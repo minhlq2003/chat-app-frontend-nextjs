@@ -15,12 +15,7 @@ export interface FormSignUpData {
   password: string;
   confirmPassword: string;
 }
-/* export const defaultFormSignUpData: FormSignUpData = {
-  name: "",
-  phone: "",
-  password: "",
-  confirmPassword: "",
-}; */
+
 
 export interface FormSignUpErrors {
   name: string;
@@ -29,9 +24,14 @@ export interface FormSignUpErrors {
   confirmPassword: string;
 }
 
-/* export const defaultFormSignUpErrors: FormSignUpErrors = {
-  name: "",
-  phone: "",
-  password: "",
-  confirmPassword: "",
-}; */
+export interface IconButtonProps {
+  icon: StaticImageData;
+  iconWidth: number;
+  iconHeight: number;
+  iconName: string;
+  className?: string;
+  style?: React.CSSProperties;
+  href?:string;
+  pathname?:string
+}
+

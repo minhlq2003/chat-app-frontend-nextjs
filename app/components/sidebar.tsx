@@ -5,12 +5,10 @@ import IconButton from "./IconButton";
 import { SidebarIconData } from "../constant/data";
 import { usePathname } from "next/navigation";
 import {
-  Button,
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
-  Tooltip,
 } from "@nextui-org/react";
 
 const Sidebar = () => {

@@ -1,17 +1,8 @@
-import Image, { StaticImageData } from "next/image";
-import React, { useState } from "react";
+import Image from "next/image";
+import React from "react";
 import { twMerge } from "tailwind-merge";
+import { IconButtonProps } from "../constant/type";
 
-interface IconButtonProps {
-  icon: StaticImageData;
-  iconWidth: number;
-  iconHeight: number;
-  iconName: string;
-  className?: string;
-  style?: React.CSSProperties;
-  href?:string;
-  pathname?:string
-}
 
 export default function IconButton({
   icon,
