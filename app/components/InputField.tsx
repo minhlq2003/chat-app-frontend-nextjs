@@ -1,4 +1,6 @@
-import Image, { StaticImageData } from "next/image";
+// InputField.tsx
+import Image from "next/image";
+import { InputFieldProps } from "../constant/type";
 
 export default function InputField({
   image,
@@ -7,14 +9,7 @@ export default function InputField({
   error,
   onFocus,
   onChange,
-}: {
-  image: StaticImageData;
-  placeholder: string;
-  password?: boolean;
-  error?: string;
-  onFocus?: () => void;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) {
+}: InputFieldProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-5">

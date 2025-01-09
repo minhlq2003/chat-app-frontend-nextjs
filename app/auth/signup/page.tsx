@@ -11,20 +11,22 @@ import Image from "next/image";
 import InputField from "@/app/components/InputField";
 import { Button } from "@nextui-org/button";
 import Link from "next/link";
+import { FormSignUpData, FormSignUpErrors } from "@/app/constant/type";
 const page = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormSignUpData>({
     name: "",
     phone: "",
     password: "",
     confirmPassword: "",
   });
 
-  const [errors, setErrors] = useState({
+
+  const [errors, setErrors] = useState<FormSignUpErrors>({
     name: "",
     phone: "",
     password: "",
     confirmPassword: "",
-  });
+  })
 
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData((prevData) => ({
@@ -39,7 +41,7 @@ const page = () => {
   };
 
   const validateForm = () => {
-    const newErrors = {
+    const newErrors: FormSignUpErrors = {
       name: "",
       phone: "",
       password: "",
@@ -59,8 +61,9 @@ const page = () => {
   };
 
   const handleSubmit = () => {
+    
     if (validateForm()) {
-      console.log("Form is valid. Submitting data:", formData);
+      
     }
   };
 
