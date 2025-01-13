@@ -3,21 +3,196 @@
 
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
+import { CallIcon, EmojiIcon, FileSendIcon, MicroIcon, PinIcon, SearchIcon, SendIcon } from "./constant/image";
+import Image, { StaticImageData } from "next/image";
+import { Button, Input } from "@nextui-org/react";
+import ChatList from "./components/ChatList";
+import { chatHistoryData, chatListData } from "./constant/data";
+import { useEffect, useState } from "react";
+import { ChatItemProps } from "./constant/type";
+import IconButton from "./components/IconButton";
 
 function Home() {
   const { t } = useTranslation("common");
+  const [type, setType] = useState("all");
+  const [selectedUser, setSelectedUser] = useState<number | null>(null);
+
+  const changeButtonStyle = (currentType: string) => {
+    if (type === currentType) {
+      return "bg-purple text-white";
+    }
+    return "bg-purple/20 text-black";
+  };
+
+  const handleUserSelect = (id: number) => {
+    setSelectedUser(id);
+  };
+
+  const selectedChat = chatHistoryData.find((chat) =>
+    chat.participants.some((p) => p.userId === selectedUser)
+  );
 
   return (
-    <div className="grid grid-cols-9 gap-2">
-      <div className="col-span-2 border-1">
-        <p>friend</p>
+    <div className="grid grid-cols-9 gap-2 h-screen">
+      <div className="col-span-2 border-1 bg-white rounded-xl max-h-[1024px] overflow-y-auto scrollbar-hide">
+        <div className="sticky top-0 z-10 px-4 bg-white">
+          <div className="flex items-center space-x-2">
+            <h1 className="font-bold text-[32px]">Messages</h1>
+            <div className="bg-purple rounded-full w-[30px] h-[30px] flex items-center justify-center">
+              <p className="text-white text-[16px]">10</p>
+            </div>
+          </div>
+          <div className="py-2">
+            <Input
+              labelPlacement="outside"
+              placeholder="Search message, people"
+              type="text"
+              startContent={
+                <Image src={SearchIcon} width={24} height={24} alt="Search" />
+              }
+            />
+          </div>
+          <div className="flex items-center justify-between py-2">
+            <Button
+              size="sm"
+              className={`w-[70px] ${changeButtonStyle("all")}`}
+              onPress={() => setType("all")}
+            >
+              All
+            </Button>
+            <Button
+              size="sm"
+              className={`w-[70px] ${changeButtonStyle("unread")}`}
+              onPress={() => setType("unread")}
+            >
+              Unread
+            </Button>
+            <Button
+              size="sm"
+              className={`w-[70px] ${changeButtonStyle("group")}`}
+              onPress={() => setType("group")}
+            >
+              Group
+            </Button>
+          </div>
+        </div>
+        <div className="px-4 py-2">
+          <p className="text-base">Pinned Messages</p>
+        </div>
+        <ChatList chatList={chatListData} pin onSelectUser={handleUserSelect} />
+        <div className="px-4 py-2">
+          <p className="text-base">Messages</p>
+        </div>
+        <ChatList
+          chatList={chatListData}
+          filterType={type}
+          onSelectUser={handleUserSelect}
+        />
       </div>
-      <div className="col-span-5 border-1">
-        <h1>{t("welcome")}</h1>
-        <p>{t("language")}</p>
-        <p>chat</p>
+      <div className="col-span-5 h-screen bg-white rounded-xl">
+        {selectedChat ? (
+          <div className="flex flex-col justify-between h-screen">
+            <div>
+              <div className="flex items-center justify-between border-b-2 p-4">
+                <div className="flex items-center gap-10">
+                  <Image
+                    src={selectedChat.participants[0].image as StaticImageData}
+                    width={64}
+                    height={64}
+                    alt="Participant 01"
+                  />
+                  <h1 className="text-2xl">
+                    {
+                      selectedChat.participants.find(
+                        (p) => p.userId !== "admin"
+                      )?.username
+                    }
+                  </h1>
+                </div>
+                <div className="flex items-center justify-center gap-5">
+                  <IconButton
+                    icon={CallIcon}
+                    iconWidth={25}
+                    iconHeight={25}
+                    iconName="Call"
+                    className={`w-[46px] h-[46px] hover:bg-purple/50 `}
+                  />
+                  <IconButton
+                    icon={PinIcon}
+                    iconWidth={25}
+                    iconHeight={25}
+                    iconName="Pin"
+                    className={`w-[46px] h-[46px] hover:bg-purple/50 ${
+                      chatListData.find((chat) => chat.id === selectedUser)?.pin
+                        ? "bg-purple/50"
+                        : ""
+                    }`}
+                  />
+                  <IconButton
+                    icon={SearchIcon}
+                    iconWidth={25}
+                    iconHeight={25}
+                    iconName="Search"
+                    className={`w-[46px] h-[46px] hover:bg-purple/50`}
+                  />
+                </div>
+              </div>
+              <div className="space-y-4 pt-10 px-2">
+                {selectedChat.messages.map((msg) => (
+                  <div
+                    key={msg.messageId}
+                    className={`flex ${
+                      msg.senderId === "admin" ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <p
+                      className={`${
+                        msg.senderId === "admin"
+                          ? "bg-purple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
+                          : "bg-purple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
+                      } p-2 max-w-[70%]`}
+                    >
+                      {msg.content}
+                      <p
+                        className={`
+                      ${
+                        msg.senderId === "admin"
+                          ? "text-white/80 justify-end"
+                          : "text-black/50"
+                      }
+                      text-sm flex`}
+                      >
+                        {msg.timestamp}
+                      </p>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="border-t-2 p-4">
+              <Input
+                placeholder="Type messages"
+                type="text"
+                className="flex-1"
+                size="lg"
+                endContent={
+                  <div className="flex items-center gap-3 pr-5">
+                    <Image src={EmojiIcon} width={20} height={20} alt="Emoji"/>
+                    <Image src={FileSendIcon} width={20} height={20} alt="File"/>
+                    <Image src={MicroIcon} width={20} height={20} alt="Micro"/>
+                    <Image src={SendIcon} width={20} height={20} alt="Send"/>
+                  </div>
+                }
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="flex justify-center items-center pt-[40%] text-gray-500">
+            Select a chat to view messages.
+          </p>
+        )}
       </div>
-      <div className="col-span-2 border-1">
+      <div className="col-span-2">
         <p>Info</p>
         <Link href="/auth/login">Login</Link>
       </div>

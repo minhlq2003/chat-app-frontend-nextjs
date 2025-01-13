@@ -15,7 +15,7 @@ const Sidebar = () => {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-60 bg-white rounded-xl">
+    <div className="flex flex-col items-center justify-between py-5 h-screen bg-white rounded-xl">
       <Link href="/">
         <IconButton
           icon={LogoIcon}

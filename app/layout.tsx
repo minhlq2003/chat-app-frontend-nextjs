@@ -1,11 +1,10 @@
-"use client"
+"use client";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "./components/sidebar";
 import SidebarWrapper from "./components/SidebarWrapper";
 import { NextUIProvider } from "@nextui-org/react";
-
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,20 +26,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-purple/10`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-purple/10 h-screen`}
       >
-       <NextUIProvider>
-       <div className="grid grid-cols-9 gap-4 px-4 py-2 h-[100vh]">
-          <div className=" h-full">
-            <SidebarWrapper />
+        <NextUIProvider>
+          <div className="grid grid-cols-9 gap-4 px-4 h-screen">
+            <div className="h-full">
+              <SidebarWrapper />
+            </div>
+            <div className="col-span-8 h-full">{children}</div>
           </div>
-          <div className="col-span-8">{children}</div>
-        </div>
-       </NextUIProvider>
+        </NextUIProvider>
       </body>
     </html>
   );

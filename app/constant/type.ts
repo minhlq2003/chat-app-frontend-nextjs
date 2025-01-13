@@ -16,7 +16,6 @@ export interface FormSignUpData {
   confirmPassword: string;
 }
 
-
 export interface FormSignUpErrors {
   name: string;
   phone: string;
@@ -31,7 +30,23 @@ export interface IconButtonProps {
   iconName: string;
   className?: string;
   style?: React.CSSProperties;
-  href?:string;
-  pathname?:string
+  href?: string;
+  pathname?: string;
 }
 
+export interface ChatItemProps {
+  id: number;
+  image: StaticImageData;
+  name: string;
+  message: string;
+  time: string;
+  unread: number;
+  pin: boolean;
+  type?: string;
+}
+
+export interface ChatListProps {
+  chatList: ChatItemProps[];
+  filterType?: string;
+  pin?: boolean;
+}
