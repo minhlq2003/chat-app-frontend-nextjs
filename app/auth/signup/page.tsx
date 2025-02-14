@@ -12,6 +12,7 @@ import InputField from "@/app/components/InputField";
 import { Button } from "@nextui-org/button";
 import Link from "next/link";
 import { FormSignUpData, FormSignUpErrors } from "@/app/constant/type";
+import { usePathname, useRouter } from "next/navigation";
 const page = () => {
   const [formData, setFormData] = useState<FormSignUpData>({
     name: "",
@@ -40,6 +41,7 @@ const page = () => {
     }));
   };
 
+
   const validateForm = () => {
     const newErrors: FormSignUpErrors = {
       name: "",
@@ -60,10 +62,12 @@ const page = () => {
     return Object.values(newErrors).every((error) => error === "");
   };
 
+  const router = useRouter();
+
   const handleSubmit = () => {
     
     if (validateForm()) {
-      
+      router.push(`/auth/signup/success?name=${formData.name}&phone=${formData.phone}`);
     }
   };
 

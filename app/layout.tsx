@@ -32,7 +32,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-purple/10 h-screen`}
       >
         <NextUIProvider>
-          <div className="grid grid-cols-9 gap-4 px-4 h-screen">
+          <div className="grid grid-cols-9 gap-4 h-screen">
             <div className="h-full">
               <SidebarWrapper />
             </div>

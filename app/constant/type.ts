@@ -50,3 +50,10 @@ export interface ChatListProps {
   filterType?: string;
   pin?: boolean;
 }
+
+export interface ProfileInfoItemProps {
+  icon: StaticImageData;
+  text: string;
+  altText: string;
+  textStyle?: string;
+}

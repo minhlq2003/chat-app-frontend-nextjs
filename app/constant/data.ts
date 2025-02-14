@@ -140,3 +140,13 @@ export const chatHistoryData = [
   },
 ];
 
+export const profileData = {
+  id: 1,
+  name: "John Doe",
+  phone: "123456789",
+  image: People01,
+  work: "Software Engineer",
+  birthday: "01/01/1990",
+  location: "New York, USA",
+};
+

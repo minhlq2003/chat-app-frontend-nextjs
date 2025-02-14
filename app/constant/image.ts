@@ -15,6 +15,11 @@ import EmojiIcon from "@/public/icon/emoji.svg";
 import FileSendIcon from "@/public/icon/file.svg";
 import MicroIcon from "@/public/icon/micro.svg";
 import SendIcon from "@/public/icon/send.svg";
+import CalendarIcon from "@/public/icon/calendar.svg";
+import BlockIcon from "@/public/icon/block.svg";
+import LocationIcon from "@/public/icon/location.svg";
+import WorkIcon from "@/public/icon/work.svg";
+import PlusIcon from "@/public/icon/plus.svg";
 
 import People01 from "@/public/image/people1.png";
 import People02 from "@/public/image/people2.png";
@@ -37,6 +42,11 @@ export {
   EmojiIcon,
   FileSendIcon,
   MicroIcon,
+  CalendarIcon,
+  BlockIcon,
+  LocationIcon,
+  WorkIcon,
+  PlusIcon,
   SendIcon,
   People01,
   People02,

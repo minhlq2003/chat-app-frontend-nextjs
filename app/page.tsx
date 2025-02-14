@@ -3,14 +3,30 @@
 
 import { useTranslation } from "next-i18next";
 import Link from "next/link";
-import { CallIcon, EmojiIcon, FileSendIcon, MicroIcon, PinIcon, SearchIcon, SendIcon } from "./constant/image";
+import {
+  BlockIcon,
+  CalendarIcon,
+  CallIcon,
+  EmojiIcon,
+  FileSendIcon,
+  LocationIcon,
+  MicroIcon,
+  PhoneIcon,
+  PinIcon,
+  PlusIcon,
+  SearchIcon,
+  SendIcon,
+  WorkIcon,
+} from "./constant/image";
 import Image, { StaticImageData } from "next/image";
-import { Button, Input } from "@nextui-org/react";
+import { Accordion, AccordionItem, Button, Card, Input } from "@nextui-org/react";
 import ChatList from "./components/ChatList";
-import { chatHistoryData, chatListData } from "./constant/data";
+import { chatHistoryData, chatListData, profileData } from "./constant/data";
 import { useEffect, useState } from "react";
 import { ChatItemProps } from "./constant/type";
 import IconButton from "./components/IconButton";
+import UserInfoItem from "./components/ProfileInfoItem";
+import { title } from "process";
 
 function Home() {
   const { t } = useTranslation("common");
@@ -32,6 +48,16 @@ function Home() {
     chat.participants.some((p) => p.userId === selectedUser)
   );
 
+  const getProfileData = (userId: number | null) => {
+    if (userId !== null && profileData.id === userId) {
+      return profileData;
+    }
+    return null;
+  };
+
+  const userInfo = getProfileData(selectedUser);
+  const defaultContent =
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
   return (
     <div className="grid grid-cols-9 gap-2 h-screen">
       <div className="col-span-2 border-1 bg-white rounded-xl max-h-[1024px] overflow-y-auto scrollbar-hide">
@@ -52,7 +78,7 @@ function Home() {
               }
             />
           </div>
-          <div className="flex items-center justify-between py-2">
+          <div className="flex items-center justify-between py-4">
             <Button
               size="sm"
               className={`w-[70px] ${changeButtonStyle("all")}`}
@@ -153,7 +179,7 @@ function Home() {
                       } p-2 max-w-[70%]`}
                     >
                       {msg.content}
-                      <p
+                      <span
                         className={`
                       ${
                         msg.senderId === "admin"
@@ -163,7 +189,7 @@ function Home() {
                       text-sm flex`}
                       >
                         {msg.timestamp}
-                      </p>
+                      </span>
                     </p>
                   </div>
                 ))}
@@ -177,10 +203,15 @@ function Home() {
                 size="lg"
                 endContent={
                   <div className="flex items-center gap-3 pr-5">
-                    <Image src={EmojiIcon} width={20} height={20} alt="Emoji"/>
-                    <Image src={FileSendIcon} width={20} height={20} alt="File"/>
-                    <Image src={MicroIcon} width={20} height={20} alt="Micro"/>
-                    <Image src={SendIcon} width={20} height={20} alt="Send"/>
+                    <Image src={EmojiIcon} width={20} height={20} alt="Emoji" />
+                    <Image
+                      src={FileSendIcon}
+                      width={20}
+                      height={20}
+                      alt="File"
+                    />
+                    <Image src={MicroIcon} width={20} height={20} alt="Micro" />
+                    <Image src={SendIcon} width={20} height={20} alt="Send" />
                   </div>
                 }
               />
@@ -192,8 +223,93 @@ function Home() {
           </p>
         )}
       </div>
-      <div className="col-span-2">
-        <p>Info</p>
+      <div className="col-span-2 w-full h-screen ">
+        {selectedChat && (
+          <div className="">
+            <div className="px-2">
+            <Card className="h-[413px] w-full bg-white rounded-xl p-2">
+              <h1 className="text-2xl font-medium">Info</h1>
+              <div className="flex flex-col items-center gap-3 justify-center">
+                <Image
+                  src={selectedChat.participants[0].image as StaticImageData}
+                  width={64}
+                  height={64}
+                  alt="Participant 01"
+                />
+                <h1 className="text-2xl">
+                  {
+                    selectedChat.participants.find((p) => p.userId !== "admin")
+                      ?.username
+                  }
+                </h1>
+              </div>
+              {userInfo && (
+                <div className="px-4 py-8 flex flex-col gap-3">
+                  <UserInfoItem
+                    icon={WorkIcon}
+                    text={userInfo.work}
+                    altText="Work"
+                  />
+                  <UserInfoItem
+                    icon={CallIcon}
+                    text={userInfo.phone}
+                    altText="Phone"
+                  />
+                  <UserInfoItem
+                    icon={CalendarIcon}
+                    text={userInfo.birthday}
+                    altText="Birthday"
+                  />
+                  <UserInfoItem
+                    icon={LocationIcon}
+                    text={userInfo.location}
+                    altText="Location"
+                  />
+                  <UserInfoItem
+                    icon={PlusIcon}
+                    text="Create group"
+                    altText="Create group"
+                  />
+                  <UserInfoItem
+                    icon={BlockIcon}
+                    text="Block"
+                    altText="Block"
+                    textStyle="text-base text-red-600"
+                  />
+                </div>
+              )}
+            </Card>
+            </div>
+            <div className="mt-2">
+              <Accordion variant="splitted" itemClasses={{
+                title: "text-xl",
+                content: "max-h-60 overflow-y-auto ",
+              }}>
+                <AccordionItem
+                  key="1"
+                  aria-label="Image"
+                  title="Image"
+                >
+                  {defaultContent}
+                </AccordionItem>
+                <AccordionItem
+                  key="2"
+                  aria-label="Link"
+                  title="Link"
+                >
+                  {defaultContent}
+                </AccordionItem>
+                <AccordionItem
+                  key="3"
+                  aria-label="File"
+                  title="File"
+                >
+                  {defaultContent}
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </div>
+        )}
         <Link href="/auth/login">Login</Link>
       </div>
     </div>
