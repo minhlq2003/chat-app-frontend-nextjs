@@ -6,12 +6,12 @@ import {
   KeyIcon,
   PhoneIcon,
   UserIcon,
-} from "@/app/constant/image";
+} from "@/constant/image";
 import Image from "next/image";
-import InputField from "@/app/components/InputField";
+import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
 import Link from "next/link";
-import { FormSignUpData, FormSignUpErrors } from "@/app/constant/type";
+import { FormSignUpData, FormSignUpErrors } from "@/constant/type";
 import { usePathname, useRouter } from "next/navigation";
 const page = () => {
   const [formData, setFormData] = useState<FormSignUpData>({
@@ -21,13 +21,12 @@ const page = () => {
     confirmPassword: "",
   });
 
-
   const [errors, setErrors] = useState<FormSignUpErrors>({
     name: "",
     phone: "",
     password: "",
     confirmPassword: "",
-  })
+  });
 
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData((prevData) => ({
@@ -40,7 +39,6 @@ const page = () => {
       [field]: "",
     }));
   };
-
 
   const validateForm = () => {
     const newErrors: FormSignUpErrors = {
@@ -65,9 +63,10 @@ const page = () => {
   const router = useRouter();
 
   const handleSubmit = () => {
-    
     if (validateForm()) {
-      router.push(`/auth/signup/success?name=${formData.name}&phone=${formData.phone}`);
+      router.push(
+        `/auth/signup/success?name=${formData.name}&phone=${formData.phone}`
+      );
     }
   };
 
@@ -75,9 +74,13 @@ const page = () => {
     <div className="py-10 flex flex-col items-center justify-center">
       <h1 className="uppercase font-semibold text-4xl">Sign up</h1>
       <div className="relative py-10">
-        <div className="bg-purple w-[1000px] h-[730px] rounded-3xl absolute z-10 ">
+        <div className="bg-customPurple w-[1000px] h-[730px] rounded-3xl absolute z-10 ">
           <div className="flex flex-col px-28 pt-20 gap-8 ">
-            <InputField image={UserIcon} placeholder="Enter your name" onChange={(e) => handleChange("name", e.target.value)}/>
+            <InputField
+              image={UserIcon}
+              placeholder="Enter your name"
+              onChange={(e) => handleChange("name", e.target.value)}
+            />
             <InputField
               image={PhoneIcon}
               placeholder="Enter your phone number"
@@ -105,7 +108,9 @@ const page = () => {
           <p className="text-xl text-right text-white mr-28 mt-2">
             Already have an account ?{" "}
             <Link href="/auth/login">
-              <span className="font-semibold hover:text-yellow">Login</span>
+              <span className="font-semibold hover:text-customYellow">
+                Login
+              </span>
             </Link>
           </p>
           <Button
@@ -138,7 +143,7 @@ const page = () => {
             </Button>
           </div>
         </div>
-        <div className="bg-purple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>
+        <div className="bg-customPurple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>
       </div>
     </div>
   );

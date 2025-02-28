@@ -1,5 +1,5 @@
 import React from "react";
-import { People01, PinIcon } from "../constant/image";
+import { PinIcon } from "../constant/image";
 import Image from "next/image";
 import { ChatItemProps } from "../constant/type";
 
@@ -11,10 +11,11 @@ export default function ChatItem({
   unread,
   pin,
   onClick,
-}: ChatItemProps & {onClick: () => void}) {
+}: ChatItemProps & { onClick: () => void }) {
   return (
-    <div className="flex flex-row w-full gap-2 bg-transparent p-2 hover:bg-purple/20"
-    onClick={onClick}    
+    <div
+      className="flex flex-row w-full gap-2 bg-transparent p-2 hover:bg-customPurple/20"
+      onClick={onClick}
     >
       <Image src={image} alt="People 01" className="w-[48px] h-[48px]" />
       <div className="flex flex-row justify-between w-full">
@@ -28,7 +29,7 @@ export default function ChatItem({
             <p className="text-[12px] text-black/50">{time}</p>
           </div>
           {unread > 0 && (
-            <div className="bg-purple rounded-full w-[16px] h-[16px] flex items-center justify-center">
+            <div className="bg-customPurple rounded-full w-[16px] h-[16px] flex items-center justify-center">
               <p className="text-white text-[12px] ">{unread}</p>
             </div>
           )}

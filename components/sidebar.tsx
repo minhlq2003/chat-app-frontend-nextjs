@@ -10,9 +10,14 @@ import {
   DropdownMenu,
   DropdownTrigger,
 } from "@nextui-org/react";
+import { useTranslation } from "react-i18next";
 
 const Sidebar = () => {
+  const { t, i18n } = useTranslation("common");
   const pathname = usePathname();
+  console.log("i18n language:", i18n.language);
+  console.log("i18n namespace:", i18n.options.ns);
+  console.log("i18n resources:", i18n.options.resources);
 
   return (
     <div className="flex flex-col items-center justify-between py-5 h-screen bg-white rounded-xl">
@@ -33,8 +38,8 @@ const Sidebar = () => {
               iconHeight={item.iconHeigh}
               iconWidth={item.iconWidth}
               href={item.href}
-              className={`w-[46px] h-[46px] hover:bg-purple/50 ${
-                pathname === item.href ? "bg-purple/50" : ""
+              className={`w-[46px] h-[46px] hover:bg-customPurple/50 ${
+                pathname === item.href ? "bg-customPurple/50" : ""
               }`}
             />
           </Link>
@@ -48,19 +53,15 @@ const Sidebar = () => {
               iconName="Setting"
               iconHeight={24}
               iconWidth={24}
-              className="w-[46px] h-[46px] hover:bg-purple/50"
+              className="w-[46px] h-[46px] hover:bg-customPurple/50"
             />
           </div>
         </DropdownTrigger>
         <DropdownMenu>
-          <DropdownItem key="vi">Tieng Viet</DropdownItem>
-          <DropdownItem key="en">English</DropdownItem>
-          <DropdownItem key="dark">
-            Darkmode
-          </DropdownItem>
-          <DropdownItem key="light">
-            Lightmode
-          </DropdownItem>
+          <DropdownItem key="vi">{t("Vietnamese")}</DropdownItem>
+          <DropdownItem key="en">{t("English")}</DropdownItem>
+          <DropdownItem key="dark">Darkmode</DropdownItem>
+          <DropdownItem key="light">Lightmode</DropdownItem>
           <DropdownItem
             key="change_account"
             className="text-red-600"

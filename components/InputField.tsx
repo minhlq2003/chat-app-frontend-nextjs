@@ -17,13 +17,13 @@ export default function InputField({
         <input
           type={password ? "password" : "text"}
           placeholder={placeholder}
-          className={`peer w-full bg-transparent border-b-2 text-2xl text-gray-100 outline-none focus:border-yellow`}
+          className={`peer w-full bg-transparent border-b-2 text-2xl text-gray-100 outline-none focus:border-customYellow`}
           onFocus={onFocus}
           onChange={onChange}
         />
       </div>
       <span
-        className={`text-yellow text-sm h-4 transition-opacity duration-300 ml-[52px] ${
+        className={`text-customYellow text-sm h-4 transition-opacity duration-300 ml-[52px] ${
           error ? "opacity-100" : "opacity-0"
         }`}
       >
