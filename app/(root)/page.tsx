@@ -15,7 +15,7 @@ import {
   SearchIcon,
   SendIcon,
   WorkIcon,
-} from "../constant/image";
+} from "../../constant/image";
 import Image, { StaticImageData } from "next/image";
 import {
   Accordion,
@@ -24,11 +24,15 @@ import {
   Card,
   Input,
 } from "@nextui-org/react";
-import ChatList from "../components/ChatList";
-import { chatHistoryData, chatListData, profileData } from "../constant/data";
+import ChatList from "../../components/ChatList";
+import {
+  chatHistoryData,
+  chatListData,
+  profileData,
+} from "../../constant/data";
 import { useState } from "react";
-import IconButton from "../components/IconButton";
-import UserInfoItem from "../components/ProfileInfoItem";
+import IconButton from "../../components/IconButton";
+import UserInfoItem from "../../components/ProfileInfoItem";
 import { useTranslation } from "react-i18next";
 
 function Home() {
