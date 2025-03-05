@@ -6,12 +6,12 @@ import {
   KeyIcon,
   PhoneIcon,
   UserIcon,
-} from "@/app/constant/image";
+} from "@/constant/image";
 import Image from "next/image";
-import InputField from "@/app/components/InputField";
+import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
 import Link from "next/link";
-import { FormSignUpData, FormSignUpErrors } from "@/app/constant/type";
+import { FormSignUpData, FormSignUpErrors } from "@/constant/type";
 import { usePathname, useRouter } from "next/navigation";
 const page = () => {
   const [formData, setFormData] = useState<FormSignUpData>({
@@ -82,7 +82,7 @@ const page = () => {
     <div className="py-10 flex flex-col items-center justify-center h-screen mx-auto">
       <h1 className="uppercase font-semibold text-4xl pt-14">Sign up</h1>
       <div className="relative py-5">
-        <div className="bg-custompurple w-[1000px] h-[730px] rounded-3xl absolute z-10 ">
+        <div className="bg-customPurple w-[1000px] h-[730px] rounded-3xl absolute z-10 ">
           <div className="flex flex-col px-28 pt-20 gap-8 ">
             <InputField
               type="text"
@@ -120,7 +120,7 @@ const page = () => {
           <p className="text-xl text-right text-white mr-28 mt-2">
             Already have an account ?{" "}
             <Link href="/signin">
-              <span className="font-semibold hover:text-customyellow">
+              <span className="font-semibold hover:text-customYellow">
                 Signin
               </span>
             </Link>
@@ -155,7 +155,7 @@ const page = () => {
             </Button>
           </div>
         </div>
-        <div className="bg-custompurple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>
+        <div className="bg-customPurple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>
       </div>
     </div>
   );

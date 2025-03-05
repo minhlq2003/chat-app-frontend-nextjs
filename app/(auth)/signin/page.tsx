@@ -4,9 +4,9 @@ import {
   FacebookIcon,
   KeyIcon,
   PhoneIcon,
-} from "@/app/constant/image";
+} from "@/constant/image";
 import Image from "next/image";
-import InputField from "@/app/components/InputField";
+import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
 import Link from "next/link";
 const page = () => {
@@ -14,7 +14,7 @@ const page = () => {
     <div className="py-10 flex flex-col items-center justify-center h-screen mx-auto">
       <h1 className="uppercase font-semibold text-4xl pt-14">Login</h1>
       <div className="relative py-5">
-        <div className="bg-custompurple w-[1000px] h-[730px] rounded-3xl absolute z-10 ">
+        <div className="bg-customPurple w-[1000px] h-[730px] rounded-3xl absolute z-10 ">
           <div className="flex flex-col px-28 pt-20 gap-10 ">
             <InputField
               type="text"
@@ -31,7 +31,7 @@ const page = () => {
           <p className="text-xl text-right text-white mr-28 mt-2">
             Don't have account ?{" "}
             <Link href="/signup">
-              <span className="font-semibold hover:text-customyellow">
+              <span className="font-semibold hover:text-customYellow">
                 Sign up
               </span>
             </Link>
@@ -65,7 +65,7 @@ const page = () => {
             <p className="mr-40">Continue with google</p>
           </Button>
         </div>
-        <div className="bg-custompurple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>
+        <div className="bg-customPurple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>
       </div>
     </div>
   );

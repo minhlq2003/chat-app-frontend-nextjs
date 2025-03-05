@@ -20,7 +20,7 @@ export default function InputField({
         <input
           type={type}
           placeholder={placeholder}
-          className={twMerge(`peer w-full bg-transparent border-b-2 text-2xl text-gray-100 outline-none focus:border-yellow`, textClassname)}
+          className={twMerge(`peer w-full bg-transparent border-b-2 text-2xl text-gray-100 outline-none focus:border-customYellow`, textClassname)}
           onFocus={onFocus}
           onChange={onChange}
           value={value}
@@ -28,7 +28,7 @@ export default function InputField({
         />
       </div>
       <span
-        className={`text-yellow text-sm h-4 transition-opacity duration-300 ml-[52px] ${
+        className={`text-customYellow text-sm h-4 transition-opacity duration-300 ml-[52px] ${
           error ? "opacity-100" : "opacity-0"
         }`}
       >

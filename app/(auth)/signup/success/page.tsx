@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { TemporaryUserProps } from "@/app/constant/type";
+import { TemporaryUserProps } from "@/constant/type";
 import Image from "next/image";
 import {
   BlackUser,
@@ -11,9 +11,9 @@ import {
   pencil,
   PhoneIcon,
   UserIcon,
-  WhitePhone,
-} from "@/app/constant/image";
-import InputField from "@/app/components/InputField";
+  WhitePhone
+} from "@/constant/image";
+import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
 
 const page = () => {
@@ -26,7 +26,7 @@ const page = () => {
   return (
     <div className="flex flex-col max-w-[1200px] h-screen gap-20 mx-auto">
       <div className="relative">
-        <div className="absolute z-0 bg-custompurple w-full h-36 flex items-center justify-center rounded-br-2xl rounded-bl-2xl">
+        <div className="absolute z-0 bg-customPurple w-full h-36 flex items-center justify-center rounded-br-2xl rounded-bl-2xl">
           <div className="flex gap-5 items-center justify-center">
             <h1 className="text-white text-xl font-bold">
               Welcome {temporaryUser?.name}
@@ -45,7 +45,7 @@ const page = () => {
             </div>
           </div>
         </div>
-        <div className="-z-10 bg-custompurple/50 w-full h-44 rounded-br-2xl rounded-bl-2xl"></div>
+        <div className="-z-10 bg-customPurple/50 w-full h-44 rounded-br-2xl rounded-bl-2xl"></div>
       </div>
       <div className="flex flex-col gap-10">
         <h1 className="text-3xl font-bold text-center">Your Profile</h1>
@@ -98,7 +98,7 @@ const page = () => {
               } as TemporaryUserProps)
             }
           />
-          <Button className="bg-custompurple text-white text-xl w-[300px] h-[50px] mx-auto">
+          <Button className="bg-customPurple text-white text-xl w-[300px] h-[50px] mx-auto">
             Done
           </Button>
         </div>

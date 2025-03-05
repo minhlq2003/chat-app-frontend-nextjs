@@ -1,6 +1,5 @@
 import { defaultLocale } from "./constant/locale";
 import { NextResponse, type NextRequest } from "next/server";
-import { i18n } from "../i18n-config";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -26,19 +25,6 @@ export function middleware(request: NextRequest) {
           pathname === `/${defaultLocale}` ? "/" : ""
         ),
         request.url
-      )
-    );
-  }
-
-  const pathnameIsMissingLocale = i18n.locales.every(
-    (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
-  );
-
-  if (pathnameIsMissingLocale) {
-    return NextResponse.rewrite(
-      new URL(
-        `/${defaultLocale}${pathname}${request.nextUrl.search}`,
-        request.nextUrl.href
       )
     );
   }

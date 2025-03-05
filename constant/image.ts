@@ -28,6 +28,10 @@ import People02 from "@/public/image/people2.png";
 import People03 from "@/public/image/people3.png";
 import noUserImage from '@/public/image/noUser.png'
 import pencil from '@/public/image/pencil.png'
+import Intro1 from "@/public/image/intro1.png";
+import Intro2 from "@/public/image/intro2.png";
+import Intro3 from "@/public/image/intro3.png";
+import Intro4 from "@/public/image/intro4.png";
 
 export {
   PhoneIcon,
@@ -58,5 +62,9 @@ export {
   People02,
   People03,
   noUserImage,
-  pencil
+  pencil,
+  Intro1,
+  Intro2,
+  Intro3,
+  Intro4,
 };

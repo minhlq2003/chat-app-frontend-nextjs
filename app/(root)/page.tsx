@@ -1,7 +1,6 @@
 // app/page.tsx
 "use client";
 
-import { useTranslation } from "next-i18next";
 import Link from "next/link";
 import {
   BlockIcon,
@@ -11,22 +10,26 @@ import {
   FileSendIcon,
   LocationIcon,
   MicroIcon,
-  PhoneIcon,
   PinIcon,
   PlusIcon,
   SearchIcon,
   SendIcon,
   WorkIcon,
-} from "./constant/image";
+} from "@/constant/image";
 import Image, { StaticImageData } from "next/image";
-import { Accordion, AccordionItem, Button, Card, Input } from "@nextui-org/react";
-import ChatList from "./components/ChatList";
-import { chatHistoryData, chatListData, profileData } from "./constant/data";
-import { useEffect, useState } from "react";
-import { ChatItemProps } from "./constant/type";
-import IconButton from "./components/IconButton";
-import UserInfoItem from "./components/ProfileInfoItem";
-import { title } from "process";
+import {
+  Accordion,
+  AccordionItem,
+  Button,
+  Card,
+  Input,
+} from "@nextui-org/react";
+import ChatList from "@/components/ChatList";
+import { chatHistoryData, chatListData, profileData } from "@/constant/data";
+import { useState } from "react";
+import IconButton from "@/components/IconButton";
+import UserInfoItem from "@/components/ProfileInfoItem";
+import { useTranslation } from "react-i18next";
 
 function Home() {
   const { t } = useTranslation("common");
@@ -35,9 +38,9 @@ function Home() {
 
   const changeButtonStyle = (currentType: string) => {
     if (type === currentType) {
-      return "bg-custompurple text-white";
+      return "bg-customPurple text-white";
     }
-    return "bg-custompurple/20 text-black";
+    return "bg-customPurple/20 text-black";
   };
 
   const handleUserSelect = (id: number) => {
@@ -63,8 +66,8 @@ function Home() {
       <div className="col-span-2 border-1 bg-white rounded-xl max-h-screen overflow-y-auto scrollbar-hide">
         <div className="sticky top-0 z-10 px-4 bg-white">
           <div className="flex items-center space-x-2">
-            <h1 className="font-bold text-[32px] text-black">Messages</h1>
-            <div className="bg-custompurple rounded-full w-[30px] h-[30px] flex items-center justify-center">
+            <h1 className="font-bold text-[32px]">{t("Messages")}</h1>
+            <div className="bg-customPurple rounded-full w-[30px] h-[30px] flex items-center justify-center">
               <p className="text-white text-[16px]">10</p>
             </div>
           </div>
@@ -103,11 +106,11 @@ function Home() {
           </div>
         </div>
         <div className="px-4 py-2">
-          <p className="text-base text-black">Pinned Messages</p>
+          <p className="text-base">{t("Pinned Messages")}</p>
         </div>
         <ChatList chatList={chatListData} pin onSelectUser={handleUserSelect} />
         <div className="px-4 py-2">
-          <p className="text-base text-black">Messages</p>
+          <p className="text-base">{t("Messages")}</p>
         </div>
         <ChatList
           chatList={chatListData}
@@ -141,16 +144,16 @@ function Home() {
                     iconWidth={25}
                     iconHeight={25}
                     iconName="Call"
-                    className={`w-[46px] h-[46px] hover:bg-custompurple/50 `}
+                    className={`w-[46px] h-[46px] hover:bg-customPurple/50 `}
                   />
                   <IconButton
                     icon={PinIcon}
                     iconWidth={25}
                     iconHeight={25}
                     iconName="Pin"
-                    className={`w-[46px] h-[46px] hover:bg-custompurple/50 ${
+                    className={`w-[46px] h-[46px] hover:bg-customPurple/50 ${
                       chatListData.find((chat) => chat.id === selectedUser)?.pin
-                        ? "bg-custompurple/50"
+                        ? "bg-customPurple/50"
                         : ""
                     }`}
                   />
@@ -159,7 +162,7 @@ function Home() {
                     iconWidth={25}
                     iconHeight={25}
                     iconName="Search"
-                    className={`w-[46px] h-[46px] hover:bg-custompurple/50`}
+                    className={`w-[46px] h-[46px] hover:bg-customPurple/50`}
                   />
                 </div>
               </div>
@@ -174,8 +177,8 @@ function Home() {
                     <p
                       className={`${
                         msg.senderId === "admin"
-                          ? "bg-custompurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
-                          : "bg-custompurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
+                          ? "bg-customPurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
+                          : "bg-customPurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
                       } p-2 max-w-[70%]`}
                     >
                       {msg.content}
@@ -227,83 +230,75 @@ function Home() {
         {selectedChat && (
           <div className="">
             <div className="px-2">
-            <Card className="h-[413px] w-full bg-white rounded-xl p-2">
-              <h1 className="text-2xl font-medium">Info</h1>
-              <div className="flex flex-col items-center gap-3 justify-center">
-                <Image
-                  src={selectedChat.participants[0].image as StaticImageData}
-                  width={64}
-                  height={64}
-                  alt="Participant 01"
-                />
-                <h1 className="text-2xl">
-                  {
-                    selectedChat.participants.find((p) => p.userId !== "admin")
-                      ?.username
-                  }
-                </h1>
-              </div>
-              {userInfo && (
-                <div className="px-4 py-8 flex flex-col gap-3">
-                  <UserInfoItem
-                    icon={WorkIcon}
-                    text={userInfo.work}
-                    altText="Work"
+              <Card className="h-[413px] w-full bg-white rounded-xl p-2">
+                <h1 className="text-2xl font-medium">Info</h1>
+                <div className="flex flex-col items-center gap-3 justify-center">
+                  <Image
+                    src={selectedChat.participants[0].image as StaticImageData}
+                    width={64}
+                    height={64}
+                    alt="Participant 01"
                   />
-                  <UserInfoItem
-                    icon={CallIcon}
-                    text={userInfo.phone}
-                    altText="Phone"
-                  />
-                  <UserInfoItem
-                    icon={CalendarIcon}
-                    text={userInfo.birthday}
-                    altText="Birthday"
-                  />
-                  <UserInfoItem
-                    icon={LocationIcon}
-                    text={userInfo.location}
-                    altText="Location"
-                  />
-                  <UserInfoItem
-                    icon={PlusIcon}
-                    text="Create group"
-                    altText="Create group"
-                  />
-                  <UserInfoItem
-                    icon={BlockIcon}
-                    text="Block"
-                    altText="Block"
-                    textStyle="text-base text-red-600"
-                  />
+                  <h1 className="text-2xl">
+                    {
+                      selectedChat.participants.find(
+                        (p) => p.userId !== "admin"
+                      )?.username
+                    }
+                  </h1>
                 </div>
-              )}
-            </Card>
+                {userInfo && (
+                  <div className="px-4 py-8 flex flex-col gap-3">
+                    <UserInfoItem
+                      icon={WorkIcon}
+                      text={userInfo.work}
+                      altText="Work"
+                    />
+                    <UserInfoItem
+                      icon={CallIcon}
+                      text={userInfo.phone}
+                      altText="Phone"
+                    />
+                    <UserInfoItem
+                      icon={CalendarIcon}
+                      text={userInfo.birthday}
+                      altText="Birthday"
+                    />
+                    <UserInfoItem
+                      icon={LocationIcon}
+                      text={userInfo.location}
+                      altText="Location"
+                    />
+                    <UserInfoItem
+                      icon={PlusIcon}
+                      text="Create group"
+                      altText="Create group"
+                    />
+                    <UserInfoItem
+                      icon={BlockIcon}
+                      text="Block"
+                      altText="Block"
+                      textStyle="text-base text-red-600"
+                    />
+                  </div>
+                )}
+              </Card>
             </div>
             <div className="mt-2">
-              <Accordion variant="splitted" itemClasses={{
-                title: "text-xl",
-                content: "max-h-60 overflow-y-auto ",
-              }}>
-                <AccordionItem
-                  key="1"
-                  aria-label="Image"
-                  title="Image"
-                >
+              <Accordion
+                variant="splitted"
+                itemClasses={{
+                  title: "text-xl",
+                  content: "max-h-60 overflow-y-auto ",
+                }}
+              >
+                <AccordionItem key="1" aria-label="Image" title="Image">
                   {defaultContent}
                 </AccordionItem>
-                <AccordionItem
-                  key="2"
-                  aria-label="Link"
-                  title="Link"
-                >
+                <AccordionItem key="2" aria-label="Link" title="Link">
                   {defaultContent}
                 </AccordionItem>
-                <AccordionItem
-                  key="3"
-                  aria-label="File"
-                  title="File"
-                >
+                <AccordionItem key="3" aria-label="File" title="File">
                   {defaultContent}
                 </AccordionItem>
               </Accordion>
