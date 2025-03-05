@@ -12,8 +12,8 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        purple : "#5457FF",
-        yellow: "#FFEA00"
+        custompurple : "#5457FF",
+        customyellow: "#FFEA00"
       },
     },
   },

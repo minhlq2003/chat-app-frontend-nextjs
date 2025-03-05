@@ -21,13 +21,12 @@ const page = () => {
     confirmPassword: "",
   });
 
-
   const [errors, setErrors] = useState<FormSignUpErrors>({
     name: "",
     phone: "",
     password: "",
     confirmPassword: "",
-  })
+  });
 
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData((prevData) => ({
@@ -40,7 +39,6 @@ const page = () => {
       [field]: "",
     }));
   };
-
 
   const validateForm = () => {
     const newErrors: FormSignUpErrors = {
@@ -65,20 +63,35 @@ const page = () => {
   const router = useRouter();
 
   const handleSubmit = () => {
-    
     if (validateForm()) {
-      router.push(`/auth/signup/success?name=${formData.name}&phone=${formData.phone}`);
+      const userData = {
+        id: 1,
+        name: formData.name,
+        password: formData.password,
+        phone: formData.phone,
+        image: "",
+        location: "",
+        birthday: null,
+      };
+      localStorage.setItem("temporaryuser", JSON.stringify(userData));
+      router.push(`/signup/success`);
     }
   };
 
   return (
-    <div className="py-10 flex flex-col items-center justify-center">
-      <h1 className="uppercase font-semibold text-4xl">Sign up</h1>
-      <div className="relative py-10">
-        <div className="bg-purple w-[1000px] h-[730px] rounded-3xl absolute z-10 ">
+    <div className="py-10 flex flex-col items-center justify-center h-screen mx-auto">
+      <h1 className="uppercase font-semibold text-4xl pt-14">Sign up</h1>
+      <div className="relative py-5">
+        <div className="bg-custompurple w-[1000px] h-[730px] rounded-3xl absolute z-10 ">
           <div className="flex flex-col px-28 pt-20 gap-8 ">
-            <InputField image={UserIcon} placeholder="Enter your name" onChange={(e) => handleChange("name", e.target.value)}/>
             <InputField
+              type="text"
+              image={UserIcon}
+              placeholder="Enter your name"
+              onChange={(e) => handleChange("name", e.target.value)}
+            />
+            <InputField
+              type="text"
               image={PhoneIcon}
               placeholder="Enter your phone number"
               error={errors.phone}
@@ -86,12 +99,14 @@ const page = () => {
               onChange={(e) => handleChange("phone", e.target.value)}
             />
             <InputField
+              type="password"
               image={KeyIcon}
               placeholder="Enter your password"
               password
               onChange={(e) => handleChange("password", e.target.value)}
             />
             <InputField
+              type="password"
               image={KeyIcon}
               placeholder="Confirm your password"
               password
@@ -104,8 +119,10 @@ const page = () => {
           </div>
           <p className="text-xl text-right text-white mr-28 mt-2">
             Already have an account ?{" "}
-            <Link href="/auth/login">
-              <span className="font-semibold hover:text-yellow">Login</span>
+            <Link href="/signin">
+              <span className="font-semibold hover:text-customyellow">
+                Signin
+              </span>
             </Link>
           </p>
           <Button
@@ -138,7 +155,7 @@ const page = () => {
             </Button>
           </div>
         </div>
-        <div className="bg-purple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>
+        <div className="bg-custompurple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>
       </div>
     </div>
   );

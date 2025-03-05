@@ -1,12 +1,15 @@
 // InputField.tsx
 import Image from "next/image";
 import { InputFieldProps } from "../constant/type";
+import { twMerge } from "tailwind-merge";
 
 export default function InputField({
   image,
   placeholder,
-  password = false,
+  type,
   error,
+  value,
+  textClassname,
   onFocus,
   onChange,
 }: InputFieldProps) {
@@ -15,11 +18,13 @@ export default function InputField({
       <div className="flex items-center gap-5">
         <Image src={image} className="size-9" alt="icon" />
         <input
-          type={password ? "password" : "text"}
+          type={type}
           placeholder={placeholder}
-          className={`peer w-full bg-transparent border-b-2 text-2xl text-gray-100 outline-none focus:border-yellow`}
+          className={twMerge(`peer w-full bg-transparent border-b-2 text-2xl text-gray-100 outline-none focus:border-yellow`, textClassname)}
           onFocus={onFocus}
           onChange={onChange}
+          value={value}
+
         />
       </div>
       <span

@@ -5,7 +5,7 @@ import Sidebar from "./sidebar";
 
 const SidebarWrapper = () => {
   const pathname = usePathname();
-  const publicRoutes = ["/auth/login", "/auth/signup", "/auth/signup/success"];
+  const publicRoutes = ["/signin", "/signup", "/signup/success"];
   const isPublicRoute = publicRoutes.includes(pathname);
   return !isPublicRoute ? <Sidebar /> : null;
 };

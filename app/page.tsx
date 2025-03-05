@@ -35,9 +35,9 @@ function Home() {
 
   const changeButtonStyle = (currentType: string) => {
     if (type === currentType) {
-      return "bg-purple text-white";
+      return "bg-custompurple text-white";
     }
-    return "bg-purple/20 text-black";
+    return "bg-custompurple/20 text-black";
   };
 
   const handleUserSelect = (id: number) => {
@@ -60,11 +60,11 @@ function Home() {
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
   return (
     <div className="grid grid-cols-9 gap-2 h-screen">
-      <div className="col-span-2 border-1 bg-white rounded-xl max-h-[1024px] overflow-y-auto scrollbar-hide">
+      <div className="col-span-2 border-1 bg-white rounded-xl max-h-screen overflow-y-auto scrollbar-hide">
         <div className="sticky top-0 z-10 px-4 bg-white">
           <div className="flex items-center space-x-2">
-            <h1 className="font-bold text-[32px]">Messages</h1>
-            <div className="bg-purple rounded-full w-[30px] h-[30px] flex items-center justify-center">
+            <h1 className="font-bold text-[32px] text-black">Messages</h1>
+            <div className="bg-custompurple rounded-full w-[30px] h-[30px] flex items-center justify-center">
               <p className="text-white text-[16px]">10</p>
             </div>
           </div>
@@ -78,7 +78,7 @@ function Home() {
               }
             />
           </div>
-          <div className="flex items-center justify-between py-4">
+          <div className="flex items-center justify-between py-4 max-w-[250px] ">
             <Button
               size="sm"
               className={`w-[70px] ${changeButtonStyle("all")}`}
@@ -103,11 +103,11 @@ function Home() {
           </div>
         </div>
         <div className="px-4 py-2">
-          <p className="text-base">Pinned Messages</p>
+          <p className="text-base text-black">Pinned Messages</p>
         </div>
         <ChatList chatList={chatListData} pin onSelectUser={handleUserSelect} />
         <div className="px-4 py-2">
-          <p className="text-base">Messages</p>
+          <p className="text-base text-black">Messages</p>
         </div>
         <ChatList
           chatList={chatListData}
@@ -127,7 +127,7 @@ function Home() {
                     height={64}
                     alt="Participant 01"
                   />
-                  <h1 className="text-2xl">
+                  <h1 className="text-2xl text-black">
                     {
                       selectedChat.participants.find(
                         (p) => p.userId !== "admin"
@@ -141,16 +141,16 @@ function Home() {
                     iconWidth={25}
                     iconHeight={25}
                     iconName="Call"
-                    className={`w-[46px] h-[46px] hover:bg-purple/50 `}
+                    className={`w-[46px] h-[46px] hover:bg-custompurple/50 `}
                   />
                   <IconButton
                     icon={PinIcon}
                     iconWidth={25}
                     iconHeight={25}
                     iconName="Pin"
-                    className={`w-[46px] h-[46px] hover:bg-purple/50 ${
+                    className={`w-[46px] h-[46px] hover:bg-custompurple/50 ${
                       chatListData.find((chat) => chat.id === selectedUser)?.pin
-                        ? "bg-purple/50"
+                        ? "bg-custompurple/50"
                         : ""
                     }`}
                   />
@@ -159,7 +159,7 @@ function Home() {
                     iconWidth={25}
                     iconHeight={25}
                     iconName="Search"
-                    className={`w-[46px] h-[46px] hover:bg-purple/50`}
+                    className={`w-[46px] h-[46px] hover:bg-custompurple/50`}
                   />
                 </div>
               </div>
@@ -174,8 +174,8 @@ function Home() {
                     <p
                       className={`${
                         msg.senderId === "admin"
-                          ? "bg-purple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
-                          : "bg-purple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
+                          ? "bg-custompurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
+                          : "bg-custompurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
                       } p-2 max-w-[70%]`}
                     >
                       {msg.content}

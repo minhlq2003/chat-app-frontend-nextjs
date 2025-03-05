@@ -33,8 +33,8 @@ const Sidebar = () => {
               iconHeight={item.iconHeigh}
               iconWidth={item.iconWidth}
               href={item.href}
-              className={`w-[46px] h-[46px] hover:bg-purple/50 ${
-                pathname === item.href ? "bg-purple/50" : ""
+              className={`w-[46px] h-[46px] hover:bg-custompurple/50 ${
+                pathname === item.href ? "bg-custompurple/50" : ""
               }`}
             />
           </Link>
@@ -48,7 +48,7 @@ const Sidebar = () => {
               iconName="Setting"
               iconHeight={24}
               iconWidth={24}
-              className="w-[46px] h-[46px] hover:bg-purple/50"
+              className="w-[46px] h-[46px] hover:bg-custompurple/50"
             />
           </div>
         </DropdownTrigger>

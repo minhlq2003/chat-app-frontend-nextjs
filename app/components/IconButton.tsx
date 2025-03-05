@@ -16,7 +16,7 @@ export default function IconButton({
   return (
         <div
       className={twMerge(
-        "w-[100px] h-[100px] rounded-full flex items-center justify-center bg-purple/10",
+        "w-[100px] h-[100px] rounded-full flex items-center justify-center bg-custompurple/10",
         className
       )}
     >

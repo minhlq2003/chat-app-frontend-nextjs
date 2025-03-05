@@ -5,6 +5,7 @@ import "./globals.css";
 import Sidebar from "./components/sidebar";
 import SidebarWrapper from "./components/SidebarWrapper";
 import { NextUIProvider } from "@nextui-org/react";
+import ContentWrapper from "./components/ContentWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,10 +34,8 @@ export default function RootLayout({
       >
         <NextUIProvider>
           <div className="grid grid-cols-9 gap-4 h-screen">
-            <div className="h-full">
-              <SidebarWrapper />
-            </div>
-            <div className="col-span-8 h-full">{children}</div>
+            <SidebarWrapper />
+            <ContentWrapper>{children}</ContentWrapper>
           </div>
         </NextUIProvider>
       </body>
