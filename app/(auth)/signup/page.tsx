@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import {
   GoogleIcon,
   FacebookIcon,
@@ -12,8 +12,8 @@ import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
 import Link from "next/link";
 import { FormSignUpData, FormSignUpErrors } from "@/constant/type";
-import { usePathname, useRouter } from "next/navigation";
-const page = () => {
+import { useRouter } from "next/navigation";
+const Page = () => {
   const [formData, setFormData] = useState<FormSignUpData>({
     name: "",
     phone: "",
@@ -79,7 +79,8 @@ const page = () => {
   };
 
   return (
-    <div className="py-10 flex flex-col items-center justify-center h-screen mx-auto">
+    <Suspense>
+      <div className="py-10 flex flex-col items-center justify-center h-screen mx-auto">
       <h1 className="uppercase font-semibold text-4xl pt-14">Sign up</h1>
       <div className="relative py-5">
         <div className="bg-customPurple w-[1000px] h-[730px] rounded-3xl absolute z-10 ">
@@ -158,7 +159,8 @@ const page = () => {
         <div className="bg-customPurple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>
       </div>
     </div>
+    </Suspense>
   );
 };
 
-export default page;
+export default Page;
