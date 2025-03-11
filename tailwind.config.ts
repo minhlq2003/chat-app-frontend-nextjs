@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-const {nextui} = require("@nextui-org/react");
+import { nextui } from "@nextui-org/react";
 export default {
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -12,8 +12,8 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        purple : "#5457FF",
-        yellow: "#FFEA00"
+        customPurple: "#5457FF",
+        customYellow: "#FFEA00",
       },
     },
   },
