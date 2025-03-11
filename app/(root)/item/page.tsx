@@ -1,5 +1,8 @@
+"use client";
+
+import { images } from "@/constant/images";
 import Image from "next/image";
-import { images } from "../../constant/images";
+
 function Item() {
   return (
     <div>

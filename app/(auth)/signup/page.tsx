@@ -12,8 +12,8 @@ import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
 import Link from "next/link";
 import { FormSignUpData, FormSignUpErrors } from "@/constant/type";
-import { usePathname, useRouter } from "next/navigation";
-const page = () => {
+import { useRouter } from "next/navigation";
+const Page = () => {
   const [formData, setFormData] = useState<FormSignUpData>({
     name: "",
     phone: "",
@@ -149,4 +149,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

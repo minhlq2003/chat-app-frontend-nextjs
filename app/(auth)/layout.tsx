@@ -3,10 +3,10 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "../../globals.css";
 import { NextUIProvider } from "@nextui-org/react";
-import { useSearchParams } from "next/navigation";
 import { I18nextProvider } from "react-i18next";
-import { i18nInstance, initializeI18n } from "../language/i18n";
-import { Suspense, useEffect, useState } from "react";
+import { i18nInstance } from "../language/i18n";
+import { Suspense } from "react";
+import LocaleProvider from "@/components/locale-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,32 +23,24 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const searchParams = useSearchParams();
-  const locale = searchParams.get("lang") ?? "vi";
-  const [isI18nReady, setIsI18nReady] = useState(false);
-
-  useEffect(() => {
-    initializeI18n(locale).then(() => setIsI18nReady(true));
-  }, [locale]);
-
-  if (!isI18nReady) {
-    return <div>Loading...</div>;
-  }
-
   console.log("i18n instance in provider:", i18nInstance);
   return (
-    <html lang={locale}>
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-customPurple/10 h-screen`}
       >
         <Suspense fallback={<div>Loading UI...</div>}>
-          <I18nextProvider i18n={i18nInstance}>
-            <NextUIProvider>
-              <div className="h-full flex justify-center items-center">
-                {children}
-              </div>
-            </NextUIProvider>
-          </I18nextProvider>
+          <LocaleProvider>
+            {() => (
+              <I18nextProvider i18n={i18nInstance}>
+                <NextUIProvider>
+                  <div className="h-full flex justify-center items-center">
+                    {children}
+                  </div>
+                </NextUIProvider>
+              </I18nextProvider>
+            )}
+          </LocaleProvider>
         </Suspense>
       </body>
     </html>

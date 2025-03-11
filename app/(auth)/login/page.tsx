@@ -1,10 +1,12 @@
+"use client";
+
 import React from "react";
 import { GoogleIcon, FacebookIcon, KeyIcon, PhoneIcon } from "@/constant/image";
 import Image from "next/image";
 import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
 import Link from "next/link";
-const page = () => {
+const Page = () => {
   return (
     <div className="py-10 flex flex-col items-center justify-center">
       <h1 className="uppercase font-semibold text-4xl">Login</h1>
@@ -64,4 +66,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
