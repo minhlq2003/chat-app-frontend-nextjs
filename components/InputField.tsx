@@ -24,7 +24,6 @@ export default function InputField({
           onFocus={onFocus}
           onChange={onChange}
           value={value}
-
         />
       </div>
       <span
