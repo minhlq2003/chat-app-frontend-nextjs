@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-customPurple/10 h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased  h-screen bg-white`}
       >
         <Suspense fallback={<div>Loading UI...</div>}>
           <LocaleProvider>

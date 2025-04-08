@@ -3,6 +3,13 @@ import type { NextConfig } from "next";
 const path = require('path');
 
 const nextConfig: NextConfig = {
+  images: {
+    domains: [
+      "shared.fastly.steamstatic.com",
+      "lh3.googleusercontent.com",
+      "platform-lookaside.fbsbx.com",
+    ],
+  },
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,

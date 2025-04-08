@@ -12,6 +12,7 @@ import {
 } from "@nextui-org/react";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
+import { logout } from "@/lib/actions/auth";
 
 const Sidebar = () => {
   const { t, i18n } = useTranslation("common");
@@ -90,10 +91,10 @@ const Sidebar = () => {
             className="text-red-600"
             color="danger"
           >
-            Change Account
+            {t("Change Account")}
           </DropdownItem>
-          <DropdownItem key="logout" className="text-red-600" color="danger">
-            Logout
+          <DropdownItem key="logout" className="text-red-600" color="danger" onPress={()=> logout()}>
+            {t("Logout")}
           </DropdownItem>
         </DropdownMenu>
       </Dropdown>

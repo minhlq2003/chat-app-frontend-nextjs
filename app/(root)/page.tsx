@@ -71,6 +71,7 @@ function Home() {
               <p className="text-white text-[16px]">10</p>
             </div>
           </div>
+
           <div className="py-2">
             <Input
               labelPlacement="outside"
@@ -87,21 +88,21 @@ function Home() {
               className={`w-[70px] ${changeButtonStyle("all")}`}
               onPress={() => setType("all")}
             >
-              All
+              {t("All")}
             </Button>
             <Button
               size="sm"
               className={`w-[70px] ${changeButtonStyle("unread")}`}
               onPress={() => setType("unread")}
             >
-              Unread
+              {t("Unread")}
             </Button>
             <Button
               size="sm"
               className={`w-[70px] ${changeButtonStyle("group")}`}
               onPress={() => setType("group")}
             >
-              Group
+              {t("Group")}
             </Button>
           </div>
         </div>
@@ -305,7 +306,7 @@ function Home() {
             </div>
           </div>
         )}
-        <Link href="/auth/login">Login</Link>
+        <Link href="/signin">Login</Link>
       </div>
     </div>
   );
