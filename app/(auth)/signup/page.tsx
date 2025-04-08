@@ -99,10 +99,10 @@ const Page = () => {
         image: "",
         location: "",
         birthday: null,
-        email: "",
+        email: null,
       };
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/signup`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/signup`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -116,6 +116,7 @@ const Page = () => {
         } else {
           const errorData = await response.json();
           console.error("Signup failed:", errorData);
+          alert("Signup failed: "+ errorData.message)
         }
       } catch (error) {
         console.error("Error during signup:", error);
