@@ -1,3 +1,4 @@
+'use client'
 import React from "react";
 import {
   GoogleIcon,
@@ -9,39 +10,42 @@ import Image from "next/image";
 import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
 import Link from "next/link";
+import { loginWithGoogle } from "@/lib/actions/auth";
+import { useTranslation } from "react-i18next";
 const page = () => {
+  const { t } = useTranslation("common");
   return (
     <div className="py-10 flex flex-col items-center justify-center h-screen mx-auto">
-      <h1 className="uppercase font-semibold text-4xl pt-14">Login</h1>
+      <h1 className="uppercase font-semibold text-4xl pt-14">{t("Login")}</h1>
       <div className="relative py-5">
         <div className="bg-customPurple w-[1000px] h-[730px] rounded-3xl absolute z-10 ">
           <div className="flex flex-col px-28 pt-20 gap-10 ">
             <InputField
               type="text"
               image={PhoneIcon}
-              placeholder="Enter your phone number"
+              placeholder={t("Enter your phone number")}
             />
             <InputField
               type="password"
               image={KeyIcon}
-              placeholder="Enter your password"
+              placeholder={t("Enter your password")}
               password
             />
           </div>
           <p className="text-xl text-right text-white mr-28 mt-2">
-            Don&apos;t have account ?{" "}
+            {t("Don't have an account ?")}{" "}
             <Link href="/signup">
               <span className="font-semibold hover:text-customYellow">
-                Sign up
+                {t("Sign up")}
               </span>
             </Link>
           </p>
           <Button className="bg-white text-3xl w-[550px] h-[70px] ml-52 mt-10">
-            Login
+            {t("Login")}
           </Button>
           <div className="flex items-center justify-center gap-2 mt-5">
             <span className="w-[200px] border-t-2 border-white"></span>
-            <p className="text-white text-2xl">or you can</p>
+            <p className="text-white text-2xl">{t("or you can")}</p>
             <span className="w-[200px] border-t-2 border-white"></span>
           </div>
           <Button className="text-3xl w-[550px] h-[70px] ml-52 mt-10 bg-[#1877F2]">
@@ -52,9 +56,10 @@ const page = () => {
               height={50}
               className="mr-5"
             />
-            <p className="mr-32 text-white">Continue with facebook</p>
+            <p className="mr-32 text-white">{t("Continue with Facebook")}</p>
           </Button>
-          <Button className="bg-white text-3xl w-[550px] h-[70px] ml-52 mt-10">
+          <Button className="bg-white text-3xl w-[550px] h-[70px] ml-52 mt-10"
+            onPress={() => loginWithGoogle()}>
             <Image
               src={GoogleIcon}
               alt="Google Icon"
@@ -62,7 +67,7 @@ const page = () => {
               height={50}
               className="mr-5"
             />
-            <p className="mr-40">Continue with google</p>
+            <p className="mr-40">{t("Continue with Google")}</p>
           </Button>
         </div>
         <div className="bg-customPurple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>

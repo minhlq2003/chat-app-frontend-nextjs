@@ -22,7 +22,9 @@ import WorkIcon from "@/public/icon/work.svg";
 import PlusIcon from "@/public/icon/plus.svg";
 import WhitePhone from '@/public/icon/whitePhone.svg'
 import BlackUser from '@/public/icon/blackUser.svg'
-
+import BlackKey from '@/public/icon/blackKey.svg'
+import EyeIcon from '@/public/icon/eye.svg'
+import EyeSlash from '@/public/icon/eye-slash.svg'
 import People01 from "@/public/image/people1.png";
 import People02 from "@/public/image/people2.png";
 import People03 from "@/public/image/people3.png";
@@ -58,6 +60,9 @@ export {
   SendIcon,
   WhitePhone,
   BlackUser,
+  BlackKey,
+  EyeIcon,
+  EyeSlash,
   People01,
   People02,
   People03,

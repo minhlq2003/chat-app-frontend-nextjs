@@ -6,6 +6,7 @@ export interface InputFieldProps {
   placeholder?: string;
   password?: boolean;
   error?: string;
+  errorClassname?:string
   value?: string
   textClassname? :string
   onFocus?: () => void;
@@ -24,6 +25,13 @@ export interface FormSignUpErrors {
   phone: string;
   password: string;
   confirmPassword: string;
+}
+
+export interface FormSuccessErrors {
+  name: string;
+  phone: string;
+  password: string;
+  birthday: string;
 }
 
 export interface IconButtonProps {
@@ -69,4 +77,5 @@ export interface TemporaryUserProps {
   image: null | string | StaticImageData;
   location: null | string;
   birthday: null | Date;
+  email: string;
 }
