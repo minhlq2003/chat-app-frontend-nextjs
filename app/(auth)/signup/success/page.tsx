@@ -45,16 +45,20 @@ const Page = () => {
           email: session.email,
         };
 
-        localStorage.setItem("temporaryuser", JSON.stringify(tempUser));
+        localStorage.setItem("userInfo", JSON.stringify(tempUser));
         setTemporaryUser(tempUser);
       } else {
         const storedUser = JSON.parse(
-          localStorage.getItem("temporaryuser") || "{}"
+          localStorage.getItem("userInfo") || "{}"
         );
         setTemporaryUser(storedUser);
       }
     };
     fetchAndStoreGoogleUser();
+    const getUserInfo = async() => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/account`)
+
+    }
   }, []);
 
   const validateForm = () => {
