@@ -74,7 +74,6 @@ const Page = () => {
       const password = formData.password || "";
       const passwordRegex =
         /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{9,}$/;
-
       if (!passwordRegex.test(password)) {
         newErrors.password =
           "Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character.";
@@ -91,10 +90,9 @@ const Page = () => {
 
   const router = useRouter();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validateForm()) {
       const userData = {
-        id: 1,
         name: formData.name,
         password: formData.password,
         phone: formData.phone,
@@ -103,8 +101,26 @@ const Page = () => {
         birthday: null,
         email: "",
       };
-      localStorage.setItem("temporaryuser", JSON.stringify(userData));
-      router.push(`/signup/success`);
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/signup`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userData),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const id = data.id;
+          router.push(`/signup/success?id=${id}`);
+        } else {
+          const errorData = await response.json();
+          console.error("Signup failed:", errorData);
+        }
+      } catch (error) {
+        console.error("Error during signup:", error);
+      }
+
     }
   };
 
@@ -119,6 +135,7 @@ const Page = () => {
               type="text"
               image={UserIcon}
               placeholder={t("Enter your name")}
+              error={errors.name}
               onChange={(e) => handleChange("name", e.target.value)}
             />
             <InputField
@@ -134,6 +151,10 @@ const Page = () => {
               image={KeyIcon}
               placeholder={t("Enter your password")}
               password
+              error={errors.password}
+              onFocus={() =>
+                  setErrors((prev) => ({ ...prev, password: "" }))
+              }
               onChange={(e) => handleChange("password", e.target.value)}
             />
             <InputField
