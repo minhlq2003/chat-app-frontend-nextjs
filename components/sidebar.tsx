@@ -93,7 +93,10 @@ const Sidebar = () => {
           >
             {t("Change Account")}
           </DropdownItem>
-          <DropdownItem key="logout" className="text-red-600" color="danger" onPress={()=> logout()}>
+            <DropdownItem key="logout" className="text-red-600" color="danger" onPress={() => {
+                localStorage.removeItem("user");
+                logout()
+            }}>
             {t("Logout")}
           </DropdownItem>
         </DropdownMenu>
