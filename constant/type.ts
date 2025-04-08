@@ -2,9 +2,12 @@ import { StaticImageData } from "next/image";
 
 export interface InputFieldProps {
   image: StaticImageData;
-  placeholder: string;
+  type: string
+  placeholder?: string;
   password?: boolean;
   error?: string;
+  value?: string
+  textClassname? :string
   onFocus?: () => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
@@ -56,4 +59,14 @@ export interface ProfileInfoItemProps {
   text: string;
   altText: string;
   textStyle?: string;
+}
+
+export interface TemporaryUserProps {
+  id: number;
+  name: string;
+  password: string;
+  phone: string;
+  image: null | string | StaticImageData;
+  location: null | string;
+  birthday: null | Date;
 }

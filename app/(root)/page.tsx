@@ -15,7 +15,7 @@ import {
   SearchIcon,
   SendIcon,
   WorkIcon,
-} from "../../constant/image";
+} from "@/constant/image";
 import Image, { StaticImageData } from "next/image";
 import {
   Accordion,
@@ -24,15 +24,11 @@ import {
   Card,
   Input,
 } from "@nextui-org/react";
-import ChatList from "../../components/ChatList";
-import {
-  chatHistoryData,
-  chatListData,
-  profileData,
-} from "../../constant/data";
+import ChatList from "@/components/ChatList";
+import { chatHistoryData, chatListData, profileData } from "@/constant/data";
 import { useState } from "react";
-import IconButton from "../../components/IconButton";
-import UserInfoItem from "../../components/ProfileInfoItem";
+import IconButton from "@/components/IconButton";
+import UserInfoItem from "@/components/ProfileInfoItem";
 import { useTranslation } from "react-i18next";
 
 function Home() {
@@ -67,7 +63,7 @@ function Home() {
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
   return (
     <div className="grid grid-cols-9 gap-2 h-screen">
-      <div className="col-span-2 border-1 bg-white rounded-xl max-h-[1024px] overflow-y-auto scrollbar-hide">
+      <div className="col-span-2 border-1 bg-white rounded-xl max-h-screen overflow-y-auto scrollbar-hide">
         <div className="sticky top-0 z-10 px-4 bg-white">
           <div className="flex items-center space-x-2">
             <h1 className="font-bold text-[32px]">{t("Messages")}</h1>
@@ -85,7 +81,7 @@ function Home() {
               }
             />
           </div>
-          <div className="flex items-center justify-between py-4">
+          <div className="flex items-center justify-between py-4 max-w-[250px] ">
             <Button
               size="sm"
               className={`w-[70px] ${changeButtonStyle("all")}`}
@@ -134,7 +130,7 @@ function Home() {
                     height={64}
                     alt="Participant 01"
                   />
-                  <h1 className="text-2xl">
+                  <h1 className="text-2xl text-black">
                     {
                       selectedChat.participants.find(
                         (p) => p.userId !== "admin"

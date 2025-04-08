@@ -20,10 +20,14 @@ import BlockIcon from "@/public/icon/block.svg";
 import LocationIcon from "@/public/icon/location.svg";
 import WorkIcon from "@/public/icon/work.svg";
 import PlusIcon from "@/public/icon/plus.svg";
+import WhitePhone from '@/public/icon/whitePhone.svg'
+import BlackUser from '@/public/icon/blackUser.svg'
 
 import People01 from "@/public/image/people1.png";
 import People02 from "@/public/image/people2.png";
 import People03 from "@/public/image/people3.png";
+import noUserImage from '@/public/image/noUser.png'
+import pencil from '@/public/image/pencil.png'
 import Intro1 from "@/public/image/intro1.png";
 import Intro2 from "@/public/image/intro2.png";
 import Intro3 from "@/public/image/intro3.png";
@@ -52,9 +56,13 @@ export {
   WorkIcon,
   PlusIcon,
   SendIcon,
+  WhitePhone,
+  BlackUser,
   People01,
   People02,
   People03,
+  noUserImage,
+  pencil,
   Intro1,
   Intro2,
   Intro3,

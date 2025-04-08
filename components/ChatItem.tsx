@@ -20,7 +20,7 @@ export default function ChatItem({
       <Image src={image} alt="People 01" className="w-[48px] h-[48px]" />
       <div className="flex flex-row justify-between w-full">
         <div className="">
-          <p className="text-sm">{name}</p>
+          <p className="text-sm text-black">{name}</p>
           <p className="text-[12px] text-black/50">{message}</p>
         </div>
         <div className="flex flex-col items-end justify-start">

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import {
   GoogleIcon,
   FacebookIcon,
@@ -64,24 +64,35 @@ const Page = () => {
 
   const handleSubmit = () => {
     if (validateForm()) {
-      router.push(
-        `/auth/signup/success?name=${formData.name}&phone=${formData.phone}`
-      );
+      const userData = {
+        id: 1,
+        name: formData.name,
+        password: formData.password,
+        phone: formData.phone,
+        image: "",
+        location: "",
+        birthday: null,
+      };
+      localStorage.setItem("temporaryuser", JSON.stringify(userData));
+      router.push(`/signup/success`);
     }
   };
 
   return (
-    <div className="py-10 flex flex-col items-center justify-center">
-      <h1 className="uppercase font-semibold text-4xl">Sign up</h1>
-      <div className="relative py-10">
+    <Suspense>
+      <div className="py-10 flex flex-col items-center justify-center h-screen mx-auto">
+      <h1 className="uppercase font-semibold text-4xl pt-14">Sign up</h1>
+      <div className="relative py-5">
         <div className="bg-customPurple w-[1000px] h-[730px] rounded-3xl absolute z-10 ">
           <div className="flex flex-col px-28 pt-20 gap-8 ">
             <InputField
+              type="text"
               image={UserIcon}
               placeholder="Enter your name"
               onChange={(e) => handleChange("name", e.target.value)}
             />
             <InputField
+              type="text"
               image={PhoneIcon}
               placeholder="Enter your phone number"
               error={errors.phone}
@@ -89,12 +100,14 @@ const Page = () => {
               onChange={(e) => handleChange("phone", e.target.value)}
             />
             <InputField
+              type="password"
               image={KeyIcon}
               placeholder="Enter your password"
               password
               onChange={(e) => handleChange("password", e.target.value)}
             />
             <InputField
+              type="password"
               image={KeyIcon}
               placeholder="Confirm your password"
               password
@@ -107,9 +120,9 @@ const Page = () => {
           </div>
           <p className="text-xl text-right text-white mr-28 mt-2">
             Already have an account ?{" "}
-            <Link href="/auth/login">
+            <Link href="/signin">
               <span className="font-semibold hover:text-customYellow">
-                Login
+                Signin
               </span>
             </Link>
           </p>
@@ -146,6 +159,7 @@ const Page = () => {
         <div className="bg-customPurple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>
       </div>
     </div>
+    </Suspense>
   );
 };
 
