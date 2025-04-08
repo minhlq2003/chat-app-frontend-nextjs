@@ -22,7 +22,7 @@ export default function InputField({
   onChange,
 }: InputFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const [localValue, setLocalValue] = useState(value || "");
   const isPassword = type === "password";
 
@@ -70,6 +70,7 @@ export default function InputField({
           onFocus={onFocus}
           onChange={handleChange}
           value={value}
+          max={type === "date" ? new Date().toISOString().split("T")[0] : undefined} // Add max attribute for date type
         />
         {isPassword && (
           <button
