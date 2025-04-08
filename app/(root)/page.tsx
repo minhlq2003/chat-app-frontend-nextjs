@@ -26,14 +26,16 @@ import {
 } from "@nextui-org/react";
 import ChatList from "@/components/ChatList";
 import { chatHistoryData, chatListData, profileData } from "@/constant/data";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import IconButton from "@/components/IconButton";
 import UserInfoItem from "@/components/ProfileInfoItem";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
 
 function Home() {
   const { t } = useTranslation("common");
   const [type, setType] = useState("all");
+  const router = useRouter();
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
 
   const changeButtonStyle = (currentType: string) => {
@@ -57,6 +59,14 @@ function Home() {
     }
     return null;
   };
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+
+    if (!user) {
+      router.replace("/introduction");
+    }
+  }, []);
 
   const userInfo = getProfileData(selectedUser);
   const defaultContent =

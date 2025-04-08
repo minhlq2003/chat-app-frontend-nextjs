@@ -1,19 +1,24 @@
-'use client'
-import React from "react";
-import {
-  GoogleIcon,
-  FacebookIcon,
-  KeyIcon,
-  PhoneIcon,
-} from "@/constant/image";
+"use client";
+import React, { useEffect } from "react";
+import { GoogleIcon, FacebookIcon, KeyIcon, PhoneIcon } from "@/constant/image";
 import Image from "next/image";
 import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
 import Link from "next/link";
 import { loginWithGoogle } from "@/lib/actions/auth";
 import { useTranslation } from "react-i18next";
-const page = () => {
+import { useRouter } from "next/navigation";
+const Page = () => {
   const { t } = useTranslation("common");
+  const router = useRouter();
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+
+    if (user) {
+      router.replace("/");
+    }
+  }, []);
   return (
     <div className="py-10 flex flex-col items-center justify-center h-screen mx-auto">
       <h1 className="uppercase font-semibold text-4xl pt-14">{t("Login")}</h1>
@@ -58,8 +63,10 @@ const page = () => {
             />
             <p className="mr-32 text-white">{t("Continue with Facebook")}</p>
           </Button>
-          <Button className="bg-white text-3xl w-[550px] h-[70px] ml-52 mt-10"
-            onPress={() => loginWithGoogle()}>
+          <Button
+            className="bg-white text-3xl w-[550px] h-[70px] ml-52 mt-10"
+            onPress={() => loginWithGoogle()}
+          >
             <Image
               src={GoogleIcon}
               alt="Google Icon"
@@ -76,4 +83,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

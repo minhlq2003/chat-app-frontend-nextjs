@@ -6,7 +6,6 @@ import {
   BlackKey,
   BlackUser,
   CalendarIcon,
-  KeyIcon,
   LocationIcon,
   noUserImage,
   pencil,
@@ -184,7 +183,9 @@ const Page = () => {
           <div className="-z-10 bg-customPurple/50 w-full h-44 rounded-br-2xl rounded-bl-2xl"></div>
         </div>
         <div className="flex flex-col gap-10">
-          <h1 className="text-3xl font-bold text-center">{t("Your Profile")}</h1>
+          <h1 className="text-3xl font-bold text-center">
+            {t("Your Profile")}
+          </h1>
           <div className="flex flex-col gap-5 w-[1000px] mx-auto">
             <InputField
               image={BlackUser}

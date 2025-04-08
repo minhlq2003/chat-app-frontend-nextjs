@@ -1,14 +1,18 @@
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { StaticImageData } from "next/image";
 
 export interface InputFieldProps {
-  image: StaticImageData;
-  type: string
+  isEditable?: boolean;
+  storageKey?: string;
+  image?: StaticImageData;
+  icon?: IconProp;
+  type: string;
   placeholder?: string;
   password?: boolean;
   error?: string;
-  errorClassname?:string
-  value?: string
-  textClassname? :string
+  errorClassname?: string;
+  value?: string;
+  textClassname?: string;
   onFocus?: () => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
@@ -78,4 +82,6 @@ export interface TemporaryUserProps {
   location: null | string;
   birthday: null | Date;
   email: string;
+  gender?: string;
+  work?: string;
 }
