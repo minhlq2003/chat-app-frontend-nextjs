@@ -1,7 +1,7 @@
 "use client";
 
 import { Geist, Geist_Mono } from "next/font/google";
-import "../../globals.css";
+import "../../styles/globals.css";
 import { NextUIProvider } from "@nextui-org/react";
 import { I18nextProvider } from "react-i18next";
 import { i18nInstance } from "../language/i18n";

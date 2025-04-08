@@ -1,12 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 import { Intro1, Intro2, Intro3 } from "@/constant/image";
+import { Navigation, Pagination } from "swiper/modules";
+import "../../../styles/swiper.css";
 
 const Page = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
-
   const slides = [
     {
       image: Intro1,
@@ -28,92 +32,40 @@ const Page = () => {
     },
   ];
 
-  const handleNext = () => {
-    setActiveIndex((prevIndex) => (prevIndex + 1) % slides.length);
-  };
-
-  const handlePrev = () => {
-    setActiveIndex(
-      (prevIndex) => (prevIndex - 1 + slides.length) % slides.length
-    );
-  };
-
   return (
-    <div
-      className="relative bg-blue-500 rounded-b-xl overflow-hidden"
-      style={{ height: "500px", width: "1000px" }}
-    >
-      <div className="relative h-full w-full flex items-center justify-center">
-        <Image
-          src={slides[activeIndex].image}
-          alt={slides[activeIndex].title}
-          width={400}
-          height={400}
-        />
-      </div>
-      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-between p-4">
-        <button
-          className="bg-blue-300 rounded-full p-2"
-          onClick={handlePrev}
-          style={{ opacity: activeIndex === 0 ? 0.5 : 1 }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-        <button
-          className="bg-blue-300 rounded-full p-2"
-          onClick={handleNext}
-          style={{ opacity: activeIndex === slides.length - 1 ? 0.5 : 1 }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        </button>
-      </div>
-
-      <div className="absolute bottom-20 left-0 w-full text-center">
-        <h2 className="text-white text-2xl font-bold mb-2">
-          {slides[activeIndex].title}
-        </h2>
-        <p className="text-white mb-4">{slides[activeIndex].description}</p>
-      </div>
-
-      <div className="absolute bottom-4 left-0 w-full flex items-center justify-center">
-        <button className="bg-blue-600 text-white px-6 py-3 rounded-lg">
-          Get Started
-        </button>
-      </div>
-
-      <div className="absolute bottom-[-100px] left-0 w-full flex items-center justify-center pb-4">
-        {slides.map((_, index) => (
-          <span
+    <div className="relative rounded-b-xl overflow-hidden h-full  mt-[50px] introduction">
+      <Swiper
+        modules={[Navigation, Pagination]}
+        navigation
+        pagination={{ clickable: true }}
+        className="h-[700px] w-[1400px] bg-[#5457ff]"
+      >
+        {slides.map((slide, index) => (
+          <SwiperSlide
             key={index}
-            className={`h-2 w-2 rounded-full mx-1 ${
-              index === activeIndex ? "bg-blue-600" : "bg-gray-400"
-            }`}
-          ></span>
+            className="flex items-center justify-center  "
+          >
+            <div className="flex justify-center items-center">
+              <Image
+                src={slide.image}
+                alt={slide.title}
+                width={600}
+                height={600}
+              />
+              <div className="absolute bottom-10 left-0 w-full text-center">
+                <h2 className="text-white text-4xl font-bold mb-2">
+                  {slide.title}
+                </h2>
+                <p className="text-white text-xl mb-4">{slide.description}</p>
+              </div>
+            </div>
+          </SwiperSlide>
         ))}
+      </Swiper>
+      <div className="relative mt-10 w-full flex items-center justify-center">
+        <button className="bg-blue-600 text-white px-6 py-3 rounded-lg">
+          <a href="/signup">Get Started</a>
+        </button>
       </div>
     </div>
   );

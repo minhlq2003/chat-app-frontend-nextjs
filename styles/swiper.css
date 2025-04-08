@@ -1,0 +1,8 @@
+.introduction .swiper-pagination {
+    bottom: 0;
+}
+
+.introduction .swiper-button-prev,
+.introduction .swiper-button-next {
+    color: white;
+}
