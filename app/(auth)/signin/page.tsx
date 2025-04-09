@@ -80,6 +80,13 @@ const Page = () => {
             />
           </div>
           <p className="text-xl text-right text-white mr-28 mt-2">
+            <Link href="/password/forgotpassword">
+              <span className=" hover:text-customYellow">
+              {t("Forgot your password ?")}
+              </span>
+            </Link>
+          </p>
+          <p className="text-xl text-right text-white mr-28 mt-2">
             {t("Don't have an account ?")}{" "}
             <Link href="/signup">
               <span className="font-semibold hover:text-customYellow">
