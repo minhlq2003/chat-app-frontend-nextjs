@@ -2,6 +2,7 @@
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { FormSuccessErrors, TemporaryUserProps } from "@/constant/type";
 import Image from "next/image";
+import { useSearchParams } from 'next/navigation'
 import {
   BlackKey,
   BlackUser,
@@ -21,6 +22,8 @@ const Page = () => {
   const { t } = useTranslation("common");
   const [temporaryUser, setTemporaryUser] = useState<TemporaryUserProps>();
   const [isGoogleLogin, setIsGoogleLogin] = useState(false);
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id')
   const [errors, setErrors] = useState<FormSuccessErrors>({
     name: "",
     phone: "",
@@ -33,6 +36,11 @@ const Page = () => {
       const session = await getSessionUser();
       if (session && session.email && session.image) {
         setIsGoogleLogin(true);
+        const userData = await getUserInfo("email", session.email);
+        if(userData.email) {
+          localStorage.setItem("user", JSON.stringify(userData));
+          return router.replace("/");
+        }
         const tempUser: TemporaryUserProps = {
           id: -1,
           name: session.name || "",
@@ -43,21 +51,23 @@ const Page = () => {
           birthday: null,
           email: session.email,
         };
-
-        localStorage.setItem("userInfo", JSON.stringify(tempUser));
         setTemporaryUser(tempUser);
       } else {
-        const storedUser = JSON.parse(
-          localStorage.getItem("userInfo") || "{}"
-        );
+        const storedUser = await getUserInfo("id", id);
         setTemporaryUser(storedUser);
       }
     };
     fetchAndStoreGoogleUser();
-    const getUserInfo = async() => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/account`)
-
+    const getUserInfo = async(type: string, value: any) => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/account?${type}=${value}`);
+      if(!res.ok) {
+        throw new Error ('Failed to fetch user info');
+      }
+      const [data] = await res.json()
+      if(!data) return {}
+      return data;
     }
+
   }, []);
 
   const validateForm = () => {
@@ -109,15 +119,35 @@ const Page = () => {
     return Object.values(newErrors).every((err) => err === "");
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (!temporaryUser) return;
 
     if (!validateForm()) return;
-
-    localStorage.removeItem("temporaryuser");
-    localStorage.setItem("user", JSON.stringify(temporaryUser));
-
-    router.push("/");
+    try {
+      if(temporaryUser.email === '') {
+        temporaryUser.email = "exampleemail@example.com"
+      }
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(temporaryUser),
+      });
+      if (response.ok) {
+        let responseData = await response.json();
+        localStorage.removeItem("temporaryuser");
+        localStorage.setItem("user", JSON.stringify(responseData));
+        router.push("/");
+      } else {
+        const errorData = await response.json();
+        console.error("Update failed:", errorData);
+        alert("Update failed: " + errorData.message);
+      }
+    } catch (error) {
+      console.error("Error during update:", error);
+      alert("An error occurred. Please try again.");
+    }
   };
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -126,23 +156,43 @@ const Page = () => {
     fileInputRef.current?.click();
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setTemporaryUser((prev) => ({
-        ...(prev || {
-          id: -1,
-          name: "",
-          password: "",
-          phone: "",
-          image: null,
-          location: null,
-          birthday: null,
-          email: "",
-        }),
-        image: imageUrl,
-      }));
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const imageUrl = data.imageUrl;
+
+          setTemporaryUser((prev) => ({
+            ...(prev || {
+              id: -1,
+              name: "",
+              password: "",
+              phone: "",
+              image: null,
+              location: null,
+              birthday: null,
+              email: "",
+            }),
+            image: imageUrl,
+          }));
+        } else {
+          console.error("Image upload failed:", await response.json());
+          alert("Failed to upload image. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error during image upload:", error);
+        alert("An error occurred while uploading the image.");
+      }
     }
   };
   return (
@@ -184,7 +234,7 @@ const Page = () => {
         </div>
         <div className="flex flex-col gap-10">
           <h1 className="text-3xl font-bold text-center">
-            {t("Your Profile")}
+            {t("Complete Your Profile")}
           </h1>
           <div className="flex flex-col gap-5 w-[1000px] mx-auto">
             <InputField

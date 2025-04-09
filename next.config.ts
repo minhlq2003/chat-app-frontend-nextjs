@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
       "shared.fastly.steamstatic.com",
       "lh3.googleusercontent.com",
       "platform-lookaside.fbsbx.com",
+      "cnm-chatapp-bucket.s3.ap-southeast-1.amazonaws.com"
     ],
   },
   webpack(config) {

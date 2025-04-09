@@ -17,6 +17,10 @@ export interface InputFieldProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
+export interface FormLoginData {
+    phone: string;
+    password: string;
+}
 export interface FormSignUpData {
   name: string;
   phone: string;
