@@ -90,8 +90,9 @@ const Sidebar = () => {
             key="change_account"
             className="text-red-600"
             color="danger"
+            onPress={()=>router.push('/password/changepassword')}
           >
-            {t("Change Account")}
+            {t("Change Password")}
           </DropdownItem>
             <DropdownItem key="logout" className="text-red-600" color="danger" onPress={() => {
                 localStorage.removeItem("user");
