@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { GoogleIcon, FacebookIcon, KeyIcon, PhoneIcon } from "@/constant/image";
 import Image from "next/image";
+import { logout } from "@/lib/actions/auth";
 import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
 import { useTranslation } from "react-i18next";
@@ -50,7 +51,7 @@ const Page = () => {
     if (user?.password !== undefined) {
       const password = user.password || "";
       const passwordRegex =
-        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{9,}$/;
+        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])(?!.*\s).{9,}$/;
 
       if (!passwordRegex.test(password)) {
         newErrors.password =
@@ -66,16 +67,59 @@ const Page = () => {
   const handleChange = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
+  const getUserInfo = async(type: string, value: any) => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/account?${type}=${value}`);
+    if(!res.ok) {
+      throw new Error ('Failed to fetch user info');
+    }
+    const [data] = await res.json()
+    if(!data) return {}
+    return data;
+  }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (isForgot) {
-        if(validateForm()){
+      if (validateForm()) {
 
-        }
+        //localStorage.setItem("user", JSON.stringify(newUser));
+        //router.push("/user/changepass");
+      }
     } else {
-        if(validateForm()){
-
+      if (validateForm()) {
+        const newUser = {
+          ...user,
+          //phone: user.phone,
+          password: form.newPassword,
+        };
+        let data = await getUserInfo("phone", newUser.phone)
+        if(!data) {
+          alert("Phone number not found");
+          return;
         }
+        if(data.password !== form.oldPassword) {
+          alert("Old password is incorrect");
+          return;
+        }
+        if(data.password === form.newPassword) {
+          alert("New password must be different from old password");
+          return;
+        }
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/changepass`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({phone: newUser.phone, oldpassword: form.oldPassword, newpassword: form.newPassword}),
+        });
+        if (!res.ok) {
+          alert("Failed to update password");
+          return;
+        }
+        alert("Password changed!")
+        localStorage.removeItem("user");
+        logout();
+
+      }
     }
   };
   useEffect(() => {}, []);
@@ -103,7 +147,7 @@ const Page = () => {
               />
             ) : (
               <InputField
-                type="text"
+                type="password"
                 image={KeyIcon}
                 placeholder={t("Enter your password")}
                 onChange={(e) => handleChange("oldPassword", e.target.value)}
