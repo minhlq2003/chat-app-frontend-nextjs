@@ -106,9 +106,9 @@ const Page = () => {
     if (temporaryUser?.password !== undefined) {
       const password = temporaryUser.password || "";
       const passwordRegex =
-        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{9,}$/;
+        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])(?!.*\s).{9,}$/;
 
-      if (!passwordRegex.test(password)) {
+      if (!passwordRegex.test(password.trim())) {
         newErrors.password =
           "Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character.";
       }
