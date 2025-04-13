@@ -17,7 +17,7 @@ export default function ChatItem({
       className="flex flex-row w-full gap-2 bg-transparent p-2 hover:bg-customPurple/20"
       onClick={onClick}
     >
-      <Image src={image} alt="People 01" className="w-[48px] h-[48px]" />
+      <Image src={image} alt="People 01" width={48} height={48} className="w-[48px] h-[48px]" />
       <div className="flex flex-row justify-between w-full">
         <div className="">
           <p className="text-sm text-black">{name}</p>
