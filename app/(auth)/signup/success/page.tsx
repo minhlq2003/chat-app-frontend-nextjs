@@ -18,6 +18,16 @@ import { getSessionUser } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
+
+function formatDateToInputValue(date: string | Date | undefined): string {
+  if (!date) return "";
+  const parsedDate = new Date(date);
+  const year = parsedDate.getFullYear();
+  const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
+  const day = String(parsedDate.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 const Page = () => {
   const { t } = useTranslation("common");
   const [temporaryUser, setTemporaryUser] = useState<TemporaryUserProps>();
@@ -288,6 +298,7 @@ const Page = () => {
               image={CalendarIcon}
               type="date"
               placeholder={t("Enter your birthday")}
+              value={formatDateToInputValue(temporaryUser?.birthday || "")}
               textClassname="text-black"
               error={errors.birthday}
               errorClassname="text-red-600"
@@ -302,6 +313,7 @@ const Page = () => {
               image={LocationIcon}
               type="text"
               placeholder={t("Enter your address")}
+              value={temporaryUser?.location || ""}
               textClassname="text-black"
               onChange={(e) =>
                 setTemporaryUser({
