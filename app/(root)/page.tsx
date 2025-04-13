@@ -25,7 +25,7 @@ import {
   Input,
 } from "@nextui-org/react";
 import ChatList from "@/components/ChatList";
-import { chatHistoryData, chatListData, profileData } from "@/constant/data";
+import { } from "@/constant/data";
 import { useEffect, useState, useRef } from "react";
 import IconButton from "@/components/IconButton";
 import UserInfoItem from "@/components/ProfileInfoItem";
@@ -37,14 +37,17 @@ function Home() {
   const [type, setType] = useState("all");
   const router = useRouter();
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
-  const [chatList, setChatList] = useState(chatListData);
+  const [chatList, setChatList] = useState<any[]>([]);
   const [selectedChatInfo, setSelectedChatInfo] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const wsRef = useRef<WebSocket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Store the original WebSocket message handler
+  const originalMessageHandlerRef = useRef<((event: MessageEvent) => void) | null>(null);
 
   const changeButtonStyle = (currentType: string) => {
     if (type === currentType) {
@@ -53,7 +56,6 @@ function Home() {
     return "bg-customPurple/20 text-black";
   };
 
-  // Initialize WebSocket connection
   const initializeWebSocket = (userId: string) => {
     // Clear any existing reconnection timeout
     if (reconnectTimeoutRef.current) {
@@ -109,7 +111,8 @@ function Home() {
       }, 30000); // Send ping every 30 seconds instead of 5 seconds
     };
 
-    ws.onmessage = (event) => {
+    // Define the base message handler
+    const messageHandler = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
         console.log("WebSocket message received:", data);
@@ -125,16 +128,18 @@ function Home() {
             break;
 
           case "receiveChat":
-            if (data.chatId === selectedChatInfo?.ChatID) {
-              // Add message to the chat
-              setMessages(prev => [...prev, {
-                messageId: data.message.messageId,
-                senderId: data.message.senderId,
-                content: data.message.content,
-                timestamp: new Date(data.message.timestamp).toLocaleTimeString(),
-                type: data.message.type,
-                attachmentUrl: data.message.attachmentUrl
-              }]);
+            console.log("Received chat message:", data);
+            // We'll handle this in the selectedChatInfo-specific handler
+            // This is just a fallback
+            if (!selectedChatInfo) {
+              console.log("No selected chat yet, updating unread counts");
+              // Update unread count for chat in the list
+              setChatList(prev => prev.map(chat => {
+                if (chat.chatId === data.chatId) {
+                  return { ...chat, unread: (chat.unread || 0) + 1 };
+                }
+                return chat;
+              }));
             }
             break;
 
@@ -149,6 +154,10 @@ function Home() {
         console.error("Error parsing WebSocket message:", error);
       }
     };
+
+    // Store the original handler for reference
+    originalMessageHandlerRef.current = messageHandler;
+    ws.onmessage = messageHandler;
 
     ws.onerror = (error) => {
       console.error("WebSocket error:", error);
@@ -193,7 +202,11 @@ function Home() {
     return ws;
   };
 
-  // Fetch chat list from API
+  const scrollToBottom = () => {
+    console.log("Scrolling to bottom");
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const fetchChatList = async (userId: string) => {
     try {
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'localhost:3000';
@@ -262,18 +275,37 @@ function Home() {
           }
         }
 
-        // Set initial messages (if available)
-        if (data.data.latestMessage) {
-          setMessages([{
-            messageId: data.data.latestMessage.messageId || Date.now(),
-            senderId: data.data.latestMessage.senderId,
-            content: data.data.latestMessage.content,
-            timestamp: new Date(data.data.latestMessage.timestamp).toLocaleTimeString(),
-            type: data.data.latestMessage.type || "text",
-            attachmentUrl: data.data.latestMessage.attachmentUrl
-          }]);
-        } else {
-          // Set empty messages array
+        // Fetch previous messages using the correct endpoint
+        try {
+          // Get 20 previous messages (you can adjust this number)
+          const messageCount = 20;
+          const messagesResponse = await fetch(`${apiBaseUrl}/chat/${chatId}/history/${messageCount}`);
+          const messagesData = await messagesResponse.json();
+
+          if (messagesData.success && Array.isArray(messagesData.data)) {
+            // Format and set messages
+            const formattedMessages = messagesData.data.map((msg: any) => ({
+              messageId: msg.messageId,
+              senderId: msg.userId, // Note: backend uses userId instead of senderId
+              content: msg.content,
+              timestamp: new Date(msg.timestamp).toLocaleTimeString(),
+              type: msg.type || "text",
+              attachmentUrl: msg.attachmentUrl,
+              senderName: msg.senderName,
+              senderImage: msg.senderImage,
+              reactions: msg.reactions || []
+            }));
+
+            // Reverse the array to show oldest messages first
+            setMessages(formattedMessages.reverse());
+            console.log("Loaded previous messages:", formattedMessages.length);
+            setTimeout(scrollToBottom, 100);
+          } else {
+            console.warn("No message history found or empty response");
+            setMessages([]);
+          }
+        } catch (error) {
+          console.error("Error fetching message history:", error);
           setMessages([]);
         }
       } else {
@@ -311,13 +343,20 @@ function Home() {
       console.log("Message sent via WebSocket:", messageObj);
 
       // Add to local messages (optimistic update)
-      setMessages(prev => [...prev, {
+      const newMessage = {
         messageId: Date.now(), // Temporary ID until server confirms
         senderId: userId,
         content: inputMessage,
         timestamp: new Date().toLocaleTimeString(),
         type: "text"
-      }]);
+      };
+
+      setMessages(prev => {
+        const updatedMessages = [...prev, newMessage];
+        // Schedule scroll to bottom after state update
+        setTimeout(scrollToBottom, 100);
+        return updatedMessages;
+      });
 
       // Clear input
       setInputMessage("");
@@ -348,13 +387,20 @@ function Home() {
             console.log("Message sent after reconnection:", reconnectMessageObj);
 
             // Add to local messages
-            setMessages(prev => [...prev, {
+            const newMessage = {
               messageId: Date.now(),
               senderId: userId,
               content: pendingMessage,
               timestamp: new Date().toLocaleTimeString(),
               type: "text"
-            }]);
+            };
+
+            setMessages(prev => {
+              const updatedMessages = [...prev, newMessage];
+              // Schedule scroll to bottom after state update
+              setTimeout(scrollToBottom, 100);
+              return updatedMessages;
+            });
           } else {
             alert("Failed to reconnect. Please try again.");
             setInputMessage(pendingMessage); // Restore the message input
@@ -412,11 +458,92 @@ function Home() {
       }
     }
 
-    if (userId !== null && profileData.id === userId) {
+    /*if (userId !== null && profileData.id === userId) {
       return profileData;
-    }
+    }*/
     return null;
   };
+
+  // This effect updates the WebSocket message handler when selectedChatInfo changes
+  useEffect(() => {
+    if (wsRef.current && selectedChatInfo) {
+      console.log("Updating WebSocket handler for chat:", selectedChatInfo.ChatID);
+
+      // Create a new message handler that has access to the current selectedChatInfo
+      wsRef.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("WebSocket message received with updated handler:", data);
+
+          // Handle different message types
+          switch (data.type) {
+            case "ok":
+              console.log(`Operation ${data.originalType} successful`);
+              break;
+
+            case "error":
+              console.error(`Error in operation ${data.originalType}: ${data.message}`);
+              break;
+
+            case "receiveChat":
+              console.log("Received chat message:", data);
+              // Check if this message belongs to the currently selected chat
+              if (data.chatId === selectedChatInfo.ChatID) {
+                console.log("Message is for current chat:", selectedChatInfo.ChatID);
+                // Add message to the chat
+                const newMessage = {
+                  messageId: data.message.messageId || Date.now(),
+                  senderId: data.message.userId || data.message.senderId,
+                  content: data.message.content,
+                  timestamp: new Date(data.message.timestamp || Date.now()).toLocaleTimeString(),
+                  type: data.message.type || "text",
+                  attachmentUrl: data.message.attachmentUrl,
+                  senderName: data.message.senderName,
+                  senderImage: data.message.senderImage,
+                  reactions: data.message.reactions || []
+                };
+
+                console.log("Adding new message to chat:", newMessage);
+
+                // Update messages state with the new message
+                setMessages(prevMessages => {
+                  console.log("Previous messages:", prevMessages.length);
+                  const newMessages = [...prevMessages, newMessage];
+                  console.log("New messages array:", newMessages.length);
+
+                  // Schedule scroll to bottom after state update
+                  setTimeout(() => {
+                    console.log("Scrolling to bottom after receiving message");
+                    scrollToBottom();
+                  }, 100);
+
+                  return newMessages;
+                });
+              } else {
+                console.log("Message is for a different chat");
+                // Update unread count for chat in the list
+                setChatList(prev => prev.map(chat => {
+                  if (chat.chatId === data.chatId) {
+                    return { ...chat, unread: (chat.unread || 0) + 1 };
+                  }
+                  return chat;
+                }));
+              }
+              break;
+
+            case "pong":
+              console.log("Received pong from server");
+              break;
+
+            default:
+              console.log("Unhandled message type:", data.type);
+          }
+        } catch (error) {
+          console.error("Error parsing WebSocket message:", error);
+        }
+      };
+    }
+  }, [selectedChatInfo]);
 
   useEffect(() => {
     try {
@@ -479,27 +606,83 @@ function Home() {
     }
   }, [router]); // Only depend on router to prevent re-initialization
 
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages]);
+
   const userInfo = getProfileData(selectedUser);
   const defaultContent =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
   // Render message based on type
   const renderMessage = (msg: any) => {
-    if (msg.type === "attachment" && msg.attachmentUrl) {
-      return (
-        <div className="flex flex-col">
-          <Image
-            src={msg.attachmentUrl}
-            alt="Attachment"
-            width={200}
-            height={150}
-            className="rounded-lg mb-1"
-          />
-          {msg.content && <p>{msg.content}</p>}
-        </div>
-      );
+    if (!msg) return null;
+
+    switch (msg.type) {
+      case "attachment":
+        return (
+          <div className="flex flex-col">
+            {msg.attachmentUrl && (
+              <Image
+                src={msg.attachmentUrl}
+                alt="Attachment"
+                width={200}
+                height={150}
+                className="rounded-lg mb-1"
+              />
+            )}
+            {msg.content && <p>{msg.content}</p>}
+            {msg.reactions && msg.reactions.length > 0 && (
+              <div className="flex mt-1 gap-1">
+                {msg.reactions.map((reaction: any, index: number) => (
+                  <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
+                  {reaction.emoji}
+                </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      case "image":
+        return (
+          <div className="flex flex-col">
+            <Image
+              src={msg.content || msg.attachmentUrl}
+              alt="Image"
+              width={200}
+              height={150}
+              className="rounded-lg mb-1"
+            />
+            {msg.caption && <p>{msg.caption}</p>}
+            {msg.reactions && msg.reactions.length > 0 && (
+              <div className="flex mt-1 gap-1">
+                {msg.reactions.map((reaction: any, index: number) => (
+                  <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
+                  {reaction.emoji}
+                </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      default:
+        return (
+          <div>
+            <p>{msg.content}</p>
+            {msg.reactions && msg.reactions.length > 0 && (
+              <div className="flex mt-1 gap-1">
+                {msg.reactions.map((reaction: any, index: number) => (
+                  <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
+                  {reaction.emoji}
+                </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
     }
-    return msg.content;
   };
 
   return (
@@ -604,7 +787,8 @@ function Home() {
                   />
                 </div>
               </div>
-              <div className="space-y-4 pt-10 px-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+              <div className="space-y-4 pt-10 px-2 max-h-[calc(100vh-200px)] overflow-y-auto"
+                   style={{ height: 'calc(100vh - 200px)' }}>
                 {messages.length > 0 ? (
                   messages.map((msg) => (
                     <div
@@ -638,6 +822,7 @@ function Home() {
                 ) : (
                   <p className="text-center text-gray-500">No messages yet. Start a conversation!</p>
                 )}
+                <div ref={messagesEndRef} />
               </div>
             </div>
             <div className="border-t-2 p-4">
