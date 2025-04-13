@@ -18,8 +18,8 @@ export interface InputFieldProps {
 }
 
 export interface FormLoginData {
-    phone: string;
-    password: string;
+  phone: string;
+  password: string;
 }
 export interface FormSignUpData {
   name: string;
@@ -62,6 +62,7 @@ export interface ChatItemProps {
   unread: number;
   pin: boolean;
   type?: string;
+  chatId?: string; // Added chatId property
 }
 
 export interface ChatListProps {
