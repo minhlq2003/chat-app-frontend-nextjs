@@ -90,3 +90,11 @@ export interface TemporaryUserProps {
   gender?: string;
   work?: string;
 }
+
+export interface Friend {
+  id: number;
+  name: string;
+  status: string;
+  phone: string;
+  avatar: string;
+}
