@@ -26,7 +26,7 @@ import {
 } from "@nextui-org/react";
 import ChatList from "@/components/ChatList";
 import { } from "@/constant/data";
-import { useEffect, useState, useRef } from "react";
+import {useEffect, useState, useRef, useCallback} from "react";
 import IconButton from "@/components/IconButton";
 import UserInfoItem from "@/components/ProfileInfoItem";
 import { useTranslation } from "react-i18next";
@@ -56,7 +56,7 @@ function Home() {
     return "bg-customPurple/20 text-black";
   };
 
-  const initializeWebSocket = (userId: string) => {
+  const initializeWebSocket = useCallback((userId: string) => {
     // Clear any existing reconnection timeout
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
@@ -200,7 +200,7 @@ function Home() {
     };
 
     return ws;
-  };
+  }, []);
 
   const scrollToBottom = () => {
     console.log("Scrolling to bottom");
@@ -283,8 +283,17 @@ function Home() {
           const messagesData = await messagesResponse.json();
 
           if (messagesData.success && Array.isArray(messagesData.data)) {
+            let filteredMessages = messagesData.data.filter((element: { deleteReason: string, userId: string; }) => !(element.deleteReason === 'remove' && element.userId === userId) ) // Remove elements with deleteReason 'remove'
+            .map((element: { deleteReason: string; content: string; }) => {
+              if (element.deleteReason === 'unsent') {
+                element.content = "message unsent"; // Change content for elements with deleteReason 'unsent'
+              }
+              return element; // Return the modified element
+            });
+
+
             // Format and set messages
-            const formattedMessages = messagesData.data.map((msg: any) => ({
+            const formattedMessages = filteredMessages.map((msg: any) => ({
               messageId: msg.messageId,
               senderId: msg.userId, // Note: backend uses userId instead of senderId
               content: msg.content,
@@ -292,6 +301,7 @@ function Home() {
               type: msg.type || "text",
               attachmentUrl: msg.attachmentUrl,
               senderName: msg.senderName,
+              deleteReason: msg.deleteReason,
               senderImage: msg.senderImage,
               reactions: msg.reactions || []
             }));
@@ -333,7 +343,9 @@ function Home() {
       chatId: selectedChatInfo.ChatID,
       messagePayload: {
         type: "text",
-        content: inputMessage
+        content: inputMessage,
+        timestamp: new Date().toLocaleTimeString(),
+        senderId: userId
       }
     };
 
@@ -341,23 +353,6 @@ function Home() {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(messageObj));
       console.log("Message sent via WebSocket:", messageObj);
-
-      // Add to local messages (optimistic update)
-      const newMessage = {
-        messageId: Date.now(), // Temporary ID until server confirms
-        senderId: userId,
-        content: inputMessage,
-        timestamp: new Date().toLocaleTimeString(),
-        type: "text"
-      };
-
-      setMessages(prev => {
-        const updatedMessages = [...prev, newMessage];
-        // Schedule scroll to bottom after state update
-        setTimeout(scrollToBottom, 100);
-        return updatedMessages;
-      });
-
       // Clear input
       setInputMessage("");
     } else {
@@ -464,6 +459,80 @@ function Home() {
     return null;
   };
 
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [messageMenuId, setMessageMenuId] = useState<string | object | boolean | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setMessageMenuId(null); // Close menu if click outside
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (messageMenuId && typeof messageMenuId === 'object' && 'id' in messageMenuId && 'type' in messageMenuId) {
+
+      const { id, type } = messageMenuId as { id: string | number, type: string };
+      console.log(messageMenuId)
+      if (type === 'remove' || type === 'unsent') {
+        const deleteType = type === 'remove' ? 'remove' : 'unsent';
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'localhost:3000';
+
+        // @ts-ignore
+        if(messageMenuId.inBrowser) {
+          console.log('in browser true')
+          setMessages(prevMessages =>
+            prevMessages.map(msg =>
+              msg.messageId === id
+                ? { ...msg, content: deleteType === 'remove' ? 'This message was removed' : 'This message was unsent', isDeleted: true }
+                : msg
+            )
+          );
+          setMessageMenuId(null);
+        } else {
+        fetch(`${apiBaseUrl}/chat/deleteMsg?messageId=${id}&deleteType=${deleteType}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            console.log(`Message ${deleteType === 'remove' ? 'removed' : 'unsent'} successfully:`, data.message);
+            setMessages(prevMessages =>
+              prevMessages.map(msg =>
+                msg.messageId === id
+                  ? { ...msg, content: deleteType === 'remove' ? 'This message was removed' : 'This message was unsent', isDeleted: true }
+                  : msg
+              )
+            );
+          } else {
+            console.error(`Failed to ${deleteType} message:`, data.message);
+          }
+          // Reset messageMenuId after operation
+          setMessageMenuId(null);
+        })
+        .catch(error => {
+          console.error(`Error ${deleteType === 'remove' ? 'removing' : 'unsending'} message:`, error);
+          setMessageMenuId(null);
+        });
+        }
+      }
+    }
+  }, [messageMenuId]);
+
+
   // This effect updates the WebSocket message handler when selectedChatInfo changes
   useEffect(() => {
     if (wsRef.current && selectedChatInfo) {
@@ -479,6 +548,21 @@ function Home() {
           switch (data.type) {
             case "ok":
               console.log(`Operation ${data.originalType} successful`);
+              switch (data.originalType) {
+                case "sendChat": {
+                  console.log(data.messageId)
+                  if(data.messagePayload) {
+                    setMessages(prev => {
+                      const updatedMessages = [...prev, data.messagePayload];
+                      // Schedule scroll to bottom after state update
+                      setTimeout(scrollToBottom, 100);
+                      return updatedMessages;
+                    });
+                    setTempMsg(null)
+                  }
+                  break;
+                }
+              }
               break;
 
             case "error":
@@ -530,6 +614,14 @@ function Home() {
                 }));
               }
               break;
+            case "changeMessageType": {
+              setMessageMenuId({
+                id: Number(data.msgId),
+                type: data.deleteType,
+                inBrowser: true
+              });
+              break;
+            }
 
             case "pong":
               console.log("Received pong from server");
@@ -668,9 +760,25 @@ function Home() {
           </div>
         );
       default:
+        let content: string = msg.content;
+        const urlRegex = new RegExp(
+          /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*))/g,
+        );
+        const regex = new RegExp(`${urlRegex.source}`, "g");
+        const delim = content.split(regex).map((string) => {
+          return {
+            content: string ?? "",
+            isURL: urlRegex.test(string),
+          };
+        });
+
+
         return (
           <div>
-            <p>{msg.content}</p>
+            <p>{delim.map((text, idx) => {
+              if (!text.isURL) return text.content;
+              return <Link href={text.content} target={"_blank"} key={`text-content-${idx}`}>{text.content}</Link>
+            })}</p>
             {msg.reactions && msg.reactions.length > 0 && (
               <div className="flex mt-1 gap-1">
                 {msg.reactions.map((reaction: any, index: number) => (
@@ -787,42 +895,197 @@ function Home() {
                   />
                 </div>
               </div>
-              <div className="space-y-4 pt-10 px-2 max-h-[calc(100vh-200px)] overflow-y-auto"
-                   style={{ height: 'calc(100vh - 200px)' }}>
+              <div
+                className="space-y-4 pt-10 px-2 max-h-[calc(100vh-200px)] overflow-y-auto"
+                style={{ height: "calc(100vh - 200px)" }}
+              >
                 {messages.length > 0 ? (
-                  messages.map((msg) => (
-                    <div
-                      key={msg.messageId}
-                      className={`flex ${
-                        msg.senderId === userId ? "justify-end" : "justify-start"
-                      }`}
-                    >
+                  messages.map((msg) => {
+                    const isOwn = msg.senderId === userId;
+                    const type = msg.deleteReason === 'unsent'
+                    const imageUrl = msg.attachmentUrl;
+
+                    const isOpen = messageMenuId === msg.messageId;
+                    return (
                       <div
-                        className={`${
-                          msg.senderId === userId
-                            ? "bg-customPurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
-                            : "bg-customPurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
-                        } p-2 max-w-[70%]`}
+                        key={msg.messageId}
+                        className={`flex ${
+                          isOwn ? "justify-end" : "justify-start"
+                        } `}
                       >
-                        {renderMessage(msg)}
-                        <span
-                          className={`
-                        ${
-                            msg.senderId === userId
-                              ? "text-white/80 justify-end"
-                              : "text-black/50"
-                          }
-                        text-sm flex`}
+                        {/* Message */}
+                        <div
+                          className={`${
+                            isOwn
+                              ? "bg-customPurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
+                              : "bg-customPurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
+                          } p-2 max-w-[70%] relative group`}
+                          onClick={() => {
+                            setSelectedImage(imageUrl);
+                            console.log(imageUrl);
+                          }}
                         >
-                          {msg.timestamp}
-                        </span>
+                          {/* Dots button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent parent click
+                              if(type){
+                                setMessageMenuId(null);
+                              } else{
+                                setMessageMenuId(isOpen ? null : msg.messageId);
+                              }
+                              /*setMessageMenuId(isOpen ? null : msg.messageId);*/
+                            }}
+                            className={`absolute bottom-0 w-8 h-8 rounded-full hover:bg-gray-200 hidden group-hover:flex items-center justify-center z-10
+                              ${
+                              isOwn
+                                ? "-left-8 bg-customPurple/20 text-black"
+                                : "-right-8 bg-customPurple/20 text-black"
+                            }`}
+                          >
+                            <span className="text-xs">●●●</span>
+                          </button>
+                          {/* Dropdown */}
+                          {isOpen && (
+                            <div
+                              ref={dropdownRef}
+                              className={`absolute bottom-0 z-20 bg-white rounded shadow-lg w-48 p-2 text-black ${
+                                isOwn ? "-left-48" : "-right-48"
+                              }`}
+                            >
+                              {isOwn ? (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      console.log("Reply to", msg.messageId);
+                                      e.stopPropagation();
+                                      setMessageMenuId({
+                                        id: msg.messageId,
+                                        type: "reply",
+                                      });
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Reply
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      console.log("Forward", msg.messageId);
+                                      e.stopPropagation();
+                                      setMessageMenuId({
+                                        id: msg.messageId,
+                                        type: "forward",
+                                      });
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Forward
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      console.log("Remove", msg.messageId);
+                                      e.stopPropagation();
+                                      setMessageMenuId({
+                                        id: msg.messageId,
+                                        type: "remove",
+                                      });
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Remove
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      console.log("Undo", msg.messageId);
+                                      e.stopPropagation();
+                                      setMessageMenuId({
+                                        id: msg.messageId,
+                                        type: "unsent",
+                                      });
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Undo
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      console.log("Reply to", msg.messageId);
+                                      e.stopPropagation();
+                                      setMessageMenuId({
+                                        id: msg.messageId,
+                                        type: "reply",
+                                      });
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Reply
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      console.log("Forward", msg.messageId);
+                                      e.stopPropagation();
+                                      setMessageMenuId({
+                                        id: msg.messageId,
+                                        type: "forward",
+                                      });
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Forward
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                          {renderMessage(msg)}
+                          <span
+                            className={`
+                        ${
+                              msg.senderId === userId
+                                ? "text-white/80 justify-end"
+                                : "text-black/50"
+                            }
+                        text-sm flex`}
+                          >
+                            {msg.timestamp}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
-                  <p className="text-center text-gray-500">No messages yet. Start a conversation!</p>
+                  <p className="text-center text-gray-500">
+                    No messages yet. Start a conversation!
+                  </p>
                 )}
                 <div ref={messagesEndRef} />
+                {selectedImage && (
+                  <div
+                    className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+                    onClick={() => setSelectedImage(null)}
+                    style={{ marginTop: "0px" }}
+                  >
+                    <div className="relative max-w-[90%] max-h-[90%]">
+                      <Image
+                        src={selectedImage}
+                        alt="Full Image"
+                        width={800}
+                        height={600}
+                        className="rounded-lg"
+                        style={{ objectFit: "contain" }}
+                      />
+                      <button
+                        onClick={() => setSelectedImage(null)}
+                        className="absolute top-2 right-2 text-white text-xl"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="border-t-2 p-4">
