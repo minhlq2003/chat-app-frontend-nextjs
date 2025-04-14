@@ -1,6 +1,7 @@
 import {
   ChatIcon,
   ContactIcon,
+  imgTest,
   People01,
   People02,
   People03,
@@ -285,3 +286,59 @@ export const groupedFriends = {
   B: listFriends,
   C: listFriends,
 };
+
+export const imageData = [
+  {
+    date: "2024-12-01",
+    images: [imgTest, imgTest, imgTest, imgTest, imgTest, imgTest],
+  },
+  {
+    date: "2024-11-01",
+    images: [imgTest, imgTest, imgTest, imgTest, imgTest, imgTest],
+  },
+];
+
+export const fileList = [
+  {
+    name: "a.pdf",
+    size: "5mb",
+    type: "pdf",
+  },
+  {
+    name: "a.docx",
+    size: "200mb",
+    type: "word",
+  },
+  {
+    name: "a.xxl",
+    size: "5mb",
+    type: "excel",
+  },
+  {
+    name: "b.pdf",
+    size: "5mb",
+    type: "pdf",
+  },
+  {
+    name: "b.file",
+    size: "5mb",
+    type: "file",
+  },
+];
+
+export const listLink = [
+  {
+    id: 1,
+    title: "Animation video",
+    url: "http://..........",
+    date: "12/02",
+    thumbnail: "https://i.imgur.com/YhIhK7I.png",
+  },
+  {
+    id: 2,
+    title: "Animation video",
+    url: "http://..........",
+    date: "12/02",
+    thumbnail: "https://i.imgur.com/YhIhK7I.png",
+  },
+];
