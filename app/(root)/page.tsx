@@ -25,12 +25,16 @@ import {
   Input,
 } from "@nextui-org/react";
 import ChatList from "@/components/ChatList";
-import { } from "@/constant/data";
-import {useEffect, useState, useRef, useCallback} from "react";
+import { fileList, imageData, listLink } from "@/constant/data";
+import { useEffect, useState, useRef } from "react";
 import IconButton from "@/components/IconButton";
 import UserInfoItem from "@/components/ProfileInfoItem";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
+import { getFileIcon } from "@/constant/help";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faDownload } from "@fortawesome/free-solid-svg-icons";
 
 function Home() {
   const { t } = useTranslation("common");
@@ -47,7 +51,17 @@ function Home() {
   const [userId, setUserId] = useState<string | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Store the original WebSocket message handler
-  const originalMessageHandlerRef = useRef<((event: MessageEvent) => void) | null>(null);
+  const originalMessageHandlerRef = useRef<
+    ((event: MessageEvent) => void) | null
+  >(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [messageCount, setMessageCount] = useState(20);
+  const messageContainerRef = useRef<HTMLDivElement>(null);
+  const firstMessageRef = useRef<HTMLDivElement | null>(null);
+
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setInputMessage((prev) => prev + emojiData.emoji);
+  };
 
   const changeButtonStyle = (currentType: string) => {
     if (type === currentType) {
@@ -56,7 +70,32 @@ function Home() {
     return "bg-customPurple/20 text-black";
   };
 
-  const initializeWebSocket = useCallback((userId: string) => {
+  const loadMoreMessage = () => {
+    const newCount = messageCount + 20;
+    setMessageCount(newCount);
+  };
+
+  useEffect(() => {
+    const container = messageContainerRef.current;
+
+    const handleScroll = () => {
+      console.log("scroll");
+
+      if (container && container.scrollTop === 30) {
+        console.log("scroll to top");
+
+        loadMoreMessage();
+      }
+    };
+
+    container?.addEventListener("scroll", handleScroll);
+
+    return () => {
+      container?.removeEventListener("scroll", handleScroll);
+    };
+  }, [messageCount]);
+
+  const initializeWebSocket = (userId: string) => {
     // Clear any existing reconnection timeout
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
@@ -200,7 +239,7 @@ function Home() {
     };
 
     return ws;
-  }, []);
+  };
 
   const scrollToBottom = () => {
     console.log("Scrolling to bottom");
@@ -346,7 +385,7 @@ function Home() {
         content: inputMessage,
         timestamp: new Date().toLocaleTimeString(),
         senderId: userId
-      }
+      },
     };
 
     // Send via WebSocket
@@ -590,7 +629,7 @@ function Home() {
                 console.log("Adding new message to chat:", newMessage);
 
                 // Update messages state with the new message
-                setMessages(prevMessages => {
+                setMessages((prevMessages) => {
                   console.log("Previous messages:", prevMessages.length);
                   const newMessages = [...prevMessages, newMessage];
                   console.log("New messages array:", newMessages.length);
@@ -862,6 +901,7 @@ function Home() {
                     width={64}
                     height={64}
                     alt="Participant"
+                    className="rounded-full"
                   />
                   <h1 className="text-2xl text-black">
                     {selectedChatInfo.chatName || "Chat"}
@@ -1103,7 +1143,21 @@ function Home() {
                 }}
                 endContent={
                   <div className="flex items-center gap-3 pr-5">
-                    <Image src={EmojiIcon} width={20} height={20} alt="Emoji" className="cursor-pointer" />
+                    <div className="relative">
+                      <Image
+                        src={EmojiIcon}
+                        width={20}
+                        height={20}
+                        alt="Emoji"
+                        className="cursor-pointer w-[40px] h-[40px]"
+                        onClick={() => setShowEmojiPicker((prev) => !prev)}
+                      />
+                      {showEmojiPicker && (
+                        <div className="absolute bottom-10 left-0 z-50">
+                          <EmojiPicker onEmojiClick={handleEmojiClick} />
+                        </div>
+                      )}
+                    </div>
                     <Image
                       src={FileSendIcon}
                       width={20}
@@ -1147,6 +1201,7 @@ function Home() {
                     width={64}
                     height={64}
                     alt="Participant"
+                    className="rounded-full"
                   />
                   <h1 className="text-2xl">
                     {selectedChatInfo.chatName || "Chat"}
@@ -1198,13 +1253,95 @@ function Home() {
                 }}
               >
                 <AccordionItem key="1" aria-label="Image" title="Image">
-                  {defaultContent}
+                  <div className="space-y-6">
+                    {imageData
+                      .sort(
+                        (a, b) =>
+                          new Date(b.date).getTime() -
+                          new Date(a.date).getTime()
+                      )
+                      .map((entry) => (
+                        <div key={entry.date}>
+                          <p className="text-gray-500 font-semibold mb-2">
+                            {new Date(entry.date).toLocaleDateString("en-GB")}
+                          </p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {entry.images.map((img, index) => (
+                              <img
+                                key={index}
+                                src={img.src}
+                                alt={`image-${index}`}
+                                className="rounded-lg w-full object-cover aspect-square"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
                 </AccordionItem>
                 <AccordionItem key="2" aria-label="Link" title="Link">
-                  {defaultContent}
+                  <div className="space-y-4">
+                    {listLink.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src={item.thumbnail}
+                            alt={item.title}
+                            className="w-12 h-12 rounded-xl object-cover"
+                          />
+                          <div>
+                            <div className="font-medium">{item.title}</div>
+                            <a
+                              href={item.url}
+                              className="text-blue-600 hover:underline text-sm"
+                            >
+                              {item.url}
+                            </a>
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-500">{item.date}</div>
+                      </div>
+                    ))}
+                  </div>
                 </AccordionItem>
                 <AccordionItem key="3" aria-label="File" title="File">
-                  {defaultContent}
+                  <div className="flex flex-col">
+                    {fileList.map((file, idx) => {
+                      const { icon, color } = getFileIcon(file.type);
+                      return (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between bg-white p-2 rounded-md"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-10 h-10 flex items-center justify-center rounded-lg ${color}`}
+                            >
+                              <FontAwesomeIcon
+                                icon={icon}
+                                size="lg"
+                                className={`${color} `}
+                              />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-black">
+                                {file.name}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {file.size}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="bg-indigo-100 p-2 rounded-full text-indigo-500 hover:bg-indigo-200 cursor-pointer">
+                            <FontAwesomeIcon icon={faDownload} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </AccordionItem>
               </Accordion>
             </div>
