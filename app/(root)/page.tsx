@@ -1087,6 +1087,7 @@ function Home() {
               if (!text.isURL) return text.content;
               return (
                 <Link
+                  className="text-blue-500 hover:underline"
                   href={text.content}
                   target={"_blank"}
                   key={`text-content-${idx}`}

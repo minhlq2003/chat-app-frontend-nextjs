@@ -2,7 +2,7 @@
 
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDownload } from "@fortawesome/free-solid-svg-icons";
+import { faDownload, faLink } from "@fortawesome/free-solid-svg-icons";
 import {
   faFilePdf,
   faFileWord,
@@ -10,6 +10,7 @@ import {
   faFileAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { Accordion, AccordionItem } from "@nextui-org/react";
+import { url } from "inspector";
 
 function getFileIcon(type: string) {
   switch (type) {
@@ -43,10 +44,13 @@ export default function RenderMedia({ data }: { data: any }) {
     url.split(".").pop()?.toLowerCase() || "unknown";
 
   const files = fileList.map((msg) => ({
+    url: msg.attachmentUrl,
     name: msg.attachmentUrl?.split("/").pop() || "Unknown file",
     size: "5mb",
     type: getFileType(msg.attachmentUrl!),
   }));
+
+  console.log("Files", files);
 
   return (
     <Accordion
@@ -74,13 +78,8 @@ export default function RenderMedia({ data }: { data: any }) {
           {listLink.map((item) => (
             <div key={item.id} className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <img
-                  src={item.thumbnail}
-                  alt={item.title}
-                  className="w-12 h-12 rounded-xl object-cover"
-                />
+                <FontAwesomeIcon icon={faLink} />
                 <div>
-                  <div className="font-medium">{item.title}</div>
                   <a
                     href={item.url}
                     className="text-blue-600 hover:underline text-sm"
@@ -91,7 +90,6 @@ export default function RenderMedia({ data }: { data: any }) {
                   </a>
                 </div>
               </div>
-              <div className="text-sm text-gray-500">{item.date}</div>
             </div>
           ))}
         </div>
@@ -100,6 +98,8 @@ export default function RenderMedia({ data }: { data: any }) {
       <AccordionItem key="3" aria-label="File" title="File">
         <div className="flex flex-col gap-2">
           {files.map((file, idx) => {
+            console.log("File", file);
+
             const { icon, color } = getFileIcon(file.type);
             return (
               <div
@@ -120,12 +120,14 @@ export default function RenderMedia({ data }: { data: any }) {
                     <p className="text-sm font-medium text-black">
                       {file.name}
                     </p>
-                    <p className="text-xs text-gray-400">{file.size}</p>
                   </div>
                 </div>
-                <div className="bg-indigo-100 p-2 rounded-full text-indigo-500 hover:bg-indigo-200 cursor-pointer">
+                <a
+                  href={file.url}
+                  className="bg-indigo-100 p-2 rounded-full text-indigo-500 hover:bg-indigo-200 cursor-pointer"
+                >
                   <FontAwesomeIcon icon={faDownload} />
-                </div>
+                </a>
               </div>
             );
           })}

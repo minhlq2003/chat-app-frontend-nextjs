@@ -36,6 +36,9 @@ export function extractLists(messages: Message[]): Lists {
     ".zip",
     ".rar",
     ".txt",
+    ".bin",
+    ".cmd",
+    ".exe",
   ];
 
   const imageList: Message[] = [];
