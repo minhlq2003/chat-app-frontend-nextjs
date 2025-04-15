@@ -98,3 +98,16 @@ export interface Friend {
   phone: string;
   avatar: string;
 }
+
+export interface Message {
+  messageId?: number;
+  userId?: number;
+  type?: string;
+  timestamp?: Date;
+  content?: string;
+  attachmentUrl?: string | null;
+  deleteReason?: string | null;
+  senderName?: string;
+  senderImage?: string;
+  reactions?: string[];
+}

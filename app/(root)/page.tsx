@@ -16,25 +16,18 @@ import {
   SendIcon,
   WorkIcon,
 } from "@/constant/image";
-import Image, { StaticImageData } from "next/image";
-import {
-  Accordion,
-  AccordionItem,
-  Button,
-  Card,
-  Input,
-} from "@nextui-org/react";
+import Image from "next/image";
+import { Button, Card, Input } from "@nextui-org/react";
 import ChatList from "@/components/ChatList";
-import { fileList, imageData, listLink } from "@/constant/data";
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import IconButton from "@/components/IconButton";
 import UserInfoItem from "@/components/ProfileInfoItem";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
-import { getFileIcon } from "@/constant/help";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {faDownload, faFile, faFileWord} from "@fortawesome/free-solid-svg-icons";
+import { extractLists } from "@/constant/help";
+import RenderMedia from "@/components/RenderMedia";
+import { Message } from "@/constant/type";
 
 function Home() {
   const { t } = useTranslation("common");
@@ -43,84 +36,19 @@ function Home() {
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [chatList, setChatList] = useState<any[]>([]);
   const [selectedChatInfo, setSelectedChatInfo] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
-  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
-  const [attachmentCaption, setAttachmentCaption] = useState("");
-  const [userId, setUserId] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Store the original WebSocket message handler
   const originalMessageHandlerRef = useRef<
     ((event: MessageEvent) => void) | null
   >(null);
-
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [messageCount, setMessageCount] = useState(20);
-  const messageContainerRef = useRef<HTMLDivElement>(null);
-  const firstMessageRef = useRef<HTMLDivElement | null>(null);
-
-  //upload operation
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileSelect = () => {
-    // Trigger the file input click event
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      alert("No file selected.");
-      return;
-    }
-    if (file) {
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`, {
-          method: "POST",
-          body: formData,
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const fileUrl = data.imageUrl;
-          // Set the attachment preview instead of showing an alert
-          setAttachmentPreview(fileUrl);
-          // Reset input value to allow selecting the same file again
-          if (fileInputRef.current) fileInputRef.current.value = "";
-        } else {
-          console.error("Image upload failed:", await response.json());
-          alert("Failed to upload image. Please try again.");
-        }
-      } catch (error) {
-        console.error("Error during image upload:", error);
-        alert("An error occurred while uploading the image.");
-      }
-    }
-  };
-
-  const handleSendMessage = () => {
-    if (attachmentPreview) {
-      sendAttachment(attachmentPreview, attachmentCaption || inputMessage);
-      setAttachmentPreview(null);
-      setAttachmentCaption("");
-      setInputMessage("");
-    } else if (inputMessage.trim()) {
-      sendMessage();
-    }
-  };
-
-// Add this function to remove the attachment preview
-  const removeAttachmentPreview = () => {
-    setAttachmentPreview(null);
-    setAttachmentCaption("");
-  };
 
   const handleEmojiClick = (emojiData: EmojiClickData) => {
     setInputMessage((prev) => prev + emojiData.emoji);
@@ -133,32 +61,7 @@ function Home() {
     return "bg-customPurple/20 text-black";
   };
 
-  const loadMoreMessage = () => {
-    const newCount = messageCount + 20;
-    setMessageCount(newCount);
-  };
-
-  useEffect(() => {
-    const container = messageContainerRef.current;
-
-    const handleScroll = () => {
-      console.log("scroll");
-
-      if (container && container.scrollTop === 30) {
-        console.log("scroll to top");
-
-        loadMoreMessage();
-      }
-    };
-
-    container?.addEventListener("scroll", handleScroll);
-
-    return () => {
-      container?.removeEventListener("scroll", handleScroll);
-    };
-  }, [messageCount]);
-
-  const initializeWebSocket = (userId: string) => {
+  const initializeWebSocket = useCallback((userId: string) => {
     // Clear any existing reconnection timeout
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
@@ -167,7 +70,9 @@ function Home() {
 
     // Close existing connection if it exists
     if (wsRef.current) {
-      console.log("Closing existing WebSocket connection before creating a new one");
+      console.log(
+        "Closing existing WebSocket connection before creating a new one"
+      );
 
       // Clear the ping interval
       if (pingIntervalRef.current) {
@@ -176,14 +81,20 @@ function Home() {
       }
 
       // Only attempt to close if the connection is open or connecting
-      if (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING) {
+      if (
+        wsRef.current.readyState === WebSocket.OPEN ||
+        wsRef.current.readyState === WebSocket.CONNECTING
+      ) {
         wsRef.current.onclose = null; // Remove the onclose handler to prevent reconnection loop
         wsRef.current.close();
       }
       wsRef.current = null;
     }
 
-    const wsUrl = `ws://${process.env.NEXT_PUBLIC_API_BASE_URL?.replace("http://", "") || 'localhost:3000'}/ws`;
+    const wsUrl = `ws://${
+      process.env.NEXT_PUBLIC_API_BASE_URL?.replace("http://", "") ||
+      "localhost:3000"
+    }/ws`;
     console.log(`Initializing WebSocket connection to ${wsUrl}`);
 
     const ws = new WebSocket(wsUrl);
@@ -193,10 +104,12 @@ function Home() {
       console.log("WebSocket connection established");
 
       // Send join message
-      ws.send(JSON.stringify({
-        type: "joinSocket",
-        userID: userId
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "joinSocket",
+          userID: userId,
+        })
+      );
 
       // Setup ping interval
       if (pingIntervalRef.current) {
@@ -205,9 +118,11 @@ function Home() {
 
       pingIntervalRef.current = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-            type: "ping"
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "ping",
+            })
+          );
           console.log("Ping sent to keep connection alive");
         }
       }, 30000); // Send ping every 30 seconds instead of 5 seconds
@@ -226,7 +141,9 @@ function Home() {
             break;
 
           case "error":
-            console.error(`Error in operation ${data.originalType}: ${data.message}`);
+            console.error(
+              `Error in operation ${data.originalType}: ${data.message}`
+            );
             break;
 
           case "receiveChat":
@@ -236,12 +153,14 @@ function Home() {
             if (!selectedChatInfo) {
               console.log("No selected chat yet, updating unread counts");
               // Update unread count for chat in the list
-              setChatList(prev => prev.map(chat => {
-                if (chat.chatId === data.chatId) {
-                  return { ...chat, unread: (chat.unread || 0) + 1 };
-                }
-                return chat;
-              }));
+              setChatList((prev) =>
+                prev.map((chat) => {
+                  if (chat.chatId === data.chatId) {
+                    return { ...chat, unread: (chat.unread || 0) + 1 };
+                  }
+                  return chat;
+                })
+              );
             }
             break;
 
@@ -262,7 +181,7 @@ function Home() {
     ws.onmessage = messageHandler;
 
     ws.onerror = (error) => {
-      console.log("WebSocket error:", error);
+      console.error("WebSocket error:", error);
     };
 
     ws.onclose = (event) => {
@@ -280,7 +199,7 @@ function Home() {
 
         // Store the timeout reference so we can cancel it if needed
         reconnectTimeoutRef.current = setTimeout(() => {
-          if (document.visibilityState !== 'hidden') {
+          if (document.visibilityState !== "hidden") {
             console.log("Reconnecting WebSocket...");
             initializeWebSocket(userId);
           } else {
@@ -288,21 +207,27 @@ function Home() {
 
             // Add event listener for when page becomes visible again
             const handleVisibilityChange = () => {
-              if (document.visibilityState !== 'hidden') {
+              if (document.visibilityState !== "hidden") {
                 console.log("Page became visible, reconnecting WebSocket");
-                document.removeEventListener('visibilitychange', handleVisibilityChange);
+                document.removeEventListener(
+                  "visibilitychange",
+                  handleVisibilityChange
+                );
                 initializeWebSocket(userId);
               }
             };
 
-            document.addEventListener('visibilitychange', handleVisibilityChange);
+            document.addEventListener(
+              "visibilitychange",
+              handleVisibilityChange
+            );
           }
         }, 5000);
       }
     };
 
     return ws;
-  };
+  }, []);
 
   const scrollToBottom = () => {
     console.log("Scrolling to bottom");
@@ -311,7 +236,8 @@ function Home() {
 
   const fetchChatList = async (userId: string) => {
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'localhost:3000';
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
       const response = await fetch(`${apiBaseUrl}/chat/me?userId=${userId}`);
       const data = await response.json();
 
@@ -322,11 +248,14 @@ function Home() {
           image: chat.imageUrl || "/default-avatar.png", // Provide a default image path
           name: chat.chatName || "Chat",
           message: "Click to view messages", // Placeholder message
-          time: new Date(chat.CreatedDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time: new Date(chat.CreatedDate).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
           unread: 0,
           pin: false,
           type: chat.Type || "private",
-          chatId: chat.ChatID
+          chatId: chat.ChatID,
         }));
 
         setChatList(formattedChatList);
@@ -341,7 +270,8 @@ function Home() {
   // Fetch chat info and messages
   const fetchChatInfo = async (chatId: string) => {
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'localhost:3000';
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
       const response = await fetch(`${apiBaseUrl}/chat/${chatId}/info`);
       const data = await response.json();
 
@@ -350,13 +280,17 @@ function Home() {
 
         // Join chat room via WebSocket
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.send(JSON.stringify({
-            type: "joinChat",
-            chatId: chatId
-          }));
+          wsRef.current.send(
+            JSON.stringify({
+              type: "joinChat",
+              chatId: chatId,
+            })
+          );
           console.log("Sent joinChat packet for chatId:", chatId);
         } else {
-          console.warn("WebSocket not connected, couldn't send joinChat packet");
+          console.warn(
+            "WebSocket not connected, couldn't send joinChat packet"
+          );
           // Try to reconnect if WebSocket is closed
           if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
             console.log("WebSocket is closed, attempting to reconnect...");
@@ -365,11 +299,16 @@ function Home() {
 
               // Wait for connection to establish before sending joinChat
               setTimeout(() => {
-                if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                  wsRef.current.send(JSON.stringify({
-                    type: "joinChat",
-                    chatId: chatId
-                  }));
+                if (
+                  wsRef.current &&
+                  wsRef.current.readyState === WebSocket.OPEN
+                ) {
+                  wsRef.current.send(
+                    JSON.stringify({
+                      type: "joinChat",
+                      chatId: chatId,
+                    })
+                  );
                   console.log("Sent joinChat packet after reconnection");
                 }
               }, 1000);
@@ -380,19 +319,26 @@ function Home() {
         // Fetch previous messages using the correct endpoint
         try {
           // Get 20 previous messages (you can adjust this number)
-          const messageCount = 20;
-          const messagesResponse = await fetch(`${apiBaseUrl}/chat/${chatId}/history/${messageCount}`);
+          const messagesResponse = await fetch(
+            `${apiBaseUrl}/chat/${chatId}/history/${messageCount}`
+          );
           const messagesData = await messagesResponse.json();
 
           if (messagesData.success && Array.isArray(messagesData.data)) {
-            let filteredMessages = messagesData.data.filter((element: { deleteReason: string, userId: string; }) => !(element.deleteReason === 'remove' && element.userId === userId) ) // Remove elements with deleteReason 'remove'
-            .map((element: { deleteReason: string; content: string; }) => {
-              if (element.deleteReason === 'unsent') {
-                element.content = "This message was unsent";
-              }
-              return element; // Return the modified element
-            });
-
+            let filteredMessages = messagesData.data
+              .filter(
+                (element: { deleteReason: string; userId: string }) =>
+                  !(
+                    element.deleteReason === "remove" &&
+                    element.userId === userId
+                  )
+              ) // Remove elements with deleteReason 'remove'
+              .map((element: { deleteReason: string; content: string }) => {
+                if (element.deleteReason === "unsent") {
+                  element.content = "message unsent"; // Change content for elements with deleteReason 'unsent'
+                }
+                return element; // Return the modified element
+              });
 
             // Format and set messages
             const formattedMessages = filteredMessages.map((msg: any) => ({
@@ -400,12 +346,12 @@ function Home() {
               senderId: msg.userId, // Note: backend uses userId instead of senderId
               content: msg.content,
               timestamp: new Date(msg.timestamp).toLocaleTimeString(),
-              type: (msg.deleteReason === 'unsent' ? 'text' : msg.type) || "text",
+              type: msg.type || "text",
               attachmentUrl: msg.attachmentUrl,
               senderName: msg.senderName,
               deleteReason: msg.deleteReason,
               senderImage: msg.senderImage,
-              reactions: msg.reactions || []
+              reactions: msg.reactions || [],
             }));
 
             // Reverse the array to show oldest messages first
@@ -438,6 +384,8 @@ function Home() {
 
   const sendMessage = () => {
     if (!inputMessage.trim() || !selectedChatInfo) return;
+
+    // Create message object according to the specified format
     const messageObj = {
       type: "sendChat",
       chatId: selectedChatInfo.ChatID,
@@ -445,7 +393,7 @@ function Home() {
         type: "text",
         content: inputMessage,
         timestamp: new Date().toLocaleTimeString(),
-        senderId: userId
+        senderId: userId,
       },
     };
 
@@ -468,20 +416,25 @@ function Home() {
 
         // Wait for connection to establish before sending
         setTimeout(() => {
-          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && selectedChatInfo) {
+          if (
+            wsRef.current &&
+            wsRef.current.readyState === WebSocket.OPEN &&
+            selectedChatInfo
+          ) {
             const reconnectMessageObj = {
               type: "sendChat",
               chatId: selectedChatInfo.ChatID,
               messagePayload: {
                 type: "text",
                 content: pendingMessage,
-                timestamp: new Date().toLocaleTimeString(),
-                senderId: userId
-              }
+              },
             };
 
             wsRef.current.send(JSON.stringify(reconnectMessageObj));
-            console.log("Message sent after reconnection:", reconnectMessageObj);
+            console.log(
+              "Message sent after reconnection:",
+              reconnectMessageObj
+            );
 
             // Add to local messages
             const newMessage = {
@@ -489,10 +442,10 @@ function Home() {
               senderId: userId,
               content: pendingMessage,
               timestamp: new Date().toLocaleTimeString(),
-              type: "text"
+              type: "text",
             };
 
-            setMessages(prev => {
+            setMessages((prev) => {
               const updatedMessages = [...prev, newMessage];
               // Schedule scroll to bottom after state update
               setTimeout(scrollToBottom, 100);
@@ -507,45 +460,55 @@ function Home() {
     }
   };
 
-  const sendAttachment = (attachmentUrl: string, caption: string = "") => {
-    if (!selectedChatInfo) return;
+  // const sendAttachment = (attachmentUrl: string, caption: string = "") => {
+  //   if (!selectedChatInfo) return;
 
-    // Create attachment message object
-    const messageObj = {
-      type: "sendChat",
-      chatId: selectedChatInfo.ChatID,
-      messagePayload: {
-        type: "attachment",
-        content: caption,
-        attachmentUrl: attachmentUrl,
-        timestamp: new Date().toLocaleTimeString(),
-        senderId: userId
-      }
-    };
+  //   // Create attachment message object
+  //   const messageObj = {
+  //     type: "sendChat",
+  //     chatId: selectedChatInfo.ChatID,
+  //     messagePayload: {
+  //       type: "attachment",
+  //       content: caption,
+  //       attachmentUrl: attachmentUrl,
+  //     },
+  //   };
 
-    // Send via WebSocket
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(messageObj));
+  //   // Send via WebSocket
+  //   if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+  //     wsRef.current.send(JSON.stringify(messageObj));
 
-    } else {
-      console.error("WebSocket not connected, attachment not sent");
-      alert("Connection lost. Please refresh the page and try again.");
-    }
-  };
+  //     // Add to local messages (optimistic update)
+  //     setMessages((prev) => [
+  //       ...prev,
+  //       {
+  //         messageId: Date.now(),
+  //         senderId: userId,
+  //         content: caption,
+  //         timestamp: new Date().toLocaleTimeString(),
+  //         type: "attachment",
+  //         attachmentUrl: attachmentUrl,
+  //       },
+  //     ]);
+  //   } else {
+  //     console.error("WebSocket not connected, attachment not sent");
+  //     alert("Connection lost. Please refresh the page and try again.");
+  //   }
+  // };
 
   const getProfileData = (userId: number | null) => {
     if (selectedChatInfo && selectedChatInfo.members) {
-      const member = selectedChatInfo.members.find((m: any) => m.userId === userId);
+      const member = selectedChatInfo.members.find(
+        (m: any) => m.userId === userId
+      );
       if (member) {
-        selectedChatInfo.imageUrl = member.imageUrl;
-        selectedChatInfo.chatName = member.name;
         return {
           id: member.userId,
           work: "Work information", // Not provided in API
           phone: member.phone || "No phone",
           birthday: "Not available", // Not provided in API
           location: member.location || "No location",
-          email: member.email || "No email"
+          email: member.email || "No email",
         };
       }
     }
@@ -557,7 +520,9 @@ function Home() {
   };
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [messageMenuId, setMessageMenuId] = useState<string | object | boolean | null>(null);
+  const [messageMenuId, setMessageMenuId] = useState<
+    string | object | boolean | null
+  >(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -577,78 +542,100 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    if (messageMenuId && typeof messageMenuId === 'object' && 'id' in messageMenuId && 'type' in messageMenuId) {
-      const { id, type } = messageMenuId as { id: string | number, type: string };
-      console.log(messageMenuId)
-      if (type === 'remove' || type === 'unsent') {
-        const deleteType = type === 'remove' ? 'remove' : 'unsent';
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'localhost:3000';
+    if (
+      messageMenuId &&
+      typeof messageMenuId === "object" &&
+      "id" in messageMenuId &&
+      "type" in messageMenuId
+    ) {
+      const { id, type } = messageMenuId as {
+        id: string | number;
+        type: string;
+      };
+      console.log(messageMenuId);
+      if (type === "remove" || type === "unsent") {
+        const deleteType = type === "remove" ? "remove" : "unsent";
+        const apiBaseUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
 
         // @ts-ignore
-        if(messageMenuId.inBrowser) {
-          console.log('in browser true')
-          if (deleteType === 'remove') {
-            // Remove the message from the array completely
-            setMessages(prevMessages =>
-              prevMessages.filter(msg => msg.messageId !== id)
-            );
-          } else {
-            // Only change content for unsent messages
-            setMessages(prevMessages =>
-              prevMessages.map(msg =>
-                msg.messageId === id
-                  ? { ...msg, type: 'text', attachmentUrl: null, content: 'This message was unsent', isDeleted: true }
-                  : msg
-              )
-            );
-          }
+        if (messageMenuId.inBrowser) {
+          console.log("in browser true");
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+              msg.messageId === id
+                ? {
+                    ...msg,
+                    content:
+                      deleteType === "remove"
+                        ? "This message was removed"
+                        : "This message was unsent",
+                    isDeleted: true,
+                  }
+                : msg
+            )
+          );
           setMessageMenuId(null);
         } else {
-          fetch(`${apiBaseUrl}/chat/deleteMsg?messageId=${id}&deleteType=${deleteType}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
+          fetch(
+            `${apiBaseUrl}/chat/deleteMsg?messageId=${id}&deleteType=${deleteType}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
             }
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              console.log(`Message ${deleteType === 'remove' ? 'removed' : 'unsent'} successfully:`, data.message);
-              if (deleteType === 'remove') {
-                // Remove the message from the array completely
-                setMessages(prevMessages =>
-                  prevMessages.filter(msg => msg.messageId !== id)
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                console.log(
+                  `Message ${
+                    deleteType === "remove" ? "removed" : "unsent"
+                  } successfully:`,
+                  data.message
                 );
-              } else {
-                // Only change content for unsent messages
-                setMessages(prevMessages =>
-                  prevMessages.map(msg =>
+                setMessages((prevMessages) =>
+                  prevMessages.map((msg) =>
                     msg.messageId === id
-                      ? { ...msg, content: 'This message was unsent', isDeleted: true }
+                      ? {
+                          ...msg,
+                          content:
+                            deleteType === "remove"
+                              ? "This message was removed"
+                              : "This message was unsent",
+                          isDeleted: true,
+                        }
                       : msg
                   )
                 );
+              } else {
+                console.error(`Failed to ${deleteType} message:`, data.message);
               }
-            } else {
-              console.error(`Failed to ${deleteType} message:`, data.message);
-            }
-            // Reset messageMenuId after operation
-            setMessageMenuId(null);
-          })
-          .catch(error => {
-            console.error(`Error ${deleteType === 'remove' ? 'removing' : 'unsending'} message:`, error);
-            setMessageMenuId(null);
-          });
+              // Reset messageMenuId after operation
+              setMessageMenuId(null);
+            })
+            .catch((error) => {
+              console.error(
+                `Error ${
+                  deleteType === "remove" ? "removing" : "unsending"
+                } message:`,
+                error
+              );
+              setMessageMenuId(null);
+            });
         }
       }
     }
   }, [messageMenuId]);
 
-
   // This effect updates the WebSocket message handler when selectedChatInfo changes
   useEffect(() => {
     if (wsRef.current && selectedChatInfo) {
-      console.log("Updating WebSocket handler for chat:", selectedChatInfo.ChatID);
+      console.log(
+        "Updating WebSocket handler for chat:",
+        selectedChatInfo.ChatID
+      );
 
       // Create a new message handler that has access to the current selectedChatInfo
       wsRef.current.onmessage = (event) => {
@@ -662,14 +649,15 @@ function Home() {
               console.log(`Operation ${data.originalType} successful`);
               switch (data.originalType) {
                 case "sendChat": {
-                  //console.log(data.messagePayload)
-                  if(data.messagePayload) {
-                    setMessages(prev => {
+                  console.log(data.messageId);
+                  if (data.messagePayload) {
+                    setMessages((prev) => {
                       const updatedMessages = [...prev, data.messagePayload];
                       // Schedule scroll to bottom after state update
                       setTimeout(scrollToBottom, 100);
                       return updatedMessages;
                     });
+                    //setTempMsg(null);
                   }
                   break;
                 }
@@ -677,25 +665,32 @@ function Home() {
               break;
 
             case "error":
-              console.error(`Error in operation ${data.originalType}: ${data.message}`);
+              console.error(
+                `Error in operation ${data.originalType}: ${data.message}`
+              );
               break;
 
             case "receiveChat":
               console.log("Received chat message:", data);
               // Check if this message belongs to the currently selected chat
               if (data.chatId === selectedChatInfo.ChatID) {
-                console.log("Message is for current chat:", selectedChatInfo.ChatID);
+                console.log(
+                  "Message is for current chat:",
+                  selectedChatInfo.ChatID
+                );
                 // Add message to the chat
                 const newMessage = {
                   messageId: data.message.messageId || Date.now(),
                   senderId: data.message.userId || data.message.senderId,
                   content: data.message.content,
-                  timestamp: new Date(data.message.timestamp || Date.now()).toLocaleTimeString(),
+                  timestamp: new Date(
+                    data.message.timestamp || Date.now()
+                  ).toLocaleTimeString(),
                   type: data.message.type || "text",
                   attachmentUrl: data.message.attachmentUrl,
                   senderName: data.message.senderName,
                   senderImage: data.message.senderImage,
-                  reactions: data.message.reactions || []
+                  reactions: data.message.reactions || [],
                 };
 
                 console.log("Adding new message to chat:", newMessage);
@@ -717,22 +712,22 @@ function Home() {
               } else {
                 console.log("Message is for a different chat");
                 // Update unread count for chat in the list
-                setChatList(prev => prev.map(chat => {
-                  if (chat.chatId === data.chatId) {
-                    return { ...chat, unread: (chat.unread || 0) + 1 };
-                  }
-                  return chat;
-                }));
+                setChatList((prev) =>
+                  prev.map((chat) => {
+                    if (chat.chatId === data.chatId) {
+                      return { ...chat, unread: (chat.unread || 0) + 1 };
+                    }
+                    return chat;
+                  })
+                );
               }
               break;
             case "changeMessageType": {
-              if(data.deleteType !== "remove") {
-                setMessageMenuId({
-                  id: Number(data.msgId),
-                  type: data.deleteType,
-                  inBrowser: true
-                });
-              }
+              setMessageMenuId({
+                id: Number(data.msgId),
+                type: data.deleteType,
+                inBrowser: true,
+              });
               break;
             }
 
@@ -773,7 +768,7 @@ function Home() {
 
       // Add visibility change handler for reconnection when tab becomes active
       const handleVisibilityChange = () => {
-        if (document.visibilityState !== 'hidden') {
+        if (document.visibilityState !== "hidden") {
           console.log("Page became visible, checking WebSocket connection");
           if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
             console.log("WebSocket not connected, reconnecting...");
@@ -782,12 +777,15 @@ function Home() {
         }
       };
 
-      document.addEventListener('visibilitychange', handleVisibilityChange);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
 
       // Cleanup function
       return () => {
         console.log("Component unmounting, cleaning up WebSocket");
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange
+        );
 
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
@@ -822,153 +820,105 @@ function Home() {
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
   // Render message based on type
-  // Render message based on type
   const renderMessage = (msg: any) => {
     if (!msg) return null;
 
-    // Determine file type from URL if it's an attachment
-    if (msg.type === "attachment" && msg.attachmentUrl) {
-      const fileUrl = msg.attachmentUrl;
-      const fileExtension = fileUrl.split('.').pop()?.toLowerCase();
-      const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-
-      // Check if it's an image file
-      if (imageExtensions.includes(fileExtension)) {
-        // Render as image
+    switch (msg.type) {
+      case "attachment":
+        return (
+          <div className="flex flex-col">
+            {msg.attachmentUrl && (
+              <Image
+                src={msg.attachmentUrl}
+                alt="Attachment"
+                width={200}
+                height={150}
+                className="rounded-lg mb-1"
+              />
+            )}
+            {msg.content && <p>{msg.content}</p>}
+            {msg.reactions && msg.reactions.length > 0 && (
+              <div className="flex mt-1 gap-1">
+                {msg.reactions.map((reaction: any, index: number) => (
+                  <span
+                    key={index}
+                    className="text-sm bg-gray-100 rounded-full px-2"
+                  >
+                    {reaction.emoji}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      case "image":
         return (
           <div className="flex flex-col">
             <Image
-              src={msg.attachmentUrl}
+              src={msg.content || msg.attachmentUrl}
               alt="Image"
               width={200}
               height={150}
               className="rounded-lg mb-1"
             />
-            {msg.content && <p className="mt-1">{msg.content}</p>}
+            {msg.caption && <p>{msg.caption}</p>}
             {msg.reactions && msg.reactions.length > 0 && (
               <div className="flex mt-1 gap-1">
                 {msg.reactions.map((reaction: any, index: number) => (
-                  <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
-                {reaction.emoji}
-              </span>
+                  <span
+                    key={index}
+                    className="text-sm bg-gray-100 rounded-full px-2"
+                  >
+                    {reaction.emoji}
+                  </span>
                 ))}
               </div>
             )}
           </div>
         );
-      } else {
-        // Extract filename from URL
-        const fileName = fileUrl.split('/').pop() || 'File';
+      default:
+        let content: string = msg.content;
+        const urlRegex = new RegExp(
+          /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*))/g
+        );
+        const regex = new RegExp(`${urlRegex.source}`, "g");
+        const delim = content.split(regex).map((string) => {
+          return {
+            content: string ?? "",
+            isURL: urlRegex.test(string),
+          };
+        });
 
-        // Determine file icon based on extension
-        let fileIcon = faFile;
-        let bgColor = "bg-blue-100";
-        let iconColor = "text-blue-500";
-
-        // Set specific icons based on file type
-        if (['doc', 'docx'].includes(fileExtension)) {
-          fileIcon = faFileWord;
-          bgColor = "bg-blue-100";
-          iconColor = "text-blue-500";
-        } else if (['pdf'].includes(fileExtension)) {
-          fileIcon = faFile;
-          bgColor = "bg-red-100";
-          iconColor = "text-red-500";
-        } else if (['xls', 'xlsx'].includes(fileExtension)) {
-          fileIcon = faFile;
-          bgColor = "bg-green-100";
-          iconColor = "text-green-500";
-        }
-
-        // Render as file attachment
         return (
-          <div className="flex flex-col">
-            <div className="flex items-center justify-between bg-gray-800 p-3 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className={`${bgColor} w-10 h-10 flex items-center justify-center rounded-lg`}>
-                  <FontAwesomeIcon icon={fileIcon} className={`${iconColor}`} size="lg" />
-                </div>
-                <div className="text-white">
-                  <p className="text-sm font-medium">{fileName}</p>
-                  <p className="text-xs opacity-70">Click to download</p>
-                </div>
-              </div>
-              <a
-                href={fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                download
-                className="bg-gray-700 p-2 rounded-full hover:bg-gray-600 transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <FontAwesomeIcon icon={faDownload} className="text-white" />
-              </a>
-            </div>
-            {msg.content && <p className="mt-2">{msg.content}</p>}
+          <div>
+            <p>
+              {delim.map((text, idx) => {
+                if (!text.isURL) return text.content;
+                return (
+                  <Link
+                    href={text.content}
+                    target={"_blank"}
+                    key={`text-content-${idx}`}
+                  >
+                    {text.content}
+                  </Link>
+                );
+              })}
+            </p>
             {msg.reactions && msg.reactions.length > 0 && (
               <div className="flex mt-1 gap-1">
                 {msg.reactions.map((reaction: any, index: number) => (
-                  <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
-                {reaction.emoji}
-              </span>
+                  <span
+                    key={index}
+                    className="text-sm bg-gray-100 rounded-full px-2"
+                  >
+                    {reaction.emoji}
+                  </span>
                 ))}
               </div>
             )}
           </div>
         );
-      }
-    } else if (msg.type === "image") {
-      return (
-        <div className="flex flex-col">
-          <Image
-            src={msg.content || msg.attachmentUrl}
-            alt="Image"
-            width={200}
-            height={150}
-            className="rounded-lg mb-1"
-          />
-          {msg.caption && <p>{msg.caption}</p>}
-          {msg.reactions && msg.reactions.length > 0 && (
-            <div className="flex mt-1 gap-1">
-              {msg.reactions.map((reaction: any, index: number) => (
-                <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
-              {reaction.emoji}
-            </span>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    } else {
-      let content: string = msg.content;
-      const urlRegex = new RegExp(
-        /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*))/g,
-      );
-      const regex = new RegExp(`${urlRegex.source}`, "g");
-      const delim = content.split(regex).map((string) => {
-        return {
-          content: string ?? "",
-          isURL: urlRegex.test(string),
-        };
-      });
-
-      return (
-        <div>
-          <p>{delim.map((text, idx) => {
-            if (!text.isURL) return text.content;
-            return <Link href={text.content} target={"_blank"} key={`text-content-${idx}`}>{text.content}</Link>
-          })}</p>
-          {msg.reactions && msg.reactions.length > 0 && (
-            <div className="flex mt-1 gap-1">
-              {msg.reactions.map((reaction: any, index: number) => (
-                <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
-              {reaction.emoji}
-            </span>
-              ))}
-            </div>
-          )}
-        </div>
-      );
     }
   };
 
@@ -1082,7 +1032,7 @@ function Home() {
                 {messages.length > 0 ? (
                   messages.map((msg) => {
                     const isOwn = msg.senderId === userId;
-                    const type = msg.deleteReason === 'unsent'
+                    const type = msg.deleteReason === "unsent";
                     const imageUrl = msg.attachmentUrl;
 
                     const isOpen = messageMenuId === msg.messageId;
@@ -1109,19 +1059,19 @@ function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation(); // Prevent parent click
-                              if(type){
+                              if (type) {
                                 setMessageMenuId(null);
-                              } else{
+                              } else {
                                 setMessageMenuId(isOpen ? null : msg.messageId);
                               }
                               /*setMessageMenuId(isOpen ? null : msg.messageId);*/
                             }}
                             className={`absolute bottom-0 w-8 h-8 rounded-full hover:bg-gray-200 hidden group-hover:flex items-center justify-center z-10
                               ${
-                              isOwn
-                                ? "-left-8 bg-customPurple/20 text-black"
-                                : "-right-8 bg-customPurple/20 text-black"
-                            }`}
+                                isOwn
+                                  ? "-left-8 bg-customPurple/20 text-black"
+                                  : "-right-8 bg-customPurple/20 text-black"
+                              }`}
                           >
                             <span className="text-xs">●●●</span>
                           </button>
@@ -1224,10 +1174,10 @@ function Home() {
                           <span
                             className={`
                         ${
-                              msg.senderId === userId
-                                ? "text-white/80 justify-end"
-                                : "text-black/50"
-                            }
+                          msg.senderId === userId
+                            ? "text-white/80 justify-end"
+                            : "text-black/50"
+                        }
                         text-sm flex`}
                           >
                             {msg.timestamp}
@@ -1268,97 +1218,28 @@ function Home() {
                 )}
               </div>
             </div>
-            <div className="border-t-2 p-4 relative">
-              {attachmentPreview && (
-                <div className="absolute bottom-full left-0 right-0 p-3 bg-gray-100 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      {(() => {
-                        // Determine if it's an image or file based on extension
-                        const fileUrl = attachmentPreview;
-                        const fileExtension: string | undefined = fileUrl.split('.').pop()?.toLowerCase();
-                        const imageExtensions: string[] = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-
-                        if (imageExtensions.includes(fileExtension as string)) {
-                          // Image preview
-                          return (
-                            <Image
-                              src={attachmentPreview}
-                              width={150}
-                              height={100}
-                              alt="Attachment preview"
-                              className="rounded-md object-cover h-[100px]"
-                            />
-                          );
-                        } else {
-                          // File preview
-                          const fileName = fileUrl.split('/').pop() || 'File';
-
-                          // Determine file icon based on extension
-                          let fileIcon = faFile;
-                          let bgColor = "bg-blue-100";
-                          let iconColor = "text-blue-500";
-
-                          if (['doc', 'docx'].includes(fileExtension as string)) {
-                            fileIcon = faFileWord;
-                            bgColor = "bg-blue-100";
-                            iconColor = "text-blue-500";
-                          } else if (['pdf'].includes(fileExtension as string)) {
-                            fileIcon = faFile;
-                            bgColor = "bg-red-100";
-                            iconColor = "text-red-500";
-                          } else if (['xls', 'xlsx'].includes(fileExtension as string)) {
-                            fileIcon = faFile;
-                            bgColor = "bg-green-100";
-                            iconColor = "text-green-500";
-                          }
-
-                          return (
-                            <div className="flex items-center bg-gray-800 p-3 rounded-lg">
-                              <div className="flex items-center gap-3">
-                                <div className={`${bgColor} w-10 h-10 flex items-center justify-center rounded-lg`}>
-                                  <FontAwesomeIcon icon={fileIcon} className={`${iconColor}`} size="lg" />
-                                </div>
-                                <div className="text-white">
-                                  <p className="text-sm font-medium">{fileName}</p>
-                                  <p className="text-xs opacity-70">Ready to send</p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        }
-                      })()}
-                    </div>
-                    <button
-                      onClick={removeAttachmentPreview}
-                      className="text-gray-500 hover:text-red-500 p-1"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              )}
+            <div className="border-t-2 p-4">
               <Input
-                placeholder={attachmentPreview ? "Add a caption..." : "Type messages"}
+                placeholder="Type messages"
                 type="text"
                 className="flex-1"
                 size="lg"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSendMessage();
+                  if (e.key === "Enter") {
+                    sendMessage();
                   }
                 }}
                 endContent={
                   <div className="flex items-center gap-3 pr-5">
-                    <div className="relative flex-none w-[25px] h-[25px]">
+                    <div className="relative">
                       <Image
                         src={EmojiIcon}
                         width={20}
                         height={20}
                         alt="Emoji"
-                        className="cursor-pointer w-[25px] h-[25px]"
+                        className="cursor-pointer w-[40px] h-[40px]"
                         onClick={() => setShowEmojiPicker((prev) => !prev)}
                       />
                       {showEmojiPicker && (
@@ -1373,22 +1254,27 @@ function Home() {
                       height={20}
                       alt="File"
                       className="cursor-pointer"
-                      onClick={handleFileSelect}
+                      onClick={() => {
+                        // This is a placeholder - you'd need to implement file upload
+                        alert(
+                          "File upload functionality would be implemented here"
+                        );
+                      }}
                     />
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      className="hidden"
-                      onChange={handleFileInputChange}
+                    <Image
+                      src={MicroIcon}
+                      width={20}
+                      height={20}
+                      alt="Micro"
+                      className="cursor-pointer"
                     />
-                    <Image src={MicroIcon} width={20} height={20} alt="Micro" className="cursor-pointer" />
                     <Image
                       src={SendIcon}
                       width={20}
                       height={20}
                       alt="Send"
                       className="cursor-pointer"
-                      onClick={handleSendMessage}
+                      onClick={sendMessage}
                     />
                   </div>
                 }
@@ -1457,108 +1343,11 @@ function Home() {
               </Card>
             </div>
             <div className="mt-2">
-              <Accordion
-                variant="splitted"
-                itemClasses={{
-                  title: "text-xl",
-                  content: "max-h-60 overflow-y-auto ",
-                }}
-              >
-                <AccordionItem key="1" aria-label="Image" title="Image">
-                  <div className="space-y-6">
-                    {imageData
-                      .sort(
-                        (a, b) =>
-                          new Date(b.date).getTime() -
-                          new Date(a.date).getTime()
-                      )
-                      .map((entry) => (
-                        <div key={entry.date}>
-                          <p className="text-gray-500 font-semibold mb-2">
-                            {new Date(entry.date).toLocaleDateString("en-GB")}
-                          </p>
-                          <div className="grid grid-cols-3 gap-2">
-                            {entry.images.map((img, index) => (
-                              <img
-                                key={index}
-                                src={img.src}
-                                alt={`image-${index}`}
-                                className="rounded-lg w-full object-cover aspect-square"
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </AccordionItem>
-                <AccordionItem key="2" aria-label="Link" title="Link">
-                  <div className="space-y-4">
-                    {listLink.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <img
-                            src={item.thumbnail}
-                            alt={item.title}
-                            className="w-12 h-12 rounded-xl object-cover"
-                          />
-                          <div>
-                            <div className="font-medium">{item.title}</div>
-                            <a
-                              href={item.url}
-                              className="text-blue-600 hover:underline text-sm"
-                            >
-                              {item.url}
-                            </a>
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-500">{item.date}</div>
-                      </div>
-                    ))}
-                  </div>
-                </AccordionItem>
-                <AccordionItem key="3" aria-label="File" title="File">
-                  <div className="flex flex-col">
-                    {fileList.map((file, idx) => {
-                      const { icon, color } = getFileIcon(file.type);
-                      return (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between bg-white p-2 rounded-md"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-10 h-10 flex items-center justify-center rounded-lg ${color}`}
-                            >
-                              <FontAwesomeIcon
-                                icon={icon}
-                                size="lg"
-                                className={`${color} `}
-                              />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-black">
-                                {file.name}
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {file.size}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="bg-indigo-100 p-2 rounded-full text-indigo-500 hover:bg-indigo-200 cursor-pointer">
-                            <FontAwesomeIcon icon={faDownload} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </AccordionItem>
-              </Accordion>
+              <RenderMedia data={extractLists(messages)} />
             </div>
           </div>
         )}
+        <Link href="/signin">Login</Link>
       </div>
     </div>
   );
