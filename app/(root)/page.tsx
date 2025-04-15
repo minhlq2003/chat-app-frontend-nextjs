@@ -936,7 +936,7 @@ function Home() {
 
   // Render message based on type
   // Render message based on type
-  const renderMessage = (msg: any) => {
+  const renderMessage = (msg: any, isOwn: boolean) => {
     if (!msg) return null;
 
     // Determine file type from URL if it's an attachment
@@ -1087,7 +1087,9 @@ function Home() {
               if (!text.isURL) return text.content;
               return (
                 <Link
-                  className="text-blue-500 hover:underline"
+                  className={`${
+                    isOwn ? "text-white" : "text-blue-500"
+                  } underline`}
                   href={text.content}
                   target={"_blank"}
                   key={`text-content-${idx}`}
@@ -1362,7 +1364,7 @@ function Home() {
                               )}
                             </div>
                           )}
-                          {renderMessage(msg)}
+                          {renderMessage(msg, isOwn)}
                           <span
                             className={`
                         ${

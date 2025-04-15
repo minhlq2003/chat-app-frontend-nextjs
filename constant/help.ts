@@ -39,6 +39,19 @@ export function extractLists(messages: Message[]): Lists {
     ".bin",
     ".cmd",
     ".exe",
+    ".ppt",
+    ".pptx",
+    ".mp4",
+    ".mp3",
+    ".wav",
+    ".flac",
+    ".ogg",
+    ".mkv",
+    ".avi",
+    ".mov",
+    ".wmv",
+    ".webm",
+    ".mpg",
   ];
 
   const imageList: Message[] = [];
