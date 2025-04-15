@@ -597,7 +597,6 @@ function Home() {
                       setTimeout(scrollToBottom, 100);
                       return updatedMessages;
                     });
-                    setTempMsg(null)
                   }
                   break;
                 }
