@@ -18,6 +18,16 @@ import { getSessionUser } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
+
+function formatDateToInputValue(date: string | Date | undefined): string {
+  if (!date) return "";
+  const parsedDate = new Date(date);
+  const year = parsedDate.getFullYear();
+  const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
+  const day = String(parsedDate.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 const Page = () => {
   const { t } = useTranslation("common");
   const [temporaryUser, setTemporaryUser] = useState<TemporaryUserProps>();
@@ -106,9 +116,9 @@ const Page = () => {
     if (temporaryUser?.password !== undefined) {
       const password = temporaryUser.password || "";
       const passwordRegex =
-        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{9,}$/;
+        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])(?!.*\s).{9,}$/;
 
-      if (!passwordRegex.test(password)) {
+      if (!passwordRegex.test(password.trim())) {
         newErrors.password =
           "Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character.";
       }
@@ -288,6 +298,7 @@ const Page = () => {
               image={CalendarIcon}
               type="date"
               placeholder={t("Enter your birthday")}
+              value={formatDateToInputValue(temporaryUser?.birthday || "")}
               textClassname="text-black"
               error={errors.birthday}
               errorClassname="text-red-600"
@@ -302,6 +313,7 @@ const Page = () => {
               image={LocationIcon}
               type="text"
               placeholder={t("Enter your address")}
+              value={temporaryUser?.location || ""}
               textClassname="text-black"
               onChange={(e) =>
                 setTemporaryUser({
