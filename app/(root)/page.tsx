@@ -26,7 +26,7 @@ import {
 } from "@nextui-org/react";
 import ChatList from "@/components/ChatList";
 import { fileList, imageData, listLink } from "@/constant/data";
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import IconButton from "@/components/IconButton";
 import UserInfoItem from "@/components/ProfileInfoItem";
 import { useTranslation } from "react-i18next";
@@ -34,7 +34,7 @@ import { useRouter } from "next/navigation";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { getFileIcon } from "@/constant/help";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDownload } from "@fortawesome/free-solid-svg-icons";
+import {faDownload, faFile, faFileWord} from "@fortawesome/free-solid-svg-icons";
 
 function Home() {
   const { t } = useTranslation("common");
@@ -45,19 +45,82 @@ function Home() {
   const [selectedChatInfo, setSelectedChatInfo] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [inputMessage, setInputMessage] = useState("");
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [attachmentCaption, setAttachmentCaption] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Store the original WebSocket message handler
   const originalMessageHandlerRef = useRef<
     ((event: MessageEvent) => void) | null
   >(null);
+
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [messageCount, setMessageCount] = useState(20);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const firstMessageRef = useRef<HTMLDivElement | null>(null);
+
+  //upload operation
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = () => {
+    // Trigger the file input click event
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      alert("No file selected.");
+      return;
+    }
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const fileUrl = data.imageUrl;
+          // Set the attachment preview instead of showing an alert
+          setAttachmentPreview(fileUrl);
+          // Reset input value to allow selecting the same file again
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        } else {
+          console.error("Image upload failed:", await response.json());
+          alert("Failed to upload image. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error during image upload:", error);
+        alert("An error occurred while uploading the image.");
+      }
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (attachmentPreview) {
+      sendAttachment(attachmentPreview, attachmentCaption || inputMessage);
+      setAttachmentPreview(null);
+      setAttachmentCaption("");
+      setInputMessage("");
+    } else if (inputMessage.trim()) {
+      sendMessage();
+    }
+  };
+
+// Add this function to remove the attachment preview
+  const removeAttachmentPreview = () => {
+    setAttachmentPreview(null);
+    setAttachmentCaption("");
+  };
 
   const handleEmojiClick = (emojiData: EmojiClickData) => {
     setInputMessage((prev) => prev + emojiData.emoji);
@@ -199,7 +262,7 @@ function Home() {
     ws.onmessage = messageHandler;
 
     ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
+      console.log("WebSocket error:", error);
     };
 
     ws.onclose = (event) => {
@@ -325,7 +388,7 @@ function Home() {
             let filteredMessages = messagesData.data.filter((element: { deleteReason: string, userId: string; }) => !(element.deleteReason === 'remove' && element.userId === userId) ) // Remove elements with deleteReason 'remove'
             .map((element: { deleteReason: string; content: string; }) => {
               if (element.deleteReason === 'unsent') {
-                element.content = "message unsent"; // Change content for elements with deleteReason 'unsent'
+                element.content = "This message was unsent";
               }
               return element; // Return the modified element
             });
@@ -337,7 +400,7 @@ function Home() {
               senderId: msg.userId, // Note: backend uses userId instead of senderId
               content: msg.content,
               timestamp: new Date(msg.timestamp).toLocaleTimeString(),
-              type: msg.type || "text",
+              type: (msg.deleteReason === 'unsent' ? 'text' : msg.type) || "text",
               attachmentUrl: msg.attachmentUrl,
               senderName: msg.senderName,
               deleteReason: msg.deleteReason,
@@ -375,8 +438,6 @@ function Home() {
 
   const sendMessage = () => {
     if (!inputMessage.trim() || !selectedChatInfo) return;
-
-    // Create message object according to the specified format
     const messageObj = {
       type: "sendChat",
       chatId: selectedChatInfo.ChatID,
@@ -413,7 +474,9 @@ function Home() {
               chatId: selectedChatInfo.ChatID,
               messagePayload: {
                 type: "text",
-                content: pendingMessage
+                content: pendingMessage,
+                timestamp: new Date().toLocaleTimeString(),
+                senderId: userId
               }
             };
 
@@ -454,7 +517,9 @@ function Home() {
       messagePayload: {
         type: "attachment",
         content: caption,
-        attachmentUrl: attachmentUrl
+        attachmentUrl: attachmentUrl,
+        timestamp: new Date().toLocaleTimeString(),
+        senderId: userId
       }
     };
 
@@ -462,15 +527,6 @@ function Home() {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(messageObj));
 
-      // Add to local messages (optimistic update)
-      setMessages(prev => [...prev, {
-        messageId: Date.now(),
-        senderId: userId,
-        content: caption,
-        timestamp: new Date().toLocaleTimeString(),
-        type: "attachment",
-        attachmentUrl: attachmentUrl
-      }]);
     } else {
       console.error("WebSocket not connected, attachment not sent");
       alert("Connection lost. Please refresh the page and try again.");
@@ -481,6 +537,8 @@ function Home() {
     if (selectedChatInfo && selectedChatInfo.members) {
       const member = selectedChatInfo.members.find((m: any) => m.userId === userId);
       if (member) {
+        selectedChatInfo.imageUrl = member.imageUrl;
+        selectedChatInfo.chatName = member.name;
         return {
           id: member.userId,
           work: "Work information", // Not provided in API
@@ -520,7 +578,6 @@ function Home() {
 
   useEffect(() => {
     if (messageMenuId && typeof messageMenuId === 'object' && 'id' in messageMenuId && 'type' in messageMenuId) {
-
       const { id, type } = messageMenuId as { id: string | number, type: string };
       console.log(messageMenuId)
       if (type === 'remove' || type === 'unsent') {
@@ -530,42 +587,58 @@ function Home() {
         // @ts-ignore
         if(messageMenuId.inBrowser) {
           console.log('in browser true')
-          setMessages(prevMessages =>
-            prevMessages.map(msg =>
-              msg.messageId === id
-                ? { ...msg, content: deleteType === 'remove' ? 'This message was removed' : 'This message was unsent', isDeleted: true }
-                : msg
-            )
-          );
-          setMessageMenuId(null);
-        } else {
-        fetch(`${apiBaseUrl}/chat/deleteMsg?messageId=${id}&deleteType=${deleteType}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            console.log(`Message ${deleteType === 'remove' ? 'removed' : 'unsent'} successfully:`, data.message);
+          if (deleteType === 'remove') {
+            // Remove the message from the array completely
+            setMessages(prevMessages =>
+              prevMessages.filter(msg => msg.messageId !== id)
+            );
+          } else {
+            // Only change content for unsent messages
             setMessages(prevMessages =>
               prevMessages.map(msg =>
                 msg.messageId === id
-                  ? { ...msg, content: deleteType === 'remove' ? 'This message was removed' : 'This message was unsent', isDeleted: true }
+                  ? { ...msg, type: 'text', attachmentUrl: null, content: 'This message was unsent', isDeleted: true }
                   : msg
               )
             );
-          } else {
-            console.error(`Failed to ${deleteType} message:`, data.message);
           }
-          // Reset messageMenuId after operation
           setMessageMenuId(null);
-        })
-        .catch(error => {
-          console.error(`Error ${deleteType === 'remove' ? 'removing' : 'unsending'} message:`, error);
-          setMessageMenuId(null);
-        });
+        } else {
+          fetch(`${apiBaseUrl}/chat/deleteMsg?messageId=${id}&deleteType=${deleteType}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              console.log(`Message ${deleteType === 'remove' ? 'removed' : 'unsent'} successfully:`, data.message);
+              if (deleteType === 'remove') {
+                // Remove the message from the array completely
+                setMessages(prevMessages =>
+                  prevMessages.filter(msg => msg.messageId !== id)
+                );
+              } else {
+                // Only change content for unsent messages
+                setMessages(prevMessages =>
+                  prevMessages.map(msg =>
+                    msg.messageId === id
+                      ? { ...msg, content: 'This message was unsent', isDeleted: true }
+                      : msg
+                  )
+                );
+              }
+            } else {
+              console.error(`Failed to ${deleteType} message:`, data.message);
+            }
+            // Reset messageMenuId after operation
+            setMessageMenuId(null);
+          })
+          .catch(error => {
+            console.error(`Error ${deleteType === 'remove' ? 'removing' : 'unsending'} message:`, error);
+            setMessageMenuId(null);
+          });
         }
       }
     }
@@ -589,7 +662,7 @@ function Home() {
               console.log(`Operation ${data.originalType} successful`);
               switch (data.originalType) {
                 case "sendChat": {
-                  console.log(data.messageId)
+                  //console.log(data.messagePayload)
                   if(data.messagePayload) {
                     setMessages(prev => {
                       const updatedMessages = [...prev, data.messagePayload];
@@ -653,11 +726,13 @@ function Home() {
               }
               break;
             case "changeMessageType": {
-              setMessageMenuId({
-                id: Number(data.msgId),
-                type: data.deleteType,
-                inBrowser: true
-              });
+              if(data.deleteType !== "remove") {
+                setMessageMenuId({
+                  id: Number(data.msgId),
+                  type: data.deleteType,
+                  inBrowser: true
+                });
+              }
               break;
             }
 
@@ -747,87 +822,153 @@ function Home() {
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
   // Render message based on type
+  // Render message based on type
   const renderMessage = (msg: any) => {
     if (!msg) return null;
 
-    switch (msg.type) {
-      case "attachment":
-        return (
-          <div className="flex flex-col">
-            {msg.attachmentUrl && (
-              <Image
-                src={msg.attachmentUrl}
-                alt="Attachment"
-                width={200}
-                height={150}
-                className="rounded-lg mb-1"
-              />
-            )}
-            {msg.content && <p>{msg.content}</p>}
-            {msg.reactions && msg.reactions.length > 0 && (
-              <div className="flex mt-1 gap-1">
-                {msg.reactions.map((reaction: any, index: number) => (
-                  <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
-                  {reaction.emoji}
-                </span>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      case "image":
+    // Determine file type from URL if it's an attachment
+    if (msg.type === "attachment" && msg.attachmentUrl) {
+      const fileUrl = msg.attachmentUrl;
+      const fileExtension = fileUrl.split('.').pop()?.toLowerCase();
+      const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+      // Check if it's an image file
+      if (imageExtensions.includes(fileExtension)) {
+        // Render as image
         return (
           <div className="flex flex-col">
             <Image
-              src={msg.content || msg.attachmentUrl}
+              src={msg.attachmentUrl}
               alt="Image"
               width={200}
               height={150}
               className="rounded-lg mb-1"
             />
-            {msg.caption && <p>{msg.caption}</p>}
+            {msg.content && <p className="mt-1">{msg.content}</p>}
             {msg.reactions && msg.reactions.length > 0 && (
               <div className="flex mt-1 gap-1">
                 {msg.reactions.map((reaction: any, index: number) => (
                   <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
-                  {reaction.emoji}
-                </span>
+                {reaction.emoji}
+              </span>
                 ))}
               </div>
             )}
           </div>
         );
-      default:
-        let content: string = msg.content;
-        const urlRegex = new RegExp(
-          /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*))/g,
-        );
-        const regex = new RegExp(`${urlRegex.source}`, "g");
-        const delim = content.split(regex).map((string) => {
-          return {
-            content: string ?? "",
-            isURL: urlRegex.test(string),
-          };
-        });
+      } else {
+        // Extract filename from URL
+        const fileName = fileUrl.split('/').pop() || 'File';
 
+        // Determine file icon based on extension
+        let fileIcon = faFile;
+        let bgColor = "bg-blue-100";
+        let iconColor = "text-blue-500";
 
+        // Set specific icons based on file type
+        if (['doc', 'docx'].includes(fileExtension)) {
+          fileIcon = faFileWord;
+          bgColor = "bg-blue-100";
+          iconColor = "text-blue-500";
+        } else if (['pdf'].includes(fileExtension)) {
+          fileIcon = faFile;
+          bgColor = "bg-red-100";
+          iconColor = "text-red-500";
+        } else if (['xls', 'xlsx'].includes(fileExtension)) {
+          fileIcon = faFile;
+          bgColor = "bg-green-100";
+          iconColor = "text-green-500";
+        }
+
+        // Render as file attachment
         return (
-          <div>
-            <p>{delim.map((text, idx) => {
-              if (!text.isURL) return text.content;
-              return <Link href={text.content} target={"_blank"} key={`text-content-${idx}`}>{text.content}</Link>
-            })}</p>
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between bg-gray-800 p-3 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className={`${bgColor} w-10 h-10 flex items-center justify-center rounded-lg`}>
+                  <FontAwesomeIcon icon={fileIcon} className={`${iconColor}`} size="lg" />
+                </div>
+                <div className="text-white">
+                  <p className="text-sm font-medium">{fileName}</p>
+                  <p className="text-xs opacity-70">Click to download</p>
+                </div>
+              </div>
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+                className="bg-gray-700 p-2 rounded-full hover:bg-gray-600 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <FontAwesomeIcon icon={faDownload} className="text-white" />
+              </a>
+            </div>
+            {msg.content && <p className="mt-2">{msg.content}</p>}
             {msg.reactions && msg.reactions.length > 0 && (
               <div className="flex mt-1 gap-1">
                 {msg.reactions.map((reaction: any, index: number) => (
                   <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
-                  {reaction.emoji}
-                </span>
+                {reaction.emoji}
+              </span>
                 ))}
               </div>
             )}
           </div>
         );
+      }
+    } else if (msg.type === "image") {
+      return (
+        <div className="flex flex-col">
+          <Image
+            src={msg.content || msg.attachmentUrl}
+            alt="Image"
+            width={200}
+            height={150}
+            className="rounded-lg mb-1"
+          />
+          {msg.caption && <p>{msg.caption}</p>}
+          {msg.reactions && msg.reactions.length > 0 && (
+            <div className="flex mt-1 gap-1">
+              {msg.reactions.map((reaction: any, index: number) => (
+                <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
+              {reaction.emoji}
+            </span>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    } else {
+      let content: string = msg.content;
+      const urlRegex = new RegExp(
+        /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*))/g,
+      );
+      const regex = new RegExp(`${urlRegex.source}`, "g");
+      const delim = content.split(regex).map((string) => {
+        return {
+          content: string ?? "",
+          isURL: urlRegex.test(string),
+        };
+      });
+
+      return (
+        <div>
+          <p>{delim.map((text, idx) => {
+            if (!text.isURL) return text.content;
+            return <Link href={text.content} target={"_blank"} key={`text-content-${idx}`}>{text.content}</Link>
+          })}</p>
+          {msg.reactions && msg.reactions.length > 0 && (
+            <div className="flex mt-1 gap-1">
+              {msg.reactions.map((reaction: any, index: number) => (
+                <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
+              {reaction.emoji}
+            </span>
+              ))}
+            </div>
+          )}
+        </div>
+      );
     }
   };
 
@@ -1127,9 +1268,78 @@ function Home() {
                 )}
               </div>
             </div>
-            <div className="border-t-2 p-4">
+            <div className="border-t-2 p-4 relative">
+              {attachmentPreview && (
+                <div className="absolute bottom-full left-0 right-0 p-3 bg-gray-100 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      {(() => {
+                        // Determine if it's an image or file based on extension
+                        const fileUrl = attachmentPreview;
+                        const fileExtension: string | undefined = fileUrl.split('.').pop()?.toLowerCase();
+                        const imageExtensions: string[] = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+                        if (imageExtensions.includes(fileExtension as string)) {
+                          // Image preview
+                          return (
+                            <Image
+                              src={attachmentPreview}
+                              width={150}
+                              height={100}
+                              alt="Attachment preview"
+                              className="rounded-md object-cover h-[100px]"
+                            />
+                          );
+                        } else {
+                          // File preview
+                          const fileName = fileUrl.split('/').pop() || 'File';
+
+                          // Determine file icon based on extension
+                          let fileIcon = faFile;
+                          let bgColor = "bg-blue-100";
+                          let iconColor = "text-blue-500";
+
+                          if (['doc', 'docx'].includes(fileExtension as string)) {
+                            fileIcon = faFileWord;
+                            bgColor = "bg-blue-100";
+                            iconColor = "text-blue-500";
+                          } else if (['pdf'].includes(fileExtension as string)) {
+                            fileIcon = faFile;
+                            bgColor = "bg-red-100";
+                            iconColor = "text-red-500";
+                          } else if (['xls', 'xlsx'].includes(fileExtension as string)) {
+                            fileIcon = faFile;
+                            bgColor = "bg-green-100";
+                            iconColor = "text-green-500";
+                          }
+
+                          return (
+                            <div className="flex items-center bg-gray-800 p-3 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className={`${bgColor} w-10 h-10 flex items-center justify-center rounded-lg`}>
+                                  <FontAwesomeIcon icon={fileIcon} className={`${iconColor}`} size="lg" />
+                                </div>
+                                <div className="text-white">
+                                  <p className="text-sm font-medium">{fileName}</p>
+                                  <p className="text-xs opacity-70">Ready to send</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                      })()}
+                    </div>
+                    <button
+                      onClick={removeAttachmentPreview}
+                      className="text-gray-500 hover:text-red-500 p-1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
               <Input
-                placeholder="Type messages"
+                placeholder={attachmentPreview ? "Add a caption..." : "Type messages"}
                 type="text"
                 className="flex-1"
                 size="lg"
@@ -1137,18 +1347,18 @@ function Home() {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
-                    sendMessage();
+                    handleSendMessage();
                   }
                 }}
                 endContent={
                   <div className="flex items-center gap-3 pr-5">
-                    <div className="relative">
+                    <div className="relative flex-none w-[25px] h-[25px]">
                       <Image
                         src={EmojiIcon}
                         width={20}
                         height={20}
                         alt="Emoji"
-                        className="cursor-pointer w-[40px] h-[40px]"
+                        className="cursor-pointer w-[25px] h-[25px]"
                         onClick={() => setShowEmojiPicker((prev) => !prev)}
                       />
                       {showEmojiPicker && (
@@ -1163,10 +1373,13 @@ function Home() {
                       height={20}
                       alt="File"
                       className="cursor-pointer"
-                      onClick={() => {
-                        // This is a placeholder - you'd need to implement file upload
-                        alert("File upload functionality would be implemented here");
-                      }}
+                      onClick={handleFileSelect}
+                    />
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      onChange={handleFileInputChange}
                     />
                     <Image src={MicroIcon} width={20} height={20} alt="Micro" className="cursor-pointer" />
                     <Image
@@ -1175,7 +1388,7 @@ function Home() {
                       height={20}
                       alt="Send"
                       className="cursor-pointer"
-                      onClick={sendMessage}
+                      onClick={handleSendMessage}
                     />
                   </div>
                 }
@@ -1346,7 +1559,6 @@ function Home() {
             </div>
           </div>
         )}
-        <Link href="/signin">Login</Link>
       </div>
     </div>
   );
