@@ -11,23 +11,6 @@ interface FriendSuggestion {
 }
 
 const suggestions: FriendSuggestion[] = [
-  {
-    id: 1,
-    name: "Híu Fan",
-    phone: "(+84) 0932 320 105",
-    avatar: "/avatar1.jpg",
-    type: "recent",
-  },
-  {
-    id: 2,
-    name: "Tán Phát",
-    phone: "(+84) 0335 696 383",
-    avatar: "/avatar2.jpg",
-    type: "recent",
-  },
-  { id: 3, name: "Híu Fan", avatar: "/avatar3.jpg", type: "suggested" },
-  { id: 4, name: "Tán Phát", avatar: "/avatar4.jpg", type: "suggested" },
-  { id: 5, name: "Hủ Tiến", avatar: "/avatar1.jpg", type: "suggested" },
 ];
 
 const apiBaseUrl =
@@ -118,7 +101,7 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <h2 className="font-semibold">Thêm bạn</h2>
+          <h2 className="font-semibold">Add Friends</h2>
           <button onClick={onClose} className="text-black text-xl">
             &times;
           </button>
@@ -129,7 +112,7 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
           <div className="bg-black/10 px-2 py-2 rounded text-sm">VN (+84)</div>
           <input
             type="text"
-            placeholder="Số điện thoại"
+            placeholder="Phone number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             className="bg-transparent border p-2 rounded-md outline-none flex-1 text-sm placeholder-black/40"
@@ -138,12 +121,13 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
 
         {/* Recent results */}
         <div className="p-4 flex flex-col gap-3">
-          <div className="max-h-[130px] overflow-y-auto">
-            <p className="text-sm text-black">Kết quả gần nhất</p>
+          <p className="text-sm  text-black">Results</p>
+          <div className="max-h-[170px] overflow-y-auto">
+
             {phone.trim().length === 0 || searchResults.length === 0 ? (
-              <p className="text-sm text-gray-500 p-4">
-                Không tìm thấy kết quả nào.
-              </p>
+              <div className="flex flex-col items-center justify-center text-sm text-gray-500 p-4">
+                <p>No friends found. Perhaps you should try a different number?</p>
+              </div>
             ) : (
               searchResults.map((user) => (
                 <div
@@ -152,7 +136,7 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
                 >
                   <div className="flex items-center gap-3">
                     <img
-                      src={user.imageUrl || "/default-avatar.png"}
+                      src={user.imageUrl || `https://ui-avatars.com/api/?name=${user.name}`}
                       className="w-10 h-10 rounded-full object-cover"
                       alt={user.name}
                     />
@@ -204,7 +188,7 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Suggested friends */}
-          <p className="text-sm text-black mt-4">Có thể bạn quen</p>
+          <p className="text-sm text-black mt-4">Friends you might interested</p>
           {suggestions
           .filter((s) => s.type === "suggested")
           .map((user) => (
@@ -225,22 +209,21 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
             </div>
           ))}
 
-          <p className="text-sm text-blue-400 text-center mt-2 cursor-pointer hover:underline">
+          {/*<p className="text-sm text-blue-400 text-center mt-2 cursor-pointer hover:underline">
             Xem thêm
-          </p>
+          </p>*/}
         </div>
 
         {/* Footer */}
         <div className="flex justify-end gap-3 p-4 border-t border-white/10">
           <button
             onClick={onClose}
-            className="text-white px-4 py-1 hover:bg-white/10 rounded"
-          >
-            Hủy
+            className="text-black bg-gray-400 px-4 py-1 hover:bg-gray-500 rounded">
+            Cancel
           </button>
-          <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded">
+          {/*<button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded">
             Tìm kiếm
-          </button>
+          </button>*/}
         </div>
       </div>
     </div>

@@ -78,9 +78,7 @@ function Home() {
     }
   };
 
-  const handleFileInputChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
       alert("No file selected.");
@@ -150,6 +148,53 @@ function Home() {
     setMessageCount(newCount);
   };
 
+  // Add this function to your component
+  // Fix the handleChatScroll function to properly reset unread counts
+  const handleChatScroll = () => {
+    const container = messageContainerRef.current;
+    if (!container || !selectedChatInfo) return;
+
+    // Check if scrolled to bottom (with a small threshold)
+    const isAtBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < 20;
+
+    if (isAtBottom) {
+      // Reset unread count for this chat
+      setChatList((prev) =>
+        prev.map((chat) => {
+          if (chat.chatId === selectedChatInfo.ChatID && chat.unread > 0) {
+            console.log("Resetting unread count for chat:", selectedChatInfo.ChatID);
+            return { ...chat, unread: 0 };
+          }
+          return chat;
+        })
+      );
+    }
+  };
+
+  // Add this useEffect to set up the scroll listener
+  useEffect(() => {
+    const container = messageContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleChatScroll);
+
+      return () => {
+        container.removeEventListener('scroll', handleChatScroll);
+      };
+    }
+  }, [selectedChatInfo]); // Depend on selectedChatInfo to re-add listener when chat changes
+
+  // Add this useEffect to set up the scroll listener
+  useEffect(() => {
+    const container = messageContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleChatScroll);
+
+      return () => {
+        container.removeEventListener('scroll', handleChatScroll);
+      };
+    }
+  }, [selectedChatInfo]); // Depend on selectedChatInfo to re-add listener when chat changes
   useEffect(() => {
     const container = messageContainerRef.current;
 
@@ -265,7 +310,10 @@ function Home() {
               setChatList((prev) =>
                 prev.map((chat) => {
                   if (chat.chatId === data.chatId) {
-                    return { ...chat, unread: (chat.unread || 0) + 1 };
+                    return { ...chat, message: data.message.content, time: new Date(data.message.timestamp || Date.now()).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }), unread: (chat.unread || 0) + 1 };
                   }
                   return chat;
                 })
@@ -356,8 +404,11 @@ function Home() {
           id: parseInt(chat.otherUserId) || Math.floor(Math.random() * 1000),
           image: chat.imageUrl || "/default-avatar.png", // Provide a default image path
           name: chat.chatName || "Chat",
-          message: "Click to view messages", // Placeholder message
-          time: new Date(chat.CreatedDate).toLocaleTimeString([], {
+          message: (chat.lastMessage) ? (((chat.lastMessage.content === "") ? ((chat.lastMessage.type) ? `Sent a ${chat.lastMessage.type}` : "Click to view messages") : chat.lastMessage.content)) : "No messages yet"  || "Click to view messages", // Placeholder message
+          time: (chat.lastMessage && chat.lastMessage.timestamp) ? new Date(chat.lastMessage.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }) : new Date(chat.CreatedDate).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           }),
@@ -428,7 +479,7 @@ function Home() {
         // Fetch previous messages using the correct endpoint
         try {
           // Get 20 previous messages (you can adjust this number)
-          const messageCount = 20;
+          const messageCount = 30;
           const messagesResponse = await fetch(
             `${apiBaseUrl}/chat/${chatId}/history/${messageCount}`
           );
@@ -506,6 +557,18 @@ function Home() {
       },
     };
 
+    setChatList((prev) =>
+      prev.map((chat) => {
+        if (chat.chatId === messageObj.chatId) {
+          console.log('update')
+          return { ...chat, message: messageObj.messagePayload.content, time: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })};
+        }
+        return chat;
+      })
+    );
     // Send via WebSocket
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(messageObj));
@@ -586,7 +649,18 @@ function Home() {
         senderId: userId,
       },
     };
-
+    setChatList((prev) =>
+      prev.map((chat) => {
+        if (chat.chatId === messageObj.chatId) {
+          console.log('update')
+          return { ...chat, message: messageObj.messagePayload.content, time: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })};
+        }
+        return chat;
+      })
+    );
     // Send via WebSocket
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(messageObj));
@@ -822,13 +896,27 @@ function Home() {
 
                   return newMessages;
                 });
+                setChatList((prev) =>
+                  prev.map((chat) => {
+                    if (chat.chatId === data.chatId) {
+                      return { ...chat, message: data.message.content, time: new Date(data.message.timestamp || Date.now()).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })};
+                    }
+                    return chat;
+                  })
+                );
               } else {
                 console.log("Message is for a different chat");
                 // Update unread count for chat in the list
                 setChatList((prev) =>
                   prev.map((chat) => {
                     if (chat.chatId === data.chatId) {
-                      return { ...chat, unread: (chat.unread || 0) + 1 };
+                      return { ...chat, message: data.message.content, time: new Date(data.message.timestamp || Date.now()).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }), unread: (chat.unread || 0) + 1 };
                     }
                     return chat;
                   })
@@ -1220,6 +1308,7 @@ function Home() {
                 </div>
               </div>
               <div
+                ref={messageContainerRef}
                 className="space-y-4 pt-10 px-2 max-h-[calc(100vh-200px)] overflow-y-auto"
                 style={{ height: "calc(100vh - 200px)" }}
               >

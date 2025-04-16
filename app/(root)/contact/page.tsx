@@ -4,7 +4,6 @@
 import React, { useEffect } from "react";
 import { Button, Input } from "@nextui-org/react";
 import { useTranslation } from "react-i18next";
-import { listFriends } from "@/constant/data";
 import { Friend } from "@/constant/type";
 import {
   faMessage,
@@ -27,12 +26,13 @@ const groupFriendsByLetter = (friends: Friend[]) => {
 };
 
 export default function ContactPage() {
+  const [friendsList, setFriendsList] = React.useState<Friend[]>([]);
   const { t } = useTranslation("common");
-  const groupedFriends = groupFriendsByLetter(listFriends);
+  const groupedFriends = groupFriendsByLetter(friendsList);
   const sortedLetters = Object.keys(groupedFriends).sort();
   const router = useRouter();
   const [userId, setUserId] = React.useState<string | null>(null);
-  const [friendsList, setFriendsList] = React.useState<Friend[]>([]);
+
 
   const fetchFriendsList = async (userId: string) => {
     try {
@@ -44,6 +44,7 @@ export default function ContactPage() {
       const data = await response.json();
 
       if (data.success) {
+        setFriendsList(data.data)
       } else {
         console.error("Failed to fetch chat list");
       }
@@ -87,13 +88,14 @@ export default function ContactPage() {
               >
                 <div className="flex items-center gap-4">
                   <img
-                    src={friend.avatar}
+                    src={friend.imageUrl}
                     alt={friend.name}
                     className="w-12 h-12 rounded-full"
                   />
                   <div>
                     <p className="font-semibold">{friend.name}</p>
-                    <p className="text-sm text-gray-500">{friend.status}</p>
+                    {/*//temporary set this as the location, since the status is not the profile bio*/}
+                    <p className="text-sm text-gray-500">{friend.location ?? "No location set"}</p>
                     <p className="text-sm text-gray-400">({friend.phone})</p>
                   </div>
                 </div>

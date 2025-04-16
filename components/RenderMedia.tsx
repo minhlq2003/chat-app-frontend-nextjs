@@ -30,7 +30,7 @@ function getFileIcon(type: string) {
 export default function RenderMedia({ data }: { data: any }) {
   const { imageList, linkList, fileList } = data;
 
-  const listLink = linkList.map((msg) => ({
+  const listLink = linkList.map((msg: { messageId: any; content: { slice: (arg0: number, arg1: number) => any; match: (arg0: RegExp) => any[]; }; senderImage: any; timestamp: string | number | Date; }) => ({
     id: msg.messageId,
     title: msg.content.slice(0, 30),
     url:
@@ -43,14 +43,14 @@ export default function RenderMedia({ data }: { data: any }) {
   const getFileType = (url: string) =>
     url.split(".").pop()?.toLowerCase() || "unknown";
 
-  const files = fileList.map((msg) => ({
+  const files = fileList.map((msg: { attachmentUrl: string; }) => ({
     url: msg.attachmentUrl,
     name: msg.attachmentUrl?.split("/").pop() || "Unknown file",
     size: "5mb",
     type: getFileType(msg.attachmentUrl!),
   }));
 
-  console.log("Files", files);
+  //console.log("Files", files);
 
   return (
     <Accordion
@@ -75,7 +75,7 @@ export default function RenderMedia({ data }: { data: any }) {
 
       <AccordionItem key="2" aria-label="Link" title="Link">
         <div className="space-y-4">
-          {listLink.map((item) => (
+          {listLink.map((item: { id: React.Key | null | undefined; url: string | undefined; }) => (
             <div key={item.id} className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <FontAwesomeIcon icon={faLink} />
@@ -97,8 +97,8 @@ export default function RenderMedia({ data }: { data: any }) {
 
       <AccordionItem key="3" aria-label="File" title="File">
         <div className="flex flex-col gap-2">
-          {files.map((file, idx) => {
-            console.log("File", file);
+          {files.map((file: { type: string; name: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | Iterable<React.ReactNode> | null | undefined; url: string | undefined; }, idx: React.Key | null | undefined) => {
+            //console.log("File", file);
 
             const { icon, color } = getFileIcon(file.type);
             return (

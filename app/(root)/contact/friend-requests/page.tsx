@@ -1,19 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
-
-interface friendRequest {
-  requestId: string;
-  senderId: string;
-  senderName?: string;
-  senderEmail?: string;
-  senderPhone?: string;
-  senderImage?: string;
-  status?: string;
-  createdAt?: string;
-}
+import { notification } from 'antd';
+import type { NotificationArgsProps } from 'antd';
 
 const Page = () => {
   const [listRequests, setListRequests] = useState<friendRequest[]>([]);
@@ -21,6 +10,18 @@ const Page = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+
+  // For notifications
+  const [api, contextHolder] = notification.useNotification();
+
+  const showNotification = (message: string, type: 'success' | 'error' | 'info' | 'warning') => {
+    api[type]({
+      message: type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Notification',
+      description: message,
+      placement: 'topRight',
+      duration: 3,
+    });
+  };
 
   interface friendRequest {
     requestId: string;
@@ -75,13 +76,13 @@ const Page = () => {
       })
     }
 
-    async function handleAccept(senderId: string) {
+  async function handleDeny(senderId: string) {
     try {
-      const response = await fetch(`${apiBaseUrl}/contact/accept?userId=${userId}&senderId=${senderId}`, {
+      const response = await fetch(`${apiBaseUrl}/contact/deny?userId=${userId}&senderId=${senderId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-    }
+        }
       });
 
       const data = await response.json();
@@ -90,28 +91,60 @@ const Page = () => {
         // Remove the accepted request from the list to update UI
         setListRequests(prevRequests =>
           prevRequests.filter(request => request.senderId !== senderId)
-  );
+        );
 
-        // Optionally show a success message
-        alert("Friend request accepted successfully!");
+        // Show success notification
+        showNotification("Friend request deny successfully!", "success");
       } else {
-        // Handle error
-        alert("Failed to accept friend request: " + (data.message || "Unknown error"));
+        // Show error notification
+        showNotification("Failed to deny friend request: " + (data.message || "Unknown error"), "error");
+      }
+    } catch (error) {
+      console.error("Error denying friend request:", error);
+      showNotification("An error occurred while denying the friend request", "error");
+    }
+  }
+
+    async function handleAccept(senderId: string) {
+    try {
+      const response = await fetch(`${apiBaseUrl}/contact/accept?userId=${userId}&senderId=${senderId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Remove the accepted request from the list to update UI
+        setListRequests(prevRequests =>
+          prevRequests.filter(request => request.senderId !== senderId)
+        );
+
+        // Show success notification
+        showNotification("Friend request accepted successfully!", "success");
+      } else {
+        // Show error notification
+        showNotification("Failed to accept friend request: " + (data.message || "Unknown error"), "error");
       }
     } catch (error) {
       console.error("Error accepting friend request:", error);
-      alert("An error occurred while accepting the friend request");
+      showNotification("An error occurred while accepting the friend request", "error");
     }
   }
 
   return (
-    <div className="bg-white text-black p-6 space-y-6 min-h-screen">
-      <h2 className="text-xl font-semibold">Lời mời kết bạn</h2>
+    <div className="bg-white text-black p-6 space-y-6">
+      {/* Include the notification context holder */}
+      {contextHolder}
+
+      <h2 className="text-xl font-semibold">Friend Requests</h2>
 
       {/* Received */}
       <div>
         <h3 className="text-lg font-medium mb-3">
-          Lời mời đã nhận ({listRequests.length})
+          Received Requests ({listRequests.length})
         </h3>
         <div className="grid md:grid-cols-3 gap-4">
           {listRequests.map((f, index) => (
@@ -127,13 +160,13 @@ const Page = () => {
                   <div className="text-sm text-gray-500">
                     {f.createdAt ? f.createdAt.split("T")[0] : "Unknown date"} - From phone number
                   </div>
-                  <div className="mt-2 text-sm">Xin chào, mình tên là {f.senderName}. Kết bạn với mình nhé!</div>
+                  <div className="mt-2 text-sm">Hi there, i'm {f.senderName}. Wanna be friends?</div>
                   <div className="mt-3 flex space-x-2">
-                    <button className="px-3 py-1 text-sm border rounded hover:bg-gray-200">
-                      Từ chối
+                    <button onClick={()=> handleAccept(f.senderId)} className="px-3 py-1 text-sm border rounded hover:bg-gray-200">
+                      Deny
                     </button>
                     <button onClick={()=> handleAccept(f.senderId)} className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">
-                      Đồng ý
+                      Accept
                     </button>
                   </div>
                 </div>
@@ -146,7 +179,7 @@ const Page = () => {
       {/* Sent */}
       <div>
         <h3 className="text-lg font-medium mb-3">
-          Lời mời đã gửi ({listSentRequests.length})
+          Sent Requests ({listSentRequests.length})
         </h3>
         <div className="grid md:grid-cols-3 gap-4">
           {listSentRequests.map((f, index) => (
@@ -163,12 +196,12 @@ const Page = () => {
                 <div>
                   <div className="font-medium">{f.receiverName}</div>
                   <div className="text-sm text-gray-500">
-                    Bạn đã gửi lời mời
+                    Request sent
                   </div>
                 </div>
               </div>
               <button className="text-sm border px-3 py-1 rounded hover:bg-gray-200">
-                Thu hồi lời mời
+                Revoke request
               </button>
             </div>
           ))}

@@ -24,20 +24,20 @@ export default function ChatItem({
         }
       }}
     >
-      <Image src={image} alt="People 01" width={48} height={48} className="w-[48px] h-[48px] rounded-full" />
-      <div className="flex flex-row justify-between w-full">
-        <div className="">
-          <p className="text-sm font-medium text-black">{name}</p>
-          <p className="text-[12px] text-black/50 line-clamp-1">{message}</p>
+      <Image src={image} alt="People 01" width={48} height={48} className="w-[48px] h-[48px] rounded-full flex-shrink-0" />
+      <div className="flex flex-row justify-between w-full min-w-0">
+        <div className="flex-grow min-w-0 mr-2">
+          <p className="text-sm font-medium text-black truncate">{name}</p>
+          <p className="text-[12px] text-black/50 truncate">{message}</p>
         </div>
-        <div className="flex flex-col items-end justify-start">
-          <div className="flex">
-            {pin && <Image src={PinIcon} width={18} height={18} alt="Pin" />}
-            <p className="text-[12px] text-black/50">{time}</p>
+        <div className="flex flex-col items-end justify-start flex-shrink-0">
+          <div className="flex items-center">
+            {pin && <Image src={PinIcon} width={18} height={18} alt="Pin" className="mr-1" />}
+            <p className="text-[12px] text-black/50 whitespace-nowrap">{time}</p>
           </div>
           {unread > 0 && (
             <div className="bg-customPurple rounded-full w-[16px] h-[16px] flex items-center justify-center">
-              <p className="text-white text-[12px] ">{unread}</p>
+              <p className="text-white text-[12px]">{unread}</p>
             </div>
           )}
         </div>

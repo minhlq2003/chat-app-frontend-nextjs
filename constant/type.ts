@@ -92,6 +92,8 @@ export interface TemporaryUserProps {
 }
 
 export interface Friend {
+  imageUrl: string;
+  location: string | "No location set";
   id: number;
   name: string;
   status: string;
