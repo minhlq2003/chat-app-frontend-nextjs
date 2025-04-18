@@ -76,6 +76,8 @@ export interface ProfileInfoItemProps {
   text: string;
   altText: string;
   textStyle?: string;
+  className?: string;
+  onClick?: () => void;
 }
 
 export interface TemporaryUserProps {
