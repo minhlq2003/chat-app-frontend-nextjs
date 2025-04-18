@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { noUserImage, pencil } from "@/constant/image";
+import Image from "next/image";
+import React, { useEffect, useRef, useState } from "react";
 
 interface FriendSuggestion {
   id: number;
@@ -118,7 +120,52 @@ export default function AddGroupModal({ onClose }: { onClose: () => void }) {
   };
 
   const [contacts, setContacts] = useState<Contact[]>([]);
+const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      alert("Image selected: " + file.name);
+      /* try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const imageUrl = data.imageUrl;
+
+          setTemporaryUser((prev) => ({
+            ...(prev || {
+              id: -1,
+              name: "",
+              password: "",
+              phone: "",
+              image: null,
+              location: null,
+              birthday: null,
+              email: "",
+            }),
+            image: imageUrl,
+          }));
+        } else {
+          console.error("Image upload failed:", await response.json());
+          alert("Failed to upload image. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error during image upload:", error);
+        alert("An error occurred while uploading the image.");
+      } */
+    }
+  };
   return (
     <div
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
@@ -136,6 +183,30 @@ export default function AddGroupModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
+        <div className="relative flex items-center justify-center">
+          
+          <div onClick={handleImageClick}>
+          <Image
+            width={120}
+            height={120}
+            src={noUserImage}
+            alt="User Image"
+            className="size-[100px] rounded-full"
+          />
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
+          />
+        </div>
+
+        <div className="flex items-center justify-between w-full p-4 border-b border-white/10">
+          <input type="text" placeholder="Enter group name" className="bg-transparent border p-2 rounded-md outline-none flex-1 text-sm placeholder-black/40" />
+        </div>
+
         {/* Phone input */}
         <div className="flex items-center gap-2 p-4 border-b border-black/10">
           <div className="bg-black/10 px-2 py-2 rounded text-sm">VN (+84)</div>
@@ -148,81 +219,9 @@ export default function AddGroupModal({ onClose }: { onClose: () => void }) {
           />
         </div>
 
-        {/* Recent results */}
         <div className="p-4 flex flex-col gap-3">
-          <p className="text-sm  text-black">Results</p>
-          <div className="max-h-[170px] overflow-y-auto">
-            {phone.trim().length === 0 || searchResults.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-sm text-gray-500 p-4">
-                <p>
-                  No friends found. Perhaps you should try a different number?
-                </p>
-              </div>
-            ) : (
-              searchResults.map((user) => (
-                <div
-                  key={user.userId}
-                  className="flex items-center justify-between gap-3 p-2 hover:bg-gray-100 rounded"
-                >
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={
-                        user.imageUrl ||
-                        `https://ui-avatars.com/api/?name=${user.name}`
-                      }
-                      className="w-10 h-10 rounded-full object-cover"
-                      alt={user.name}
-                    />
-                    <div>
-                      <p className="font-medium">{user.name}</p>
-                      {user.phone && (
-                        <p className="text-xs text-black/50">{user.phone}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    {user.friend ? (
-                      <button className="min-w-[90px] text-sm border border-blue-500 text-blue-500 px-3 py-1 rounded hover:bg-blue-500 hover:text-white transition">
-                        Add Group
-                      </button>
-                    ) : sentUsers.includes(user.userId) ? (
-                      <button
-                        className="min-w-[90px] text-sm border border-gray-400 text-gray-400 px-3 py-1 rounded cursor-not-allowed"
-                        disabled
-                      >
-                        Sent
-                      </button>
-                    ) : (
-                      <div>
-                        {user.friendRequestSent ? (
-                          <button
-                            className="min-w-[90px] text-sm border border-gray-400 text-gray-400 px-3 py-1 rounded cursor-not-allowed"
-                            disabled
-                          >
-                            Sent
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              if (userId) handleAddContact(userId, user.userId);
-                              else console.error("User ID is null");
-                            }}
-                            className="min-w-[90px] text-sm border border-blue-500 text-blue-500 px-3 py-1 rounded hover:bg-blue-500 hover:text-white transition"
-                          >
-                            Add Friend
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Suggested friends */}
           <p className="text-sm text-black mt-4">Friends Lists</p>
-          <div className="max-h-[220px] overflow-y-auto">
+          <div className="max-h-[160px] overflow-y-auto">
             {contacts.map((user) => (
               <div
                 key={user.contactId}
