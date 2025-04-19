@@ -21,9 +21,9 @@ const Sidebar = () => {
   const router = useRouter();
   const currentLang =
     searchParams.get("lang") || localStorage.getItem("lang") || "en";
-  console.log("i18n language:", i18n.language);
+/*  console.log("i18n language:", i18n.language);
   console.log("i18n namespace:", i18n.options.ns);
-  console.log("i18n resources:", i18n.options.resources);
+  console.log("i18n resources:", i18n.options.resources);*/
 
   const changeLanguage = (newLang: string) => {
     i18n.changeLanguage(newLang);

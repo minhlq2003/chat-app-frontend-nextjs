@@ -76,6 +76,8 @@ export interface ProfileInfoItemProps {
   text: string;
   altText: string;
   textStyle?: string;
+  className?: string;
+  onClick?: () => void;
 }
 
 export interface TemporaryUserProps {
@@ -92,9 +94,24 @@ export interface TemporaryUserProps {
 }
 
 export interface Friend {
+  imageUrl: string;
+  location: string | "No location set";
   id: number;
   name: string;
   status: string;
   phone: string;
   avatar: string;
+}
+
+export interface Message {
+  messageId?: number;
+  userId?: number;
+  type?: string;
+  timestamp?: Date;
+  content?: string;
+  attachmentUrl?: string | null;
+  deleteReason?: string | null;
+  senderName?: string;
+  senderImage?: string;
+  reactions?: string[];
 }

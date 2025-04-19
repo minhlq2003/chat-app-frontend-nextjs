@@ -73,7 +73,7 @@ const Page = () => {
     if (formData.password !== undefined) {
       const password = formData.password || "";
       const passwordRegex =
-        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{9,}$/;
+        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?])(?!.*\s).{9,}$/;
       if (!passwordRegex.test(password)) {
         newErrors.password =
           "Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character.";

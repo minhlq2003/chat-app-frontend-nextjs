@@ -113,16 +113,16 @@ const Page = () => {
       newErrors.birthday = "Birthday is required.";
     }
 
-    if (temporaryUser?.password !== undefined) {
+/*    if (temporaryUser?.password !== undefined) {
       const password = temporaryUser.password || "";
       const passwordRegex =
-        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])(?!.*\s).{9,}$/;
+        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?])(?!.*\s).{9,}$/;
 
       if (!passwordRegex.test(password.trim())) {
         newErrors.password =
           "Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character.";
       }
-    }
+    }*/
 
     setErrors(newErrors);
 
@@ -276,7 +276,7 @@ const Page = () => {
                 } as TemporaryUserProps)
               }
             />
-            {isGoogleLogin && (
+{/*            {isGoogleLogin && (
               <InputField
                 type="password"
                 image={BlackKey}
@@ -293,7 +293,7 @@ const Page = () => {
                   } as TemporaryUserProps)
                 }
               />
-            )}
+            )}*/}
             <InputField
               image={CalendarIcon}
               type="date"
