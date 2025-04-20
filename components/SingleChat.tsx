@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, { Children } from "react";
+import React from "react";
 import IconButton from "./IconButton";
 import {
   CallIcon,
@@ -10,11 +10,7 @@ import {
   SearchIcon,
   SendIcon,
 } from "@/constant/image";
-import {
-  faDownload,
-  faFile,
-  faFileWord,
-} from "@fortawesome/free-solid-svg-icons";
+import { faFile, faFileWord } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
@@ -71,10 +67,7 @@ const SingleChat = ({
   handleFileSelect: () => void;
   handleFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  renderMessage: (
-    msg: any,
-    isOwn: boolean
-  ) => React.ReactNode;
+  renderMessage: (msg: any, isOwn: boolean) => React.ReactNode;
 }) => {
   return (
     <div>

@@ -5,6 +5,7 @@ import {
   faAddressBook,
   faBell,
   faUserFriends,
+  faUserGroup,
   faUserPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -14,6 +15,7 @@ import { SearchIcon } from "@/constant/image";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import AddFriendModal from "@/components/AddFriendModel";
+import AddGroupModal from "@/components/AddGroupModel";
 
 export default function ContactLayout({
   children,
@@ -21,7 +23,8 @@ export default function ContactLayout({
   children: React.ReactNode;
 }) {
   const { t } = useTranslation("common");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isOpenModalAddFriend, setIsOpenModalAddFriend] = useState(false);
+  const [isOpenModalAddGroup, setIsOpenModalAddGroup] = useState(false);
 
   return (
     <div className="grid grid-cols-9 gap-2 h-screen">
@@ -43,9 +46,15 @@ export default function ContactLayout({
             />
             <Button
               className="bg-transparent px-0 min-w-[40px]"
-              onPress={() => setIsModalOpen(true)}
+              onPress={() => setIsOpenModalAddFriend(true)}
             >
               <FontAwesomeIcon icon={faUserPlus} />
+            </Button>
+            <Button
+              className="bg-transparent px-0 min-w-[40px]"
+              onPress={() => setIsOpenModalAddGroup(true)}
+            >
+              <FontAwesomeIcon icon={faUserGroup} />
             </Button>
           </div>
         </div>
@@ -58,13 +67,13 @@ export default function ContactLayout({
             />
             <p className="font-medium text-[20px] ml-2">{t("Friend List")}</p>
           </a>
-          <div className="flex">
+          <a href="/contact/your-groups" className="flex">
             <FontAwesomeIcon
               icon={faUserFriends}
               className="h-[25px] w-[25px] pr-2"
             />
             <p className="font-medium text-[20px] ml-2">{t("Your Group")}</p>
-          </div>
+          </a>
           <a href="/contact/friend-requests" className="flex">
             <FontAwesomeIcon
               icon={faUserPlus}
@@ -84,7 +93,12 @@ export default function ContactLayout({
       {/* Main Content */}
       <div className="col-span-7 p-4 bg-white rounded-xl">{children}</div>
 
-      {isModalOpen && <AddFriendModal onClose={() => setIsModalOpen(false)} />}
+      {isOpenModalAddFriend && (
+        <AddFriendModal onClose={() => setIsOpenModalAddFriend(false)} />
+      )}
+      {isOpenModalAddGroup && (
+        <AddGroupModal onClose={() => setIsOpenModalAddGroup(false)} />
+      )}
     </div>
   );
 }

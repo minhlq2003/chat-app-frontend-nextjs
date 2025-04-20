@@ -115,3 +115,22 @@ export interface Message {
   senderImage?: string;
   reactions?: string[];
 }
+
+export interface GroupChat {
+  chatId: string;
+  chatName: string;
+  imageUrl?: string;
+  members: {
+    userId: number;
+    name: string;
+    imageUrl?: string;
+    phone?: string;
+    email?: string;
+    location?: string;
+  }[];
+  latestMessage?: {
+    content: string;
+    timestamp: string;
+    senderName: string;
+  };
+}

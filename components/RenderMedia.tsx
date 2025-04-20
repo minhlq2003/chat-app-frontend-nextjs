@@ -108,7 +108,7 @@ export default function RenderMedia({ data }: { data: any }) {
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 flex items-center justify-center rounded-lg ${color}`}
+                    className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-lg ${color}`}
                   >
                     <FontAwesomeIcon
                       icon={icon}
@@ -117,7 +117,7 @@ export default function RenderMedia({ data }: { data: any }) {
                     />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-black">
+                    <p className="text-sm font-medium break-all text-black">
                       {file.name}
                     </p>
                   </div>

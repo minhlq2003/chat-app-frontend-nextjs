@@ -1410,7 +1410,9 @@ function Home() {
                       text="Create group"
                       altText="Create group"
                       className="cursor-pointer"
-                      onClick={() => setIsModalOpen(true)}
+                      onClick={() => {
+                        setIsModalOpen(true);
+                      }}
                     />
                     <UserInfoItem
                       icon={BlockIcon}
@@ -1428,7 +1430,12 @@ function Home() {
           </div>
         )}
       </div>
-      {isModalOpen && <AddGroupModal onClose={() => setIsModalOpen(false)} />}
+      {isModalOpen && (
+        <AddGroupModal
+          selectedUser={userInfo?.id.toString()}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

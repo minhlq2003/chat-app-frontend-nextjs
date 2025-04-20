@@ -1,58 +1,67 @@
 "use client";
 
-import { noUserImage, pencil } from "@/constant/image";
+import { noUserImage } from "@/constant/image";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
+import { Checkbox } from "antd";
 
 interface FriendSuggestion {
-  id: number;
+  userId: string;
   name: string;
   phone?: string;
-  avatar: string;
-  type: "recent" | "suggested";
+  email?: string;
+  imageUrl?: string;
+  friend?: boolean;
+  friendRequestSent?: boolean;
 }
 
-const suggestions: FriendSuggestion[] = [];
+type Contact = {
+  contactId: string;
+  name: string;
+  status: string;
+  email: string;
+  phone: string;
+  imageUrl: string;
+  location: string;
+};
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
 
-export default function AddGroupModal({ onClose }: { onClose: () => void }) {
-  interface FriendSuggestion {
-    userId: string;
-    name: string;
-    phone?: string;
-    email?: string;
-    imageUrl?: string;
-    friend?: boolean;
-    friendRequestSent?: boolean;
-  }
+export default function AddGroupModal({
+  onClose,
+  selectedUser,
+}: {
+  onClose: () => void;
+  selectedUser?: string;
+}) {
   const [phone, setPhone] = useState("");
   const [searchResults, setSearchResults] = useState<FriendSuggestion[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
-  const [sentUsers, setSentUsers] = useState<string[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>(
+    selectedUser ? [selectedUser] : []
+  );
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   useEffect(() => {
     const userStr = localStorage.getItem("user");
     const user = JSON.parse(userStr || "{}");
     const userId = user.id;
     setUserId(userId);
-  }, [userId]);
+  }, []);
+
   useEffect(() => {
     if (!userId) return;
 
     fetch(`${apiBaseUrl}/contact/list?userId=${userId}`)
       .then((res) => res.json())
       .then((data) => {
-        console.log("Contacts fetched successfully:", data.data);
         setContacts(data.data || []);
       })
-      .catch((err) => {
-        console.error("Error fetching contact:", err);
-        setContacts([]);
-      });
-  }, [userId]); // <-- Run only when userId changes
+      .catch(() => setContacts([]));
+  }, [userId]);
 
-  // Search contact by phone with debounce
   useEffect(() => {
     if (!userId) return;
 
@@ -63,136 +72,61 @@ export default function AddGroupModal({ onClose }: { onClose: () => void }) {
           .then((data) => {
             setSearchResults(data.data || []);
           })
-          .catch((err) => {
-            console.error("Error searching contact:", err);
-            setSearchResults([]);
-          });
+          .catch(() => setSearchResults([]));
       } else {
-        setSearchResults([]); // Clear when input is empty
+        setSearchResults([]);
       }
     }, 500);
 
     return () => clearTimeout(delayDebounce);
-  }, [phone, userId]); // <-- Watch phone and userId for search
-
-  const addContact = async (userId: string, contactId: string) => {
-    try {
-      const response = await fetch(
-        `${apiBaseUrl}/contact/add?userId=${userId}&contactId=${contactId}`,
-        {
-          method: "POST",
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to add contact");
-      }
-
-      return data; // contains success message or result
-    } catch (error) {
-      console.error("Error adding contact:", error);
-      throw error;
-    }
-  };
-
-  const handleAddContact = async (userId: string, contactId: string) => {
-    try {
-      const result = await addContact(userId, contactId);
-      if (result.success) {
-        setSentUsers((prev) => [...prev, contactId]);
-        console.log("Friend request sent!");
-      }
-    } catch (error) {
-      console.error("Error sending request:", error);
-    }
-  };
-
-  type Contact = {
-    contactId: string;
-    name: string;
-    status: string;
-    email: string;
-    phone: string;
-    imageUrl: string;
-    location: string;
-  };
-
-  const [contacts, setContacts] = useState<Contact[]>([]);
-const fileInputRef = useRef<HTMLInputElement | null>(null);
+  }, [phone, userId]);
 
   const handleImageClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       alert("Image selected: " + file.name);
-      /* try {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`, {
-          method: "POST",
-          body: formData,
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const imageUrl = data.imageUrl;
-
-          setTemporaryUser((prev) => ({
-            ...(prev || {
-              id: -1,
-              name: "",
-              password: "",
-              phone: "",
-              image: null,
-              location: null,
-              birthday: null,
-              email: "",
-            }),
-            image: imageUrl,
-          }));
-        } else {
-          console.error("Image upload failed:", await response.json());
-          alert("Failed to upload image. Please try again.");
-        }
-      } catch (error) {
-        console.error("Error during image upload:", error);
-        alert("An error occurred while uploading the image.");
-      } */
     }
   };
+
+  const toggleSelectUser = (id: string) => {
+    setSelectedUsers((prev) =>
+      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
+    );
+  };
+
+  const isSelected = (id: string) => selectedUsers.includes(id);
+
   return (
     <div
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
       onClick={onClose}
     >
       <div
-        className="bg-white text-black w-[500px] h-[70vh] rounded-lg shadow-lg"
+        className="bg-white text-black w-[500px] h-[70vh] rounded-lg shadow-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <h2 className="font-semibold">Add Group</h2>
+          <h2 className="font-semibold">Create Group</h2>
           <button onClick={onClose} className="text-black text-xl">
             &times;
           </button>
         </div>
 
-        <div className="relative flex items-center justify-center">
-          
+        {/* Group Avatar Upload */}
+        <div className="relative flex items-center justify-center p-4">
           <div onClick={handleImageClick}>
-          <Image
-            width={120}
-            height={120}
-            src={noUserImage}
-            alt="User Image"
-            className="size-[100px] rounded-full"
-          />
+            <Image
+              width={120}
+              height={120}
+              src={noUserImage}
+              alt="User Image"
+              className="size-[100px] rounded-full"
+            />
           </div>
           <input
             ref={fileInputRef}
@@ -203,8 +137,30 @@ const fileInputRef = useRef<HTMLInputElement | null>(null);
           />
         </div>
 
+        {/* Group Name Input */}
         <div className="flex items-center justify-between w-full p-4 border-b border-white/10">
-          <input type="text" placeholder="Enter group name" className="bg-transparent border p-2 rounded-md outline-none flex-1 text-sm placeholder-black/40" />
+          <input
+            type="text"
+            placeholder="Enter group name"
+            className="bg-transparent border p-2 rounded-md outline-none flex-1 text-sm placeholder-black/40"
+          />
+        </div>
+
+        {/* Selected Avatars */}
+        <div className="flex gap-2 px-4 overflow-x-auto">
+          {contacts
+            .filter((c) => selectedUsers.includes(c.contactId))
+            .map((user) => (
+              <img
+                key={user.contactId}
+                src={
+                  user.imageUrl ||
+                  `https://ui-avatars.com/api/?name=${user.name}`
+                }
+                alt={user.name}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ))}
         </div>
 
         {/* Phone input */}
@@ -219,6 +175,7 @@ const fileInputRef = useRef<HTMLInputElement | null>(null);
           />
         </div>
 
+        {/* Friends List with Checkboxes */}
         <div className="p-4 flex flex-col gap-3">
           <p className="text-sm text-black mt-4">Friends Lists</p>
           <div className="max-h-[160px] overflow-y-auto">
@@ -243,9 +200,10 @@ const fileInputRef = useRef<HTMLInputElement | null>(null);
                     )}
                   </div>
                 </div>
-                <button className="min-w-[90px] text-sm border border-blue-500 text-blue-500 px-3 py-1 rounded hover:bg-blue-500 hover:text-white transition">
-                  Add Group
-                </button>
+                <Checkbox
+                  checked={isSelected(user.contactId)}
+                  onChange={() => toggleSelectUser(user.contactId)}
+                />
               </div>
             ))}
           </div>
@@ -258,6 +216,16 @@ const fileInputRef = useRef<HTMLInputElement | null>(null);
             className="text-black bg-gray-400 px-4 py-1 hover:bg-gray-500 rounded"
           >
             Cancel
+          </button>
+          <button
+            disabled={selectedUsers.length < 2}
+            className={`px-4 py-1 rounded ${
+              selectedUsers.length >= 2
+                ? "bg-blue-500 text-white hover:bg-blue-600"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            Create Group
           </button>
         </div>
       </div>
