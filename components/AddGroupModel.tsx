@@ -3,9 +3,10 @@
 import { noUserImage } from "@/constant/image";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import { Checkbox } from "antd";
+import { Checkbox, notification } from "antd";
 
 interface FriendSuggestion {
+  contactId: string;
   userId: string;
   name: string;
   phone?: string;
@@ -25,6 +26,12 @@ type Contact = {
   location: string;
 };
 
+interface temporaryGroupProps {
+  name: string;
+  image: string | null;
+  members: string[] | null;
+}
+
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
 
@@ -42,7 +49,24 @@ export default function AddGroupModal({
   const [selectedUsers, setSelectedUsers] = useState<string[]>(
     selectedUser ? [selectedUser] : []
   );
+  const [temporaryGroup, setTemporaryGroup] = useState<temporaryGroupProps>({
+    name: "",
+    image: null,
+    members: (selectedUser) ? [selectedUser]:  [],
+  });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // For notifications
+  const [api, contextHolder] = notification.useNotification();
+
+  const showNotification = (message: string, type: 'success' | 'error' | 'info' | 'warning') => {
+    api[type]({
+      message: type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Notification',
+      description: message,
+      placement: 'topRight',
+      duration: 3,
+    });
+  };
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -52,12 +76,22 @@ export default function AddGroupModal({
   }, []);
 
   useEffect(() => {
+    setTemporaryGroup({...temporaryGroup, members: selectedUsers})
+  }, [selectedUsers]);
+
+  useEffect(() => {
+    console.log(temporaryGroup)
+  }, [temporaryGroup]);
+
+  useEffect(() => {
     if (!userId) return;
 
     fetch(`${apiBaseUrl}/contact/list?userId=${userId}`)
       .then((res) => res.json())
       .then((data) => {
         setContacts(data.data || []);
+        setSearchResults(data.data || []);
+
       })
       .catch(() => setContacts([]));
   }, [userId]);
@@ -73,29 +107,98 @@ export default function AddGroupModal({
             setSearchResults(data.data || []);
           })
           .catch(() => setSearchResults([]));
-      } else {
-        setSearchResults([]);
-      }
+        } else {
+        setSearchResults(contacts);
+        }
     }, 500);
 
     return () => clearTimeout(delayDebounce);
-  }, [phone, userId]);
+  }, [phone]);
 
   const handleImageClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCreateGroup = async () => {
+    try {
+      if (!userId) {
+        showNotification("User ID not found. Please log in again.", "error");
+        return;
+      }
+
+      if (!temporaryGroup.name.trim()) {
+        showNotification("Please enter a group name", "warning");
+        return;
+      }
+
+      if (!temporaryGroup.members || temporaryGroup.members.length < 2) {
+        showNotification("Please select at least 2 members for the group", "warning");
+        return;
+      }
+
+      const requestBody = {
+        name: temporaryGroup.name,
+        image: temporaryGroup.image || "",
+        ownerId: userId,
+        initialMembers: temporaryGroup.members
+  };
+
+      const response = await fetch(`${apiBaseUrl}/group/create`, {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showNotification("Group created successfully!", "success");
+        onClose(); // Close the modal on success
+      } else {
+        showNotification(`Failed to create group: ${data.message || "Unknown error"}`, "error");
+      }
+    } catch (error) {
+      console.error("Error creating group:", error);
+      showNotification("An error occurred while creating the group", "error");
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      alert("Image selected: " + file.name);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const imageUrl = data.imageUrl;
+          setTemporaryGroup({
+            ...temporaryGroup,
+            image: imageUrl,
+          })
+        } else {
+          console.error("Image upload failed:", await response.json());
+          alert("Failed to upload image. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error during image upload:", error);
+        alert("An error occurred while uploading the image.");
+      }
     }
   };
 
   const toggleSelectUser = (id: string) => {
     setSelectedUsers((prev) =>
       prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
-    );
+  );
   };
 
   const isSelected = (id: string) => selectedUsers.includes(id);
@@ -105,6 +208,9 @@ export default function AddGroupModal({
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
       onClick={onClose}
     >
+      {/* Include the notification context holder */}
+      {contextHolder}
+
       <div
         className="bg-white text-black w-[500px] h-[70vh] rounded-lg shadow-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -123,7 +229,7 @@ export default function AddGroupModal({
             <Image
               width={120}
               height={120}
-              src={noUserImage}
+              src={temporaryGroup?.image || noUserImage}
               alt="User Image"
               className="size-[100px] rounded-full"
             />
@@ -141,6 +247,7 @@ export default function AddGroupModal({
         <div className="flex items-center justify-between w-full p-4 border-b border-white/10">
           <input
             type="text"
+            onChange={(e) =>{setTemporaryGroup({...temporaryGroup, name: e.target.value})}}
             placeholder="Enter group name"
             className="bg-transparent border p-2 rounded-md outline-none flex-1 text-sm placeholder-black/40"
           />
@@ -156,7 +263,7 @@ export default function AddGroupModal({
                 src={
                   user.imageUrl ||
                   `https://ui-avatars.com/api/?name=${user.name}`
-                }
+}
                 alt={user.name}
                 className="w-10 h-10 rounded-full object-cover"
               />
@@ -179,9 +286,9 @@ export default function AddGroupModal({
         <div className="p-4 flex flex-col gap-3">
           <p className="text-sm text-black mt-4">Friends Lists</p>
           <div className="max-h-[160px] overflow-y-auto">
-            {contacts.map((user) => (
+            {searchResults.map((user) => (
               <div
-                key={user.contactId}
+                key={user.userId || user.contactId}
                 className="flex items-center justify-between gap-3 p-2 hover:bg-gray-100 rounded"
               >
                 <div className="flex items-center gap-3">
@@ -201,8 +308,8 @@ export default function AddGroupModal({
                   </div>
                 </div>
                 <Checkbox
-                  checked={isSelected(user.contactId)}
-                  onChange={() => toggleSelectUser(user.contactId)}
+                  checked={isSelected(user.userId || user.contactId)}
+                  onChange={() => toggleSelectUser(user.userId || user.contactId)}
                 />
               </div>
             ))}
@@ -219,6 +326,7 @@ export default function AddGroupModal({
           </button>
           <button
             disabled={selectedUsers.length < 2}
+            onClick={handleCreateGroup}
             className={`px-4 py-1 rounded ${
               selectedUsers.length >= 2
                 ? "bg-blue-500 text-white hover:bg-blue-600"
