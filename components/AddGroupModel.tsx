@@ -128,12 +128,12 @@ export default function AddGroupModal({
       }
 
       if (!temporaryGroup.name.trim()) {
-        toast.error("Please enter a group name", "warning");
+        toast.error("Please enter a group name");
         return;
       }
 
       if (!temporaryGroup.members || temporaryGroup.members.length < 2) {
-        toast.error("Please select at least 2 members for the group", "warning");
+        toast.error("Please select at least 2 members for the group");
         return;
       }
 
@@ -209,8 +209,6 @@ export default function AddGroupModal({
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
       onClick={onClose}
     >
-      {/* Include the notification context holder */}
-      {contextHolder}
 
       <div
         className="bg-white text-black w-[500px] h-[75vh] rounded-lg shadow-lg overflow-hidden"

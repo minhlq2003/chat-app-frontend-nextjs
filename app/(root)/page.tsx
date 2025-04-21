@@ -65,6 +65,7 @@ function Home() {
   const [attachmentCaption, setAttachmentCaption] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const notificationSoundRef = useRef<HTMLAudioElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -88,9 +89,7 @@ function Home() {
     }
   };
 
-  const handleFileInputChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
       alert("No file selected.");
@@ -160,6 +159,18 @@ function Home() {
     setMessageCount(newCount);
   };
 
+  const playNotificationSound = () => {
+    console.log("Attempting to play notification sound");
+    if (notificationSoundRef.current) {
+      notificationSoundRef.current.volume = 0.15; // Set volume to 50%
+      notificationSoundRef.current.currentTime = 0; // Reset to start
+      notificationSoundRef.current.play().catch(err => {
+        console.error("Error playing notification sound:", err);
+      });
+    } else {
+      console.log("Audio reference is not available");
+    }
+  };
   // Add this function to your component
   // Fix the handleChatScroll function to properly reset unread counts
   const handleChatScroll = () => {
@@ -323,11 +334,8 @@ function Home() {
 
           case "receiveChat":
             console.log("Received chat message:", data);
-            // We'll handle this in the selectedChatInfo-specific handler
-            // This is just a fallback
             if (!selectedChatInfo) {
               console.log("No selected chat yet, updating unread counts");
-              // Update unread count for chat in the list
               setChatList((prev) =>
                 prev.map((chat) => {
                   if (chat.chatId === data.chatId) {
@@ -925,6 +933,9 @@ function Home() {
 
             case "receiveChat":
               console.log("Received chat message:", data);
+              if (data.message.userId !== userId || data.message.senderId !== userId) {
+                playNotificationSound();
+              }
               // Check if this message belongs to the currently selected chat
               if (data.chatId === selectedChatInfo.ChatID) {
                 console.log(
@@ -1504,6 +1515,7 @@ function Home() {
           onClose={() => setIsNewMemberModalOpen(false)}
         />
       )}
+      <audio ref={notificationSoundRef} src="/noti.mp3" preload="auto" />
     </div>
   );
 }
