@@ -85,7 +85,7 @@ const GroupChat = ({
                   width={64}
                   height={64}
                   alt="Participant"
-                  className="rounded-full"
+                  className="w-[64px] h-[64px] rounded-full"
                 />
                 <h1 className="text-2xl text-black">
                   {selectedChatInfo.chatName || "Chat"}
