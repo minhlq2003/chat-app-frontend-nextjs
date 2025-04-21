@@ -120,6 +120,7 @@ export interface GroupChat {
   chatId: string;
   chatName: string;
   imageUrl?: string;
+  Type?: string;
   members: {
     userId: number;
     name: string;

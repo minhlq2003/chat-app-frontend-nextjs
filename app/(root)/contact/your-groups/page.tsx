@@ -14,11 +14,48 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/navigation";
 import { mockGroupChats } from "@/constant/data";
+import { noUserImage } from "@/constant/image";
+import { StaticImageData } from "next/image";
+
+const groupFriendsByLetter = (friends: GroupChat[]) => {
+  const sorted = [...friends].sort((a, b) =>
+    a.chatName.localeCompare(b.chatName)
+  );
+  const grouped: { [key: string]: GroupChat[] } = {};
+  sorted.forEach((friend) => {
+    const firstLetter = friend.chatName.charAt(0).toUpperCase();
+    if (!grouped[firstLetter]) grouped[firstLetter] = [];
+    grouped[firstLetter].push(friend);
+  });
+  return grouped;
+};
 
 export default function Page() {
   const { t } = useTranslation("common");
   const [groupChats, setGroupChats] = React.useState<GroupChat[]>([]);
   const router = useRouter();
+  const groupedFriends = groupFriendsByLetter(groupChats);
+  const sortedLetters = Object.keys(groupedFriends).sort();
+  const [userId, setUserId] = React.useState<string | null>(null);
+
+  const fetchGroupList = async (userId: string) => {
+    try {
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
+      const response = await fetch(`${apiBaseUrl}/chat/me?userId=${userId}`);
+      const data = await response.json();
+      if (data.success) {
+        let groupChats: GroupChat[] = data.data.filter(
+          (chat: GroupChat) => chat.Type === "group"
+        );
+        setGroupChats(groupChats);
+      } else {
+        console.error("Failed to fetch chat list");
+      }
+    } catch (error) {
+      console.error("Error fetching chat list:", error);
+    }
+  };
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -26,7 +63,12 @@ export default function Page() {
       router.replace("/introduction");
       return;
     }
-    setGroupChats(mockGroupChats);
+    const user = JSON.parse(userStr);
+    const userId = user.id;
+    setUserId(userId);
+
+    setGroupChats([]);
+    fetchGroupList(userId || "");
   }, [router]);
 
   return (
@@ -38,44 +80,42 @@ export default function Page() {
       </div>
 
       <div className="overflow-y-auto max-h-[calc(100vh-150px)] pr-2">
-        {groupChats.map((chat) => (
-          <div
-            key={chat.chatId}
-            className="flex items-center justify-between p-4 hover:bg-customPurple/10 rounded-lg transition"
-          >
-            <div className="flex items-center gap-4">
-              <img
-                src={
-                  chat.imageUrl ||
-                  `https://ui-avatars.com/api/?name=${chat.chatName}`
-                }
-                alt={chat.chatName}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-              <div>
-                <p className="font-semibold">{chat.chatName}</p>
-                <p className="text-sm text-gray-500 line-clamp-1 max-w-[300px]">
-                  {chat.members.length} {t("members")}
-                </p>
+        {sortedLetters.map((letter) => (
+          <div key={letter} className="mb-6">
+            <h2 className="text-lg font-semibold text-gray-600 mb-2">
+              {letter}
+            </h2>
+            {groupedFriends[letter].map((friend, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-4 hover:bg-customPurple/10"
+              >
+                <div className="flex items-center gap-4">
+                  <img
+                    src={friend.imageUrl || noUserImage.src}
+                    alt={friend.chatName}
+                    className="w-12 h-12 rounded-full"
+                  />
+                  <div>
+                    <p className="font-semibold">{friend.chatName}</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <Button size="sm" variant="ghost">
+                    <FontAwesomeIcon icon={faMessage} />
+                  </Button>
+                  <Button size="sm" variant="ghost">
+                    <FontAwesomeIcon icon={faVideo} />
+                  </Button>
+                  <Button size="sm" variant="ghost">
+                    <FontAwesomeIcon icon={faPhone} />
+                  </Button>
+                  <Button size="sm" variant="ghost">
+                    <FontAwesomeIcon icon={faTrash} />
+                  </Button>
+                </div>
               </div>
-            </div>
-            <div className="flex gap-3 items-center text-sm text-gray-400">
-              {chat.latestMessage?.timestamp
-                ? new Date(chat.latestMessage.timestamp).toLocaleString()
-                : "No time"}
-              <Button size="sm" variant="ghost">
-                <FontAwesomeIcon icon={faMessage} />
-              </Button>
-              <Button size="sm" variant="ghost">
-                <FontAwesomeIcon icon={faVideo} />
-              </Button>
-              <Button size="sm" variant="ghost">
-                <FontAwesomeIcon icon={faPhone} />
-              </Button>
-              <Button size="sm" variant="ghost" color="danger">
-                <FontAwesomeIcon icon={faTrash} />
-              </Button>
-            </div>
+            ))}
           </div>
         ))}
       </div>
