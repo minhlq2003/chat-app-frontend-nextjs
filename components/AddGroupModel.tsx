@@ -4,6 +4,7 @@ import { noUserImage } from "@/constant/image";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { Checkbox, notification } from "antd";
+import { toast } from "sonner";
 
 interface FriendSuggestion {
   contactId: string;
@@ -122,17 +123,17 @@ export default function AddGroupModal({
   const handleCreateGroup = async () => {
     try {
       if (!userId) {
-        showNotification("User ID not found. Please log in again.", "error");
+        toast.error("User ID not found. Please log in again.");
         return;
       }
 
       if (!temporaryGroup.name.trim()) {
-        showNotification("Please enter a group name", "warning");
+        toast.error("Please enter a group name", "warning");
         return;
       }
 
       if (!temporaryGroup.members || temporaryGroup.members.length < 2) {
-        showNotification("Please select at least 2 members for the group", "warning");
+        toast.error("Please select at least 2 members for the group", "warning");
         return;
       }
 
@@ -154,10 +155,10 @@ export default function AddGroupModal({
       const data = await response.json();
 
       if (data.success) {
-        showNotification("Group created successfully!", "success");
+        toast.success("Group created successfully!");
         onClose(); // Close the modal on success
       } else {
-        showNotification(`Failed to create group: ${data.message || "Unknown error"}`, "error");
+        toast.error(`Failed to create group: ${data.message || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error creating group:", error);

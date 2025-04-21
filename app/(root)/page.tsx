@@ -47,6 +47,7 @@ import AddGroupModal from "@/components/AddGroupModel";
 import { TemporaryUserProps } from "@/constant/type";
 import { noUserImage } from "@/constant/image";
 import AddNewMemberModal from "@/components/AddNewMemberModal";
+import { toast } from "sonner";
 
 function Home() {
   const { t } = useTranslation("common");
@@ -1426,7 +1427,7 @@ function Home() {
                             text="Change group name"
                             altText="Change group name"
                             className="cursor-pointer hover:text-blue-600 transition-colors"
-                            //onClick={() => setIsModalOpen(true)}
+                            onClick={() => toast.success("Change group name")}
                           />
                           <UserInfoItem
                             icon={PlusIcon}
