@@ -135,3 +135,10 @@ export interface GroupChat {
     senderName: string;
   };
 }
+
+export interface MembersGroupChat {
+  userId: number;
+  role: string;
+  name: string;
+  imageUrl?: string;
+}

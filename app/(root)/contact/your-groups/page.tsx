@@ -6,16 +6,16 @@ import { Button, Input } from "@nextui-org/react";
 import { useTranslation } from "react-i18next";
 import { GroupChat } from "@/constant/type";
 import {
+  faArrowRightFromBracket,
   faMessage,
   faPhone,
+  faRightFromBracket,
   faTrash,
   faVideo,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/navigation";
-import { mockGroupChats } from "@/constant/data";
 import { noUserImage } from "@/constant/image";
-import { StaticImageData } from "next/image";
 
 const groupFriendsByLetter = (friends: GroupChat[]) => {
   const sorted = [...friends].sort((a, b) =>
@@ -110,8 +110,11 @@ export default function Page() {
                   <Button size="sm" variant="ghost">
                     <FontAwesomeIcon icon={faPhone} />
                   </Button>
-                  <Button size="sm" variant="ghost">
-                    <FontAwesomeIcon icon={faTrash} />
+                  <Button
+                    size="sm"
+                    className="text-red-600 bg-white border-2 border-red-600 hover:bg-red-600 hover:text-white"
+                  >
+                    <FontAwesomeIcon icon={faRightFromBracket} />
                   </Button>
                 </div>
               </div>

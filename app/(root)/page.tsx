@@ -44,10 +44,11 @@ import SingleChat from "@/components/SingleChat";
 import GroupChat from "@/components/GroupChat";
 import AddFriendModal from "@/components/AddFriendModel";
 import AddGroupModal from "@/components/AddGroupModel";
-import { TemporaryUserProps } from "@/constant/type";
+import { MembersGroupChat, TemporaryUserProps } from "@/constant/type";
 import { noUserImage } from "@/constant/image";
 import AddNewMemberModal from "@/components/AddNewMemberModal";
 import { toast } from "sonner";
+import ListMembersGroupChat from "@/components/ListMembersGroup";
 
 function Home() {
   const { t } = useTranslation("common");
@@ -79,6 +80,7 @@ function Home() {
   const firstMessageRef = useRef<HTMLDivElement | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNewMemberModalOpen, setIsNewMemberModalOpen] = useState(false);
+  const [listMembers, setListMembers] = useState<MembersGroupChat[]>([]);
   //upload operation
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -89,7 +91,9 @@ function Home() {
     }
   };
 
-  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) {
       alert("No file selected.");
@@ -164,7 +168,7 @@ function Home() {
     if (notificationSoundRef.current) {
       notificationSoundRef.current.volume = 0.15; // Set volume to 50%
       notificationSoundRef.current.currentTime = 0; // Reset to start
-      notificationSoundRef.current.play().catch(err => {
+      notificationSoundRef.current.play().catch((err) => {
         console.error("Error playing notification sound:", err);
       });
     } else {
@@ -493,6 +497,9 @@ function Home() {
               chatId: chatId,
             })
           );
+          if (data.data.Type === "group") {
+            setListMembers(data.data.members);
+          }
           console.log("Sent joinChat packet for chatId:", chatId);
         } else {
           console.warn(
@@ -933,7 +940,10 @@ function Home() {
 
             case "receiveChat":
               console.log("Received chat message:", data);
-              if (data.message.userId !== userId || data.message.senderId !== userId) {
+              if (
+                data.message.userId !== userId ||
+                data.message.senderId !== userId
+              ) {
                 playNotificationSound();
               }
               // Check if this message belongs to the currently selected chat
@@ -1453,6 +1463,14 @@ function Home() {
                             altText="Leave group"
                             textStyle="text-base text-red-600"
                           />
+                          <UserInfoItem
+                            icon={BlockIcon}
+                            text="Delete group"
+                            altText="Delete group"
+                            textStyle="text-base text-red-600"
+                            className="cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => toast.success("Delete group")}
+                          />
                         </div>
                       </>
                     ) : (
@@ -1496,9 +1514,15 @@ function Home() {
                 )}
               </Card>
             </div>
-            <div className="mt-2">
-              <RenderMedia data={extractLists(messages)} />
-            </div>
+            {selectedChatInfo.Type === "group" && (
+              <div className="py-2">
+                <ListMembersGroupChat
+                  currentUserId={Number(userId)}
+                  members={listMembers}
+                />
+              </div>
+            )}
+            <RenderMedia data={extractLists(messages)} />
           </div>
         )}
       </div>
