@@ -44,6 +44,8 @@ import SingleChat from "@/components/SingleChat";
 import GroupChat from "@/components/GroupChat";
 import AddFriendModal from "@/components/AddFriendModel";
 import AddGroupModal from "@/components/AddGroupModel";
+import {TemporaryUserProps} from "@/constant/type";
+import { noUserImage } from "@/constant/image";
 
 function Home() {
   const { t } = useTranslation("common");
@@ -54,6 +56,7 @@ function Home() {
   const [selectedChatInfo, setSelectedChatInfo] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [inputMessage, setInputMessage] = useState("");
+  const [user, setUser] = useState<TemporaryUserProps>();
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(
     null
   );
@@ -181,6 +184,12 @@ function Home() {
       );
     }
   };
+
+
+  useEffect(() => {
+    const temUser = JSON.parse(localStorage.getItem("user") || "{}");
+    setUser(temUser);
+  }, []);
 
   // Add this useEffect to set up the scroll listener
   useEffect(() => {
@@ -419,15 +428,15 @@ function Home() {
         // Transform API data to match our component's expected format
         const formattedChatList = data.data.map((chat: any) => ({
           id: parseInt(chat.otherUserId) || Math.floor(Math.random() * 1000),
-          image: chat.imageUrl || "/default-avatar.png", // Provide a default image path
+          image: chat.imageUrl || noUserImage, // Provide a default image path
           name: chat.chatName || "Chat",
           message: chat.lastMessage
             ? chat.lastMessage.content === ""
               ? chat.lastMessage.type
                 ? `Sent a ${chat.lastMessage.type}`
                 : "Click to view messages"
-              : chat.lastMessage.content
-            : "No messages yet" || "Click to view messages", // Placeholder message
+              : chat.lastMessage?.content
+            : chat.lastMessage?.content || "No messages yet" || "Click to view messages", // Placeholder message
           time:
             chat.lastMessage && chat.lastMessage.timestamp
               ? new Date(chat.lastMessage.timestamp).toLocaleTimeString([], {
@@ -580,6 +589,8 @@ function Home() {
         content: inputMessage,
         timestamp: new Date().toLocaleTimeString(),
         senderId: userId,
+        senderImage: user?.image || "https://ui-avatars.com/api/?name=John+Doe",
+        senderName: user?.name || "No User"
       },
     };
 
@@ -631,6 +642,8 @@ function Home() {
                 content: pendingMessage,
                 timestamp: new Date().toLocaleTimeString(),
                 senderId: userId,
+                senderImage: user?.image || "https://ui-avatars.com/api/?name=John+Doe",
+                senderName: user?.name || "No User"
               },
             };
 
@@ -677,6 +690,8 @@ function Home() {
         attachmentUrl: attachmentUrl,
         timestamp: new Date().toLocaleTimeString(),
         senderId: userId,
+        senderImage: user?.image || "https://ui-avatars.com/api/?name=John+Doe",
+        senderName: user?.name || "No User"
       },
     };
     setChatList((prev) =>
@@ -705,28 +720,40 @@ function Home() {
   };
 
   const getProfileData = (userId: number | null) => {
-    if (selectedChatInfo && selectedChatInfo.members) {
-      const member = selectedChatInfo.members.find(
-        (m: any) => m.userId === userId
-      );
-      if (member) {
-        selectedChatInfo.imageUrl = member.imageUrl;
-        selectedChatInfo.chatName = member.name;
-        return {
-          id: member.userId,
-          work: "Work information", // Not provided in API
-          phone: member.phone || "No phone",
-          birthday: "Not available", // Not provided in API
-          location: member.location || "No location",
-          email: member.email || "No email",
-        };
+    if(selectedChatInfo) {
+    if(selectedChatInfo.Type === "private") {
+      if (selectedChatInfo && selectedChatInfo.members) {
+        const member = selectedChatInfo.members.find(
+          (m: any) => m.userId === userId
+        );
+        if (member) {
+          selectedChatInfo.imageUrl = member.imageUrl;
+          selectedChatInfo.chatName = member.name;
+          return {
+            id: member.userId,
+            work: "University Student",
+            phone: member.phone || "No phone",
+            birthday: "Not available", // Not provided in API
+            location: member.location || "No location",
+            email: member.email || "No email",
+          };
+        }
       }
+    } else if(selectedChatInfo.Type === "group") {
+      return {
+        id: "999999999",
+        work: "Work Here",
+        phone: "No phone",
+        birthday: "Not available",
+        location: "No location",
+        email: "No email",
+      };
     }
-
+    }
     /*if (userId !== null && profileData.id === userId) {
       return profileData;
     }*/
-    return null;
+    return null
   };
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -1069,8 +1096,6 @@ function Home() {
   const defaultContent =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
-  // Render message based on type
-  // Render message based on type
   const renderMessage = (msg: any, isOwn: boolean) => {
     if (!msg) return null;
 
@@ -1310,7 +1335,7 @@ function Home() {
         />
       </div>
       <div className="col-span-5 h-screen bg-white rounded-xl">
-        <SingleChat
+        {selectedChatInfo && selectedChatInfo.Type === "private" ? (<SingleChat
           selectedChatInfo={selectedChatInfo}
           chatList={chatList}
           messageContainerRef={messageContainerRef}
@@ -1336,8 +1361,7 @@ function Home() {
           fileInputRef={fileInputRef}
           renderMessage={renderMessage}
           onEmojiClick={handleEmojiClick}
-        />
-        {/* <GroupChat 
+        />): (<GroupChat
           selectedChatInfo={selectedChatInfo}
           chatList={chatList}
           messageContainerRef={messageContainerRef}
@@ -1363,7 +1387,9 @@ function Home() {
           fileInputRef={fileInputRef}
           renderMessage={renderMessage}
           onEmojiClick={handleEmojiClick}
-        /> */}
+        />) }
+{/*        */}
+
       </div>
       <div className="col-span-2 w-full h-screen ">
         {selectedChatInfo && (
@@ -1373,7 +1399,7 @@ function Home() {
                 <h1 className="text-2xl font-medium">Info</h1>
                 <div className="flex flex-col items-center gap-3 justify-center">
                   <Image
-                    src={selectedChatInfo.imageUrl || "/default-avatar.png"}
+                    src={selectedChatInfo.imageUrl || noUserImage}
                     width={64}
                     height={64}
                     alt="Participant"
