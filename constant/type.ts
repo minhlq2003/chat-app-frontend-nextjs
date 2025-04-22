@@ -54,6 +54,8 @@ export interface IconButtonProps {
 }
 
 export interface ChatItemProps {
+  Status: string;
+  Type: string;
   id: number;
   image: StaticImageData;
   name: string;
@@ -118,6 +120,7 @@ export interface Message {
 }
 
 export interface GroupChat {
+  Status: string;
   ChatID: string;
   chatId: string;
   chatName: string;

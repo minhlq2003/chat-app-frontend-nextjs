@@ -1,7 +1,7 @@
 // app/contact/page.tsx
 "use client";
 
-import React, { useEffect } from "react";
+import React, {useEffect, useState} from "react";
 import { Button, Input } from "@nextui-org/react";
 import { useTranslation } from "react-i18next";
 import { GroupChat } from "@/constant/type";
@@ -16,6 +16,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/navigation";
 import { noUserImage } from "@/constant/image";
+import ConfirmationModel from "@/components/ConfirmationModel";
 
 const groupFriendsByLetter = (friends: GroupChat[]) => {
   const sorted = [...friends].sort((a, b) =>
@@ -33,11 +34,16 @@ const groupFriendsByLetter = (friends: GroupChat[]) => {
 export default function Page() {
   const { t } = useTranslation("common");
   const [groupChats, setGroupChats] = React.useState<GroupChat[]>([]);
+  const [isConfirmation, setisConfirmation] = useState(false);
+  const [selectedChat, setSelectedChat] = useState<GroupChat | null>(null);
   const router = useRouter();
   const groupedFriends = groupFriendsByLetter(groupChats);
   const sortedLetters = Object.keys(groupedFriends).sort();
   const [userId, setUserId] = React.useState<string | null>(null);
-
+  const handleChatClick = async (friendId: string) => {
+      if (!userId) return;
+      router.push(`/?chatId=${friendId}`);
+  };
   const fetchGroupList = async (userId: string) => {
     try {
       const apiBaseUrl =
@@ -46,7 +52,7 @@ export default function Page() {
       const data = await response.json();
       if (data.success) {
         let groupChats: GroupChat[] = data.data.filter(
-          (chat: GroupChat) => chat.Type === "group"
+          (chat: GroupChat) => chat.Type === "group" && chat.Status !== "disbanded"
         );
         setGroupChats(groupChats);
       } else {
@@ -70,7 +76,10 @@ export default function Page() {
     setGroupChats([]);
     fetchGroupList(userId || "");
   }, [router]);
-
+function handleDeleteChat(chat: GroupChat) {
+  setSelectedChat(chat);
+  setisConfirmation(true);
+}
   return (
     <>
       <h1 className="font-bold text-[32px]">{t("Your Group")}</h1>
@@ -101,7 +110,7 @@ export default function Page() {
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button size="sm" variant="ghost">
+                  <Button size="sm" variant="ghost" onClick={() => handleChatClick(friend.ChatID)}>
                     <FontAwesomeIcon icon={faMessage} />
                   </Button>
                   <Button size="sm" variant="ghost">
@@ -113,14 +122,24 @@ export default function Page() {
                   <Button
                     size="sm"
                     className="text-red-600 bg-white border-2 border-red-600 hover:bg-red-600 hover:text-white"
+                    onClick={() => handleDeleteChat(friend)}
                   >
                     <FontAwesomeIcon icon={faRightFromBracket} />
                   </Button>
                 </div>
               </div>
+
             ))}
+
           </div>
         ))}
+        {isConfirmation && (<ConfirmationModel
+          listChatFunc={() => fetchGroupList(userId || "")}
+          chatFunc={null}
+          selectedChatInfo={selectedChat}
+          selectedUser={userId}
+          onClose={() => setisConfirmation(false)}
+        />)}
       </div>
     </>
   );

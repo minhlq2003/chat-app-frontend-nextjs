@@ -33,6 +33,27 @@ export default function ContactPage() {
   const router = useRouter();
   const [userId, setUserId] = React.useState<string | null>(null);
 
+  const handleChatClick = async (friendId: string) => {
+    try {
+      if (!userId) return;
+
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
+      const response = await fetch(
+        `${apiBaseUrl}/chat/private?userIdA=${userId}&userIdB=${friendId}`
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Navigate to the chat with the returned chatId
+        router.push(`/?chatId=${data.data.chatId}`);
+      } else {
+        console.error("Failed to get or create private chat");
+      }
+    } catch (error) {
+      console.error("Error getting or creating private chat:", error);
+    }
+  };
 
   const fetchFriendsList = async (userId: string) => {
     try {
@@ -100,7 +121,7 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button size="sm" variant="ghost">
+                  <Button size="sm" variant="ghost" onClick={() => handleChatClick(friend.contactId)}>
                     <FontAwesomeIcon icon={faMessage} />
                   </Button>
                   <Button size="sm" variant="ghost">
