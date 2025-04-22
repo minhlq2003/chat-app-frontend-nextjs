@@ -94,6 +94,7 @@ export interface TemporaryUserProps {
 }
 
 export interface Friend {
+  contactId: string;
   imageUrl: string;
   location: string | "No location set";
   id: number;
@@ -117,6 +118,7 @@ export interface Message {
 }
 
 export interface GroupChat {
+  ChatID: string;
   chatId: string;
   chatName: string;
   imageUrl?: string;

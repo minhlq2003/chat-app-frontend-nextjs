@@ -30,7 +30,7 @@ import React, { useEffect, useState, useRef } from "react";
 import IconButton from "@/components/IconButton";
 import UserInfoItem from "@/components/ProfileInfoItem";
 import { useTranslation } from "react-i18next";
-import { useRouter } from "next/navigation";
+import {useRouter, useSearchParams} from "next/navigation";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { extractLists, getFileIcon } from "@/constant/help";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -49,7 +49,7 @@ import { noUserImage } from "@/constant/image";
 import AddNewMemberModal from "@/components/AddNewMemberModal";
 import { toast } from "sonner";
 import ListMembersGroupChat from "@/components/ListMembersGroup";
-
+import ConfirmationModel from "@/components/ConfirmationModel";
 function Home() {
   const { t } = useTranslation("common");
   const [type, setType] = useState("all");
@@ -80,8 +80,11 @@ function Home() {
   const firstMessageRef = useRef<HTMLDivElement | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNewMemberModalOpen, setIsNewMemberModalOpen] = useState(false);
+  const [isConfirmation, setisConfirmation] = useState(false);
+  const [allMessages, setAllMessages] = useState([]);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
   const [listMembers, setListMembers] = useState<MembersGroupChat[]>([]);
-  //upload operation
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = () => {
@@ -91,9 +94,44 @@ function Home() {
     }
   };
 
-  const handleFileInputChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const loadMoreMessages = () => {
+    if (!chatRef.current) return;
+
+    const previousScrollHeight = chatRef.current.scrollHeight;
+
+    const nextPage = page + 1;
+    const start = Math.max(allMessages.length - nextPage * PAGE_SIZE, 0);
+    const end = allMessages.length - page * PAGE_SIZE;
+
+    const newMessages = allMessages.slice(start, end);
+
+    // Temporarily add messages without scrolling
+    setMessages((prev) => [...newMessages, ...prev]);
+    setPage(nextPage);
+
+    // After messages are rendered, adjust scroll
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        if (chatRef.current) {
+          const newScrollHeight = chatRef.current.scrollHeight;
+          chatRef.current.scrollTop = newScrollHeight - previousScrollHeight;
+        }
+      });
+    }, 0); // wait for the DOM to update
+  };
+  const chatRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const onScroll = () => {
+      if (chatRef.current?.scrollTop === 0 && page * PAGE_SIZE < allMessages.length) {
+        loadMoreMessages();
+      }
+    };
+
+    chatRef.current?.addEventListener("scroll", onScroll);
+    return () => chatRef.current?.removeEventListener("scroll", onScroll);
+  }, [page, allMessages]);
+
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
       alert("No file selected.");
@@ -158,11 +196,6 @@ function Home() {
     return "bg-customPurple/20 text-black";
   };
 
-  const loadMoreMessage = () => {
-    const newCount = messageCount + 20;
-    setMessageCount(newCount);
-  };
-
   const playNotificationSound = () => {
     console.log("Attempting to play notification sound");
     if (notificationSoundRef.current) {
@@ -202,7 +235,7 @@ function Home() {
       );
     }
   };
-
+  let params = useSearchParams()
   useEffect(() => {
     const temUser = JSON.parse(localStorage.getItem("user") || "{}");
     setUser(temUser);
@@ -240,7 +273,7 @@ function Home() {
       if (container && container.scrollTop === 30) {
         console.log("scroll to top");
 
-        loadMoreMessage();
+        loadMoreMessages();
       }
     };
 
@@ -532,28 +565,22 @@ function Home() {
 
         // Fetch previous messages using the correct endpoint
         try {
-          // Get 20 previous messages (you can adjust this number)
-          const messageCount = 30;
-          const messagesResponse = await fetch(
-            `${apiBaseUrl}/chat/${chatId}/history/${messageCount}`
-          );
+          const messageCount = 50;
+          const messagesResponse = await fetch(`${apiBaseUrl}/chat/${chatId}/history/${messageCount}`);
           const messagesData = await messagesResponse.json();
 
           if (messagesData.success && Array.isArray(messagesData.data)) {
             let filteredMessages = messagesData.data
-              .filter(
-                (element: { deleteReason: string; userId: string }) =>
-                  !(
-                    element.deleteReason === "remove" &&
-                    element.userId === userId
-                  )
-              ) // Remove elements with deleteReason 'remove'
-              .map((element: { deleteReason: string; content: string }) => {
-                if (element.deleteReason === "unsent") {
-                  element.content = "This message was unsent";
-                }
-                return element; // Return the modified element
-              });
+            .filter((element: {
+              deleteReason: string;
+              userId: string
+            }) => !(element.deleteReason === "remove" && element.userId === userId)) // Remove elements with deleteReason 'remove'
+            .map((element: { deleteReason: string; content: string }) => {
+              if (element.deleteReason === "unsent") {
+                element.content = "This message was unsent";
+              }
+              return element; // Return the modified element
+            });
 
             // Format and set messages
             const formattedMessages = filteredMessages.map((msg: any) => ({
@@ -571,7 +598,11 @@ function Home() {
             }));
 
             // Reverse the array to show oldest messages first
-            setMessages(formattedMessages.reverse());
+            /*setMessages(formattedMessages.reverse());*/
+            const reversed = formattedMessages.reverse(); // Oldest first
+            setAllMessages(reversed);
+            setMessages(reversed.slice(-PAGE_SIZE)); // Initial page (latest 10)
+            setPage(1);
             console.log("Loaded previous messages:", formattedMessages.length);
             setTimeout(scrollToBottom, 100);
           } else {
@@ -940,10 +971,7 @@ function Home() {
 
             case "receiveChat":
               console.log("Received chat message:", data);
-              if (
-                data.message.userId !== userId ||
-                data.message.senderId !== userId
-              ) {
+              if (data.message.userId !== userId || data.message.senderId !== userId) {
                 playNotificationSound();
               }
               // Check if this message belongs to the currently selected chat
@@ -1060,6 +1088,15 @@ function Home() {
       const user = JSON.parse(userStr);
       const userId = user.id;
       setUserId(userId);
+      let foundChat = params.get("chatId")
+      if (foundChat) {
+        let userSelect = "11111111";
+        if (!foundChat.includes("group")) {
+          userSelect = foundChat.split("-").filter(id => Number(id) !== userId)[0]
+        }
+        handleUserSelect(Number(userSelect), foundChat);
+
+      }
 
       // Initialize WebSocket only once
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
@@ -1114,7 +1151,7 @@ function Home() {
 
   useEffect(() => {
     if (messages.length > 0) {
-      scrollToBottom();
+      //scrollToBottom();
     }
   }, [messages]);
 
@@ -1365,7 +1402,7 @@ function Home() {
           <SingleChat
             selectedChatInfo={selectedChatInfo}
             chatList={chatList}
-            messageContainerRef={messageContainerRef}
+            messageContainerRef={chatRef}
             selectedUser={selectedUser}
             messages={messages}
             userId={userId}
@@ -1393,7 +1430,7 @@ function Home() {
           <GroupChat
             selectedChatInfo={selectedChatInfo}
             chatList={chatList}
-            messageContainerRef={messageContainerRef}
+            messageContainerRef={chatRef}
             selectedUser={selectedUser}
             messages={messages}
             userId={userId}
@@ -1462,6 +1499,9 @@ function Home() {
                             text="Leave group"
                             altText="Leave group"
                             textStyle="text-base text-red-600"
+                            className="cursor-pointer"
+                            onClick={() => setisConfirmation(true)}
+
                           />
                           <UserInfoItem
                             icon={BlockIcon}
@@ -1537,11 +1577,16 @@ function Home() {
           selectedChatInfo={selectedChatInfo}
           selectedUser={""}
           onClose={() => setIsNewMemberModalOpen(false)}
-        />
-      )}
-      <audio ref={notificationSoundRef} src="/noti.mp3" preload="auto" />
-    </div>
-  );
+        />)}
+      {isConfirmation && (<ConfirmationModel
+          listChatFunc={() => fetchChatList(userId || "")}
+          chatFunc={setSelectedChatInfo}
+          selectedChatInfo={selectedChatInfo}
+          selectedUser={userId}
+          onClose={() => setisConfirmation(false)}
+        />)}
+      <audio ref={notificationSoundRef} src="/noti.mp3" preload="auto"/>
+    </div>);
 }
 
 export default Home;
