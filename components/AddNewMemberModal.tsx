@@ -5,6 +5,7 @@ import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { Checkbox, notification } from "antd";
 import { log } from "node:console";
+import { toast } from "sonner";
 
 interface FriendSuggestion {
   contactId: string;
@@ -18,6 +19,7 @@ interface FriendSuggestion {
 }
 
 type Contact = {
+  userId: string;
   contactId: string;
   name: string;
   status: string;
@@ -40,10 +42,12 @@ export default function AddNewMemberModal({
   onClose,
   selectedUser,
   selectedChatInfo,
+  getChatFunc
 }: {
   onClose: () => void;
   selectedUser?: string;
   selectedChatInfo: any;
+  getChatFunc: (chatId: string) => Promise<void> | null;
 }) {
   const [phone, setPhone] = useState("");
   const [searchResults, setSearchResults] = useState<FriendSuggestion[]>([]);
@@ -137,19 +141,20 @@ export default function AddNewMemberModal({
 
 
   const handleAddNewMember = async () => {
+    let isAlerted = false;
     if (!userId) {
-      showNotification("User ID not found. Please log in again.", "error");
+      toast.error("User ID not found. Please log in again.");
       return;
     }
 
     if (!temporaryGroup.members || temporaryGroup.members.length < 1) {
-      showNotification(
-        "Please select at least 1 members for the group",
-        "warning"
+      toast.error(
+        "Please select at least 1 members to add"
       );
       return;
     }
-    selectedUsers.forEach(async (user) => {
+
+    for (const user of selectedUsers) {
       const requestBody = {
         chatId: selectedChatInfo.ChatID,
         userId: userId,
@@ -168,15 +173,19 @@ export default function AddNewMemberModal({
       const data = await response.json();
 
       if (data.success) {
-        showNotification("Group created successfully!", "success");
+
+        if(!isAlerted) {
+          toast.success("Member added successfully!");
+          isAlerted = true;
+        }
+        getChatFunc(selectedChatInfo.ChatID)
         onClose();
       } else {
-        showNotification(
-          `Failed to create group: ${data.message || "Unknown error"}`,
-          "error"
+        toast.error(
+          `Failed to add member: ${data.message || "Unknown error"}`
         );
       }
-    });
+    }
   };
 
   const toggleSelectUser = (id: string) => {

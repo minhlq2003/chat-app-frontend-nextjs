@@ -18,6 +18,7 @@ interface FriendSuggestion {
 }
 
 type Contact = {
+  userId: string;
   contactId: string;
   name: string;
   status: string;
