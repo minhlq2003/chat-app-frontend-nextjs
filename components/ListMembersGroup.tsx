@@ -1,6 +1,6 @@
 import { MembersGroupChat } from "@/constant/type";
 import { Accordion, AccordionItem } from "@nextui-org/react";
-import React, {Dispatch, useEffect, useRef, useState} from "react";
+import React, { Dispatch, useEffect, useRef, useState } from "react";
 
 const roleLabel = {
   owner: "Trưởng nhóm",
@@ -11,7 +11,7 @@ const roleLabel = {
 interface ListMembersGroupChatProps {
   members: MembersGroupChat[];
   currentUserId: number;
-  isConfirmation: Dispatch<any>
+  isConfirmation: Dispatch<any>;
   currentChat: any;
   requestObject: Dispatch<any>;
 }
@@ -21,7 +21,7 @@ const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
   currentUserId,
   isConfirmation,
   currentChat,
-  requestObject
+  requestObject,
 }) => {
   const [memberAction, setMemberAction] = useState<number | null>(null);
   const yourRole = members.find(
@@ -126,9 +126,9 @@ const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
                                   chatId: currentChat.ChatID,
                                   userId: currentUserId,
                                   memberToChangeId: member.userId,
-                                  newRole: "admin"
-                                }
-                              })
+                                  newRole: "admin",
+                                },
+                              });
                               isConfirmation(true);
                               console.log("Set Admin role clicked");
                             }}
@@ -146,9 +146,9 @@ const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
                                 object: {
                                   chatId: currentChat.ChatID,
                                   userId: currentUserId,
-                                  memberToRemoveId: member.userId
-                                }
-                              })
+                                  memberToRemoveId: member.userId,
+                                },
+                              });
                               isConfirmation(true);
                               console.log("Remove From Group clicked");
                             }}
