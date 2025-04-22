@@ -81,11 +81,11 @@ const GroupChat = ({
             <div className="flex items-center justify-between border-b-2 p-4">
               <div className="flex items-center gap-10">
                 <Image
-                  src={selectedChatInfo.imageUrl || "/default-avatar.png"}
+                  src={selectedChatInfo.imageUrl || `https://cnm-chatapp-bucket.s3.ap-southeast-1.amazonaws.com/ud3x-1745220840806-no-avatar.png`}
                   width={64}
                   height={64}
                   alt="Participant"
-                  className="rounded-full"
+                  className="w-[64px] h-[64px] rounded-full"
                 />
                 <h1 className="text-2xl text-black">
                   {selectedChatInfo.chatName || "Chat"}
@@ -144,7 +144,7 @@ const GroupChat = ({
                       } mb-2`}>
                         {/* Sender Image */}
                         <img
-                          src={msg.senderImage || "/default-avatar.png"}
+                          src={msg.senderImage || `https://ui-avatars.com/api/?name=${msg.senderName}`}
                           alt={msg.senderName}
                           className=" w-6 h-6 rounded-full object-cover mt-1"
                         />

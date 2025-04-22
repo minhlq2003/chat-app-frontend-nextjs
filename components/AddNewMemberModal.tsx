@@ -4,6 +4,7 @@ import { noUserImage } from "@/constant/image";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { Checkbox, notification } from "antd";
+import { log } from "node:console";
 import { toast } from "sonner";
 
 interface FriendSuggestion {
@@ -37,12 +38,16 @@ interface temporaryGroupProps {
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
 
-export default function AddGroupModal({
+export default function AddNewMemberModal({
   onClose,
   selectedUser,
+  selectedChatInfo,
+  getChatFunc
 }: {
   onClose: () => void;
   selectedUser?: string;
+  selectedChatInfo: any;
+  getChatFunc: (chatId: string) => Promise<void> | null;
 }) {
   const [phone, setPhone] = useState("");
   const [searchResults, setSearchResults] = useState<FriendSuggestion[]>([]);
@@ -54,18 +59,26 @@ export default function AddGroupModal({
   const [temporaryGroup, setTemporaryGroup] = useState<temporaryGroupProps>({
     name: "",
     image: null,
-    members: (selectedUser) ? [selectedUser]:  [],
+    members: selectedUser ? [selectedUser] : [],
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
+  const groupMemberIds = selectedChatInfo.members.map((m: any) => m.userId);
   // For notifications
   const [api, contextHolder] = notification.useNotification();
 
-  const showNotification = (message: string, type: 'success' | 'error' | 'info' | 'warning') => {
+  const showNotification = (
+    message: string,
+    type: "success" | "error" | "info" | "warning"
+  ) => {
     api[type]({
-      message: type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Notification',
+      message:
+        type === "success"
+          ? "Success"
+          : type === "error"
+          ? "Error"
+          : "Notification",
       description: message,
-      placement: 'topRight',
+      placement: "topRight",
       duration: 3,
     });
   };
@@ -78,11 +91,11 @@ export default function AddGroupModal({
   }, []);
 
   useEffect(() => {
-    setTemporaryGroup({...temporaryGroup, members: selectedUsers})
+    setTemporaryGroup({ ...temporaryGroup, members: selectedUsers });
   }, [selectedUsers]);
 
   useEffect(() => {
-    console.log(temporaryGroup)
+    console.log(temporaryGroup);
   }, [temporaryGroup]);
 
   useEffect(() => {
@@ -91,9 +104,11 @@ export default function AddGroupModal({
     fetch(`${apiBaseUrl}/contact/list?userId=${userId}`)
       .then((res) => res.json())
       .then((data) => {
-        setContacts(data.data || []);
-        setSearchResults(data.data || []);
-
+        const filteredContacts = data.data.filter((contact: any) => {
+          return !groupMemberIds.includes(Number(contact.contactId));
+        });
+        setContacts(filteredContacts || []);
+        setSearchResults(filteredContacts || []);
       })
       .catch(() => setContacts([]));
   }, [userId]);
@@ -106,93 +121,69 @@ export default function AddGroupModal({
         fetch(`${apiBaseUrl}/contact/find?phone=${phone}&userId=${userId}`)
           .then((res) => res.json())
           .then((data) => {
-            setSearchResults(data.data || []);
+            const filteredContacts = data.data.filter((contact: any) => {
+              return !groupMemberIds.includes(Number(contact.userId));
+            });
+            setSearchResults(filteredContacts);
           })
           .catch(() => setSearchResults([]));
-        } else {
-        setSearchResults(contacts);
-        }
+      } else {
+        const filteredContacts = contacts.filter((contact: any) => {
+          return !groupMemberIds.includes(Number(contact.contactId));
+        });
+        console.log("Filtered Contacts:", filteredContacts);
+        setSearchResults(filteredContacts);
+      }
     }, 500);
 
     return () => clearTimeout(delayDebounce);
   }, [phone]);
 
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
 
-  const handleCreateGroup = async () => {
-    try {
-      if (!userId) {
-        toast.error("User ID not found. Please log in again.");
-        return;
-      }
+  const handleAddNewMember = async () => {
+    let isAlerted = false;
+    if (!userId) {
+      toast.error("User ID not found. Please log in again.");
+      return;
+    }
 
-      if (!temporaryGroup.name.trim()) {
-        toast.error("Please enter a group name");
-        return;
-      }
+    if (!temporaryGroup.members || temporaryGroup.members.length < 1) {
+      toast.error(
+        "Please select at least 1 members to add"
+      );
+      return;
+    }
 
-      if (!temporaryGroup.members || temporaryGroup.members.length < 2) {
-        toast.error("Please select at least 2 members for the group");
-        return;
-      }
-
+    for (const user of selectedUsers) {
       const requestBody = {
-        name: temporaryGroup.name,
-        image: temporaryGroup.image || "",
-        ownerId: userId,
-        initialMembers: temporaryGroup.members
-  };
+        chatId: selectedChatInfo.ChatID,
+        userId: userId,
+        newMemberId: user,
+        role: "member",
+      };
 
-      const response = await fetch(`${apiBaseUrl}/group/create`, {
+      const response = await fetch(`${apiBaseUrl}/group/member/add`, {
         method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Group created successfully!");
-        onClose(); // Close the modal on success
-      } else {
-        toast.error(`Failed to create group: ${data.message || "Unknown error"}`);
-      }
-    } catch (error) {
-      console.error("Error creating group:", error);
-      showNotification("An error occurred while creating the group", "error");
-    }
-  };
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`, {
-          method: "POST",
-          body: formData,
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const imageUrl = data.imageUrl;
-          setTemporaryGroup({
-            ...temporaryGroup,
-            image: imageUrl,
-          })
-        } else {
-          console.error("Image upload failed:", await response.json());
-          alert("Failed to upload image. Please try again.");
+        if(!isAlerted) {
+          toast.success("Member added successfully!");
+          isAlerted = true;
         }
-      } catch (error) {
-        console.error("Error during image upload:", error);
-        alert("An error occurred while uploading the image.");
+        getChatFunc(selectedChatInfo.ChatID)
+        onClose();
+      } else {
+        toast.error(
+          `Failed to add member: ${data.message || "Unknown error"}`
+        );
       }
     }
   };
@@ -200,7 +191,7 @@ export default function AddGroupModal({
   const toggleSelectUser = (id: string) => {
     setSelectedUsers((prev) =>
       prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
-  );
+    );
   };
 
   const isSelected = (id: string) => selectedUsers.includes(id);
@@ -210,66 +201,38 @@ export default function AddGroupModal({
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
       onClick={onClose}
     >
+      {/* Include the notification context holder */}
+      {contextHolder}
 
       <div
-        className="bg-white text-black w-[500px] h-[75vh] rounded-lg shadow-lg overflow-hidden"
+        className="bg-white text-black w-[500px] h-[50vh] rounded-lg shadow-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <h2 className="font-semibold">Create Group</h2>
+          <h2 className="font-semibold">Add new member</h2>
           <button onClick={onClose} className="text-black text-xl">
             &times;
           </button>
         </div>
 
-        {/* Group Avatar Upload */}
-        <div className="relative flex items-center justify-center p-4">
-          <div onClick={handleImageClick}>
-            <Image
-              width={120}
-              height={120}
-              src={temporaryGroup?.image || noUserImage}
-              alt="User Image"
-              className="size-[100px] rounded-full"
-            />
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleImageChange}
-          />
-        </div>
-
-        {/* Group Name Input */}
-        <div className="flex items-center justify-between w-full p-4 border-b border-white/10">
-          <input
-            type="text"
-            onChange={(e) =>{setTemporaryGroup({...temporaryGroup, name: e.target.value})}}
-            placeholder="Enter group name"
-            className="bg-transparent border p-2 rounded-md outline-none flex-1 text-sm placeholder-black/40"
-          />
-        </div>
-
         {/* Selected Avatars */}
         {selectedUsers.length > 0 ? (
           <div className="flex gap-2 px-4 overflow-x-auto min-h-[45px]">
-          {contacts
-            .filter((c) => selectedUsers.includes(c.contactId))
-            .map((user) => (
-              <img
-                key={user.contactId}
-                src={
-                  user.imageUrl ||
-                  `https://ui-avatars.com/api/?name=${user.name}`
-}
-                alt={user.name}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ))}
-        </div>
+            {contacts
+              .filter((c) => selectedUsers.includes(c.contactId))
+              .map((user) => (
+                <img
+                  key={user.contactId}
+                  src={
+                    user.imageUrl ||
+                    `https://ui-avatars.com/api/?name=${user.name}`
+                  }
+                  alt={user.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ))}
+          </div>
         ) : (
           <div className="flex items-center justify-center min-h-[45px] text-sm text-black/50">
             Please select at least 2 friends
@@ -314,7 +277,9 @@ export default function AddGroupModal({
                 </div>
                 <Checkbox
                   checked={isSelected(user.userId || user.contactId)}
-                  onChange={() => toggleSelectUser(user.userId || user.contactId)}
+                  onChange={() =>
+                    toggleSelectUser(user.userId || user.contactId)
+                  }
                 />
               </div>
             ))}
@@ -330,15 +295,15 @@ export default function AddGroupModal({
             Cancel
           </button>
           <button
-            disabled={selectedUsers.length < 2}
-            onClick={handleCreateGroup}
+            disabled={selectedUsers.length < 1}
+            onClick={handleAddNewMember}
             className={`px-4 py-1 rounded ${
-              selectedUsers.length >= 2
+              selectedUsers.length >= 1
                 ? "bg-blue-500 text-white hover:bg-blue-600"
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
           >
-            Create Group
+            Add members
           </button>
         </div>
       </div>

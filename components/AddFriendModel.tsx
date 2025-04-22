@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface FriendSuggestion {
   id: number;
@@ -173,6 +174,7 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
                             onClick={() => {
                               if (userId) handleAddContact(userId, user.userId);
                               else console.error("User ID is null");
+                              toast.success("Friend request sent!")
                             }}
                             className="min-w-[90px] text-sm border border-blue-500 text-blue-500 px-3 py-1 rounded hover:bg-blue-500 hover:text-white transition"
                           >

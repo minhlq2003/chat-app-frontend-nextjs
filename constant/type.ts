@@ -54,6 +54,8 @@ export interface IconButtonProps {
 }
 
 export interface ChatItemProps {
+  Status: string;
+  Type: string;
   id: number;
   image: StaticImageData;
   name: string;
@@ -94,6 +96,7 @@ export interface TemporaryUserProps {
 }
 
 export interface Friend {
+  contactId: string;
   imageUrl: string;
   location: string | "No location set";
   id: number;
@@ -114,4 +117,33 @@ export interface Message {
   senderName?: string;
   senderImage?: string;
   reactions?: string[];
+}
+
+export interface GroupChat {
+  Status: string;
+  ChatID: string;
+  chatId: string;
+  chatName: string;
+  imageUrl?: string;
+  Type?: string;
+  members: {
+    userId: number;
+    name: string;
+    imageUrl?: string;
+    phone?: string;
+    email?: string;
+    location?: string;
+  }[];
+  latestMessage?: {
+    content: string;
+    timestamp: string;
+    senderName: string;
+  };
+}
+
+export interface MembersGroupChat {
+  userId: number;
+  role: string;
+  name: string;
+  imageUrl?: string;
 }

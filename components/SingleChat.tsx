@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, { Children } from "react";
+import React from "react";
 import IconButton from "./IconButton";
 import {
   CallIcon,
@@ -10,11 +10,7 @@ import {
   SearchIcon,
   SendIcon,
 } from "@/constant/image";
-import {
-  faDownload,
-  faFile,
-  faFileWord,
-} from "@fortawesome/free-solid-svg-icons";
+import { faFile, faFileWord } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
@@ -71,10 +67,7 @@ const SingleChat = ({
   handleFileSelect: () => void;
   handleFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  renderMessage: (
-    msg: any,
-    isOwn: boolean
-  ) => React.ReactNode;
+  renderMessage: (msg: any, isOwn: boolean) => React.ReactNode;
 }) => {
   return (
     <div>
@@ -84,7 +77,7 @@ const SingleChat = ({
             <div className="flex items-center justify-between border-b-2 p-4">
               <div className="flex items-center gap-10">
                 <Image
-                  src={selectedChatInfo.imageUrl || "/default-avatar.png"}
+                  src={selectedChatInfo.imageUrl || `https://cnm-chatapp-bucket.s3.ap-southeast-1.amazonaws.com/ud3x-1745220840806-no-avatar.png`}
                   width={64}
                   height={64}
                   alt="Participant"

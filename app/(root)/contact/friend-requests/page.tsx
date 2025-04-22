@@ -162,7 +162,7 @@ const Page = () => {
                   </div>
                   <div className="mt-2 text-sm">Hi there, i'm {f.senderName}. Wanna be friends?</div>
                   <div className="mt-3 flex space-x-2">
-                    <button onClick={()=> handleAccept(f.senderId)} className="px-3 py-1 text-sm border rounded hover:bg-gray-200">
+                    <button onClick={()=> handleDeny(f.senderId)} className="px-3 py-1 text-sm border rounded hover:bg-gray-200">
                       Deny
                     </button>
                     <button onClick={()=> handleAccept(f.senderId)} className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">
