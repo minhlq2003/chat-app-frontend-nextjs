@@ -44,11 +44,12 @@ import SingleChat from "@/components/SingleChat";
 import GroupChat from "@/components/GroupChat";
 import AddFriendModal from "@/components/AddFriendModel";
 import AddGroupModal from "@/components/AddGroupModel";
-import { MembersGroupChat, TemporaryUserProps } from "@/constant/type";
+import {ChatItemProps, MembersGroupChat, TemporaryUserProps} from "@/constant/type";
 import { noUserImage } from "@/constant/image";
 import AddNewMemberModal from "@/components/AddNewMemberModal";
 import { toast } from "sonner";
 import ListMembersGroupChat from "@/components/ListMembersGroup";
+import LeaveGroupConfirmationModel from "@/components/LeaveGroupConfirmationModel";
 import ConfirmationModel from "@/components/ConfirmationModel";
 function Home() {
   const { t } = useTranslation("common");
@@ -81,12 +82,15 @@ function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNewMemberModalOpen, setIsNewMemberModalOpen] = useState(false);
   const [isConfirmation, setisConfirmation] = useState(false);
+  const [isDisbandConfirmation, setisDisbandConfirmation] = useState(false);
   const [allMessages, setAllMessages] = useState([]);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
   const [listMembers, setListMembers] = useState<MembersGroupChat[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const [reqObj, setReqObj] = useState<any>({
+    nodata: true,
+  });
   const handleFileSelect = () => {
     // Trigger the file input click event
     if (fileInputRef.current) {
@@ -473,7 +477,9 @@ function Home() {
 
       if (data.success) {
         // Transform API data to match our component's expected format
-        const formattedChatList = data.data.map((chat: any) => ({
+        const formattedChatList = data.data.filter(function(chat: ChatItemProps) {
+          return chat.Status !== "disbanded";
+        }).map((chat: any) => ({
           id: parseInt(chat.otherUserId) || Math.floor(Math.random() * 1000),
           image: chat.imageUrl || noUserImage, // Provide a default image path
           name: chat.chatName || "Chat",
@@ -1105,6 +1111,9 @@ function Home() {
 
       // Fetch chat list
       fetchChatList(userId);
+      setInterval(() => {
+        fetchChatList(userId);
+      }, 3000)
 
       // Add visibility change handler for reconnection when tab becomes active
       const handleVisibilityChange = () => {
@@ -1461,7 +1470,7 @@ function Home() {
         {selectedChatInfo && (
           <div className="">
             <div className="px-2">
-              <Card className="h-[413px] w-full bg-white rounded-xl p-2">
+              <Card className="h-[413px] w-full bg-white rounded-xl p-2 mb-2">
                 <h1 className="text-2xl font-medium">Info</h1>
                 <div className="flex flex-col items-center gap-3 justify-center">
                   <Image
@@ -1501,7 +1510,6 @@ function Home() {
                             textStyle="text-base text-red-600"
                             className="cursor-pointer"
                             onClick={() => setisConfirmation(true)}
-
                           />
                           <UserInfoItem
                             icon={BlockIcon}
@@ -1509,7 +1517,7 @@ function Home() {
                             altText="Delete group"
                             textStyle="text-base text-red-600"
                             className="cursor-pointer hover:text-blue-600 transition-colors"
-                            onClick={() => toast.success("Delete group")}
+                            onClick={() => setisDisbandConfirmation(true)}
                           />
                         </div>
                       </>
@@ -1555,10 +1563,13 @@ function Home() {
               </Card>
             </div>
             {selectedChatInfo.Type === "group" && (
-              <div className="py-2">
+              <div className="py-2 ">
                 <ListMembersGroupChat
+                  isConfirmation={setisConfirmation}
                   currentUserId={Number(userId)}
                   members={listMembers}
+                  currentChat={selectedChatInfo}
+                  requestObject={setReqObj}
                 />
               </div>
             )}
@@ -1575,16 +1586,26 @@ function Home() {
       {isNewMemberModalOpen && (
         <AddNewMemberModal
           selectedChatInfo={selectedChatInfo}
+          getChatFunc={fetchChatInfo}
           selectedUser={""}
           onClose={() => setIsNewMemberModalOpen(false)}
         />)}
       {isConfirmation && (<ConfirmationModel
           listChatFunc={() => fetchChatList(userId || "")}
           chatFunc={setSelectedChatInfo}
+          getChatFunc={fetchChatInfo}
           selectedChatInfo={selectedChatInfo}
           selectedUser={userId}
           onClose={() => setisConfirmation(false)}
+          requestObject={reqObj}
         />)}
+      {isDisbandConfirmation && (<LeaveGroupConfirmationModel
+        listChatFunc={() => fetchChatList(userId || "")}
+        chatFunc={setSelectedChatInfo}
+        selectedChatInfo={selectedChatInfo}
+        selectedUser={userId}
+        onClose={() => setisDisbandConfirmation(false)}
+      />)}
       <audio ref={notificationSoundRef} src="/noti.mp3" preload="auto"/>
     </div>);
 }

@@ -1,6 +1,6 @@
 import { MembersGroupChat } from "@/constant/type";
 import { Accordion, AccordionItem } from "@nextui-org/react";
-import React, { useEffect, useRef, useState } from "react";
+import React, {Dispatch, useEffect, useRef, useState} from "react";
 
 const roleLabel = {
   owner: "Trưởng nhóm",
@@ -11,11 +11,17 @@ const roleLabel = {
 interface ListMembersGroupChatProps {
   members: MembersGroupChat[];
   currentUserId: number;
+  isConfirmation: Dispatch<any>
+  currentChat: any;
+  requestObject: Dispatch<any>;
 }
 
 const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
   members,
   currentUserId,
+  isConfirmation,
+  currentChat,
+  requestObject
 }) => {
   const [memberAction, setMemberAction] = useState<number | null>(null);
   const yourRole = members.find(
@@ -46,11 +52,12 @@ const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
       variant="splitted"
       itemClasses={{
         title: "text-xl",
+        base: "-mt-2 ",
         content: "",
       }}
     >
       <AccordionItem key="1" aria-label="Members" title="Members">
-        <ul className="flex flex-col gap-3 ">
+        <ul className="flex flex-col gap-3  max-h-[270px] overflow-y-auto">
           {members.map((member) => (
             <li
               key={member.userId}
@@ -99,6 +106,7 @@ const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            isConfirmation(true);
                             console.log("Leave Group clicked");
                           }}
                           className="block w-full text-left text-red-600 hover:bg-gray-100 px-4 py-2"
@@ -112,17 +120,36 @@ const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              console.log("Set Role Admin clicked");
+                              requestObject({
+                                operation: "/member/role",
+                                object: {
+                                  chatId: currentChat.ChatID,
+                                  userId: currentUserId,
+                                  memberToChangeId: member.userId,
+                                  newRole: "admin"
+                                }
+                              })
+                              isConfirmation(true);
+                              console.log("Set Admin role clicked");
                             }}
                             className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                           >
-                            Set Role Admin
+                            Promote to Admin
                           </button>
                         )}
                         {member.role !== "owner" && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              requestObject({
+                                operation: "/member/remove",
+                                object: {
+                                  chatId: currentChat.ChatID,
+                                  userId: currentUserId,
+                                  memberToRemoveId: member.userId
+                                }
+                              })
+                              isConfirmation(true);
                               console.log("Remove From Group clicked");
                             }}
                             className="block w-full text-left text-red-600 hover:bg-gray-100 px-4 py-2"
