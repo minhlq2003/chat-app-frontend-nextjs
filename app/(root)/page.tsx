@@ -1291,7 +1291,8 @@ function Home() {
           <div className="flex flex-col">
             <video
               src={msg.attachmentUrl}
-              controls
+              controls={false}
+              muted={true}
               className="rounded-lg mb-1"
               width={200}
               height={150}
