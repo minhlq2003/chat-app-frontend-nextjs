@@ -65,6 +65,7 @@ function Home() {
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [chatList, setChatList] = useState<any[]>([]);
   const [selectedChatInfo, setSelectedChatInfo] = useState<any>(null);
+  const [memberRole, setMemberRole] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [user, setUser] = useState<TemporaryUserProps>();
@@ -90,8 +91,7 @@ function Home() {
   const [isNewMemberModalOpen, setIsNewMemberModalOpen] = useState(false);
   const [isConfirmation, setisConfirmation] = useState(false);
   const [isDisbandConfirmation, setisDisbandConfirmation] = useState(false);
-  const [isOpenModalChangeGroupName, setIsOpenModalChangeGroupName] =
-    useState(false);
+  const [isOpenModalChangeGroupName, setIsOpenModalChangeGroupName] = useState(false);
   const [allMessages, setAllMessages] = useState([]);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
@@ -108,8 +108,54 @@ function Home() {
   };
 
   const handleChangeGroupName = async (newName: string) => {
-    toast.success("New group name: " + newName);
-    setIsOpenModalChangeGroupName(false);
+    try {
+      if (!selectedChatInfo || !userId) {
+        toast.error("Missing chat information or user ID");
+        return;
+      }
+
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
+      const response = await fetch(`${apiBaseUrl}/group/rename`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chatId: selectedChatInfo.ChatID,
+          userId: userId,
+          newName: newName
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Group name changed successfully");
+        setSelectedChatInfo((prev: any) => ({
+          ...prev,
+          chatName: newName
+        }));
+
+        setChatList(prev =>
+          prev.map(chat => {
+            if (chat.chatId === selectedChatInfo.ChatID) {
+              return {
+                ...chat,
+                name: newName
+              };
+            }
+            return chat;
+          })
+        );
+      } else {
+        toast.error(data.message || "Failed to change group name");
+      }
+    } catch (error) {
+      console.error("Error changing group name:", error);
+      toast.error("An error occurred while changing the group name");
+    } finally {
+      setIsOpenModalChangeGroupName(false);
+    }
   };
 
   const loadMoreMessages = () => {
@@ -176,9 +222,7 @@ function Home() {
         if (response.ok) {
           const data = await response.json();
           const fileUrl = data.imageUrl;
-          // Set the attachment preview instead of showing an alert
           setAttachmentPreview(fileUrl);
-          // Reset input value to allow selecting the same file again
           if (fileInputRef.current) fileInputRef.current.value = "";
         } else {
           console.error("Image upload failed:", await response.json());
@@ -559,6 +603,13 @@ function Home() {
           );
           if (data.data.Type === "group") {
             setListMembers(data.data.members);
+            data.data.members.forEach((member: any) => {
+
+              if(member.userId === Number(userId)) {
+                setMemberRole(member.role);
+                console.log(memberRole)
+              }
+            })
           }
           console.log("Sent joinChat packet for chatId:", chatId);
         } else {
@@ -1206,6 +1257,7 @@ function Home() {
       const fileUrl = msg.attachmentUrl;
       const fileExtension = fileUrl.split(".").pop()?.toLowerCase();
       const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+      const videoExtensions = ["mp4", "avi", "mov", "wmv", "flv", "mkv"];
 
       // Check if it's an image file
       if (imageExtensions.includes(fileExtension)) {
@@ -1234,7 +1286,32 @@ function Home() {
             )}
           </div>
         );
-      } else {
+      } else if(videoExtensions.includes(fileExtension)) {
+        return (
+          <div className="flex flex-col">
+            <video
+              src={msg.attachmentUrl}
+              controls
+              className="rounded-lg mb-1"
+              width={200}
+              height={150}
+            />
+            {msg.content && <p className="mt-1">{msg.content}</p>}
+            {msg.reactions && msg.reactions.length > 0 && (
+              <div className="flex mt-1 gap-1">
+                {msg.reactions.map((reaction: any, index: number) => (
+                  <span
+                    key={index}
+                    className="text-sm bg-gray-100 rounded-full px-2"
+                  >
+                    {reaction.emoji}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      }else {
         // Extract filename from URL
         const fileName = fileUrl.split("/").pop() || "File";
 
@@ -1536,6 +1613,7 @@ function Home() {
                             onClick={() => setIsNewMemberModalOpen(true)}
                           />
 
+                          {memberRole !== "owner" && (
                           <div
                             className={`cursor-pointer text-base text-red-600 flex items-center gap-2`}
                             onClick={() => setisConfirmation(true)}
@@ -1546,6 +1624,8 @@ function Home() {
                             />
                             <p className={``}>Leave group</p>
                           </div>
+                          )}
+                          {memberRole === "owner" && (
                           <UserInfoItem
                             icon={BlockIcon}
                             text="Disband group"
@@ -1554,6 +1634,7 @@ function Home() {
                             className="cursor-pointer hover:text-blue-600 transition-colors"
                             onClick={() => setisDisbandConfirmation(true)}
                           />
+                          )}
                         </div>
                       </>
                     ) : (

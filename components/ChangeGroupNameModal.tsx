@@ -49,11 +49,11 @@ const ChangeGroupNameModal: React.FC<ChangeGroupNameModalProps> = ({
           name="name"
           label="New Group Name"
           rules={[
-            { required: true, message: "cannot be blank" },
-            { max: 50, message: "maximun 50 characters" },
+            { required: true, message: "Group name cannot be blank" },
+            { max: 50, message: "Group name limit is 50 characters" },
           ]}
         >
-          <Input placeholder="Type new name" maxLength={50} />
+          <Input placeholder="Type a new name" maxLength={50} />
         </Form.Item>
       </Form>
     </Modal>

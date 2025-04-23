@@ -57,7 +57,7 @@ const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
       }}
     >
       <AccordionItem key="1" aria-label="Members" title="Members">
-        <ul className="flex flex-col gap-3  max-h-[270px] overflow-y-auto">
+        <ul className="flex flex-col gap-3  max-h-[270px] ">
           {members.map((member) => (
             <li
               key={member.userId}
