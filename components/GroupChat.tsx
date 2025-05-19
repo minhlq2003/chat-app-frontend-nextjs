@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, { Children, useEffect, useState } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import IconButton from "./IconButton";
 import {
   CallIcon,
@@ -11,7 +11,6 @@ import {
   SendIcon,
 } from "@/constant/image";
 import {
-  faDownload,
   faFile,
   faFileWord,
 } from "@fortawesome/free-solid-svg-icons";
@@ -85,6 +84,17 @@ const GroupChat = ({
   // State to track the type of the selected media
   const [selectedMediaType, setSelectedMediaType] = useState<"image" | "video" | null>(null);
 
+  // Refs for video elements
+  const modalVideoRef = useRef<HTMLVideoElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Set volume for videos when they load
+  const setVideoVolume = (videoElement: HTMLVideoElement | null) => {
+    if (videoElement) {
+      videoElement.volume = 0.11; // Set volume to 50%
+    }
+  };
+
   // Update media type when selectedImage changes
   useEffect(() => {
     if (selectedImage) {
@@ -101,6 +111,11 @@ const GroupChat = ({
       setSelectedMediaType(null);
     }
   }, [selectedImage, setSelectedImage]);
+
+  // Set volume for modal video when it's loaded
+  useEffect(() => {
+    setVideoVolume(modalVideoRef.current);
+  }, [selectedMediaType]);
 
   // Handle message click to determine if preview should be shown
   const handleMessageClick = (imageUrl: string | null) => {
@@ -372,9 +387,13 @@ const GroupChat = ({
                       />
                     ) : selectedMediaType === "video" ? (
                       <video
+                        ref={modalVideoRef}
                         src={selectedImage}
                         controls
                         autoPlay
+                        onLoadedMetadata={(e) => {
+                          e.currentTarget.volume = 0.11; // Set volume to 50%
+                        }}
                         className="rounded-lg max-h-[80vh]"
                         style={{ maxWidth: "90vw" }}
                       />
@@ -418,9 +437,13 @@ const GroupChat = ({
                         // Video preview
                         return (
                           <video
+                            ref={previewVideoRef}
                             src={attachmentPreview}
                             width={150}
                             height={100}
+                            onLoadedMetadata={(e) => {
+                              e.currentTarget.volume = 0.11; // Set volume to 50%
+                            }}
                             className="rounded-md h-[100px]"
                           />
                         );
