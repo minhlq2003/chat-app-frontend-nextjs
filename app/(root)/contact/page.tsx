@@ -109,7 +109,7 @@ export default function ContactPage() {
               >
                 <div className="flex items-center gap-4">
                   <img
-                    src={friend.imageUrl}
+                    src={friend.imageUrl || "https://cnm-chatapp-bucket.s3.ap-southeast-1.amazonaws.com/ud3x-1745220840806-no-avatar.png" }
                     alt={friend.name}
                     className="w-12 h-12 rounded-full"
                   />

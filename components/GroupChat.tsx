@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, { Children } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import IconButton from "./IconButton";
 import {
   CallIcon,
@@ -11,13 +11,21 @@ import {
   SendIcon,
 } from "@/constant/image";
 import {
-  faDownload,
   faFile,
   faFileWord,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
+
+// Define file type constants
+const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp"];
+const VIDEO_EXTENSIONS = ["mp4", "avi", "mov", "wmv", "flv", "mkv"];
+
+// Helper function to get file extension
+const getFileExtension = (url: string): string => {
+  return url?.split(".").pop()?.toLowerCase() || "";
+};
 
 const GroupChat = ({
   selectedChatInfo,
@@ -73,6 +81,53 @@ const GroupChat = ({
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   renderMessage: (msg: any, isOwn: boolean) => React.ReactNode;
 }) => {
+  // State to track the type of the selected media
+  const [selectedMediaType, setSelectedMediaType] = useState<"image" | "video" | null>(null);
+
+  // Refs for video elements
+  const modalVideoRef = useRef<HTMLVideoElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Set volume for videos when they load
+  const setVideoVolume = (videoElement: HTMLVideoElement | null) => {
+    if (videoElement) {
+      videoElement.volume = 0.11; // Set volume to 50%
+    }
+  };
+
+  // Update media type when selectedImage changes
+  useEffect(() => {
+    if (selectedImage) {
+      const extension = getFileExtension(selectedImage);
+      if (IMAGE_EXTENSIONS.includes(extension)) {
+        setSelectedMediaType("image");
+      } else if (VIDEO_EXTENSIONS.includes(extension)) {
+        setSelectedMediaType("video");
+      } else {
+        setSelectedMediaType(null);
+        setSelectedImage(null); // Don't show preview for non-media files
+      }
+    } else {
+      setSelectedMediaType(null);
+    }
+  }, [selectedImage, setSelectedImage]);
+
+  // Set volume for modal video when it's loaded
+  useEffect(() => {
+    setVideoVolume(modalVideoRef.current);
+  }, [selectedMediaType]);
+
+  // Handle message click to determine if preview should be shown
+  const handleMessageClick = (imageUrl: string | null) => {
+    if (!imageUrl) return;
+
+    const extension = getFileExtension(imageUrl);
+    if (IMAGE_EXTENSIONS.includes(extension) || VIDEO_EXTENSIONS.includes(extension)) {
+      setSelectedImage(imageUrl);
+    }
+    // Do nothing for other file types
+  };
+
   return (
     <div>
       {selectedChatInfo ? (
@@ -131,6 +186,11 @@ const GroupChat = ({
                   const imageUrl = msg.attachmentUrl;
                   const isOpen = messageMenuId === msg.messageId;
 
+                  // Check if the message has a previewable attachment
+                  const fileExtension = imageUrl ? getFileExtension(imageUrl) : "";
+                  const isPreviewable = IMAGE_EXTENSIONS.includes(fileExtension) ||
+                                      VIDEO_EXTENSIONS.includes(fileExtension);
+
                   return (
                     <div
                       key={msg.messageId}
@@ -152,22 +212,23 @@ const GroupChat = ({
                         {/* Message Bubble */}
                         <div
                           className={`
-              ${
-                isOwn
-                  ? "bg-customPurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
-                  : "bg-customPurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
-              }
-              p-2 relative group w-full
-            `}
+                            ${
+                              isOwn
+                                ? "bg-customPurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
+                                : "bg-customPurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
+                            }
+                            p-2 relative group w-full ${isPreviewable ? "cursor-pointer" : ""}
+                          `}
                           onClick={() => {
-                            setSelectedImage(imageUrl);
-                            console.log(imageUrl);
+                            if (isPreviewable) {
+                              handleMessageClick(imageUrl);
+                            }
                           }}
                         >
                           {/* Sender name (for group chat) */}
                           <div className={`text-xs font-semibold mb-1 ${
-                        isOwn ? "text-white" : "text-black"
-                      }`}>
+                            isOwn ? "text-white" : "text-black"
+                          }`}>
                             {msg.senderName}
                           </div>
 
@@ -182,11 +243,11 @@ const GroupChat = ({
                               }
                             }}
                             className={`absolute bottom-0 w-8 h-8 rounded-full hover:bg-gray-200 hidden group-hover:flex items-center justify-center z-10
-                ${
-                  isOwn
-                    ? "-left-8 bg-customPurple/20 text-black"
-                    : "-right-8 bg-customPurple/20 text-black"
-                }`}
+                            ${
+                              isOwn
+                                ? "-left-8 bg-customPurple/20 text-black"
+                                : "-right-8 bg-customPurple/20 text-black"
+                            }`}
                           >
                             <span className="text-xs">●●●</span>
                           </button>
@@ -306,24 +367,43 @@ const GroupChat = ({
               )}
 
               <div ref={messagesEndRef} />
-              {selectedImage && (
+
+              {/* Media Preview Modal */}
+              {selectedImage && selectedMediaType && (
                 <div
                   className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
                   onClick={() => setSelectedImage(null)}
                   style={{ marginTop: "0px" }}
                 >
                   <div className="relative max-w-[90%] max-h-[90%]">
-                    <Image
-                      src={selectedImage}
-                      alt="Full Image"
-                      width={800}
-                      height={600}
-                      className="rounded-lg"
-                      style={{ objectFit: "contain" }}
-                    />
+                    {selectedMediaType === "image" ? (
+                      <Image
+                        src={selectedImage}
+                        alt="Full Image"
+                        width={800}
+                        height={600}
+                        className="rounded-lg"
+                        style={{ objectFit: "contain" }}
+                      />
+                    ) : selectedMediaType === "video" ? (
+                      <video
+                        ref={modalVideoRef}
+                        src={selectedImage}
+                        controls
+                        autoPlay
+                        onLoadedMetadata={(e) => {
+                          e.currentTarget.volume = 0.11; // Set volume to 50%
+                        }}
+                        className="rounded-lg max-h-[80vh]"
+                        style={{ maxWidth: "90vw" }}
+                      />
+                    ) : null}
                     <button
-                      onClick={() => setSelectedImage(null)}
-                      className="absolute top-2 right-2 text-white text-xl"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedImage(null);
+                      }}
+                      className="absolute top-2 right-2 text-white text-xl bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center"
                     >
                       ✕
                     </button>
@@ -340,19 +420,9 @@ const GroupChat = ({
                     {(() => {
                       // Determine if it's an image or file based on extension
                       const fileUrl = attachmentPreview;
-                      const fileExtension: string | undefined = fileUrl
-                        .split(".")
-                        .pop()
-                        ?.toLowerCase();
-                      const imageExtensions: string[] = [
-                        "jpg",
-                        "jpeg",
-                        "png",
-                        "gif",
-                        "webp",
-                      ];
+                      const fileExtension = getFileExtension(fileUrl);
 
-                      if (imageExtensions.includes(fileExtension as string)) {
+                      if (IMAGE_EXTENSIONS.includes(fileExtension)) {
                         // Image preview
                         return (
                           <Image
@@ -361,6 +431,20 @@ const GroupChat = ({
                             height={100}
                             alt="Attachment preview"
                             className="rounded-md object-cover h-[100px]"
+                          />
+                        );
+                      } else if (VIDEO_EXTENSIONS.includes(fileExtension)) {
+                        // Video preview
+                        return (
+                          <video
+                            ref={previewVideoRef}
+                            src={attachmentPreview}
+                            width={150}
+                            height={100}
+                            onLoadedMetadata={(e) => {
+                              e.currentTarget.volume = 0.11; // Set volume to 50%
+                            }}
+                            className="rounded-md h-[100px]"
                           />
                         );
                       } else {
@@ -372,16 +456,16 @@ const GroupChat = ({
                         let bgColor = "bg-blue-100";
                         let iconColor = "text-blue-500";
 
-                        if (["doc", "docx"].includes(fileExtension as string)) {
+                        if (["doc", "docx"].includes(fileExtension)) {
                           fileIcon = faFileWord;
                           bgColor = "bg-blue-100";
                           iconColor = "text-blue-500";
-                        } else if (["pdf"].includes(fileExtension as string)) {
+                        } else if (["pdf"].includes(fileExtension)) {
                           fileIcon = faFile;
                           bgColor = "bg-red-100";
                           iconColor = "text-red-500";
                         } else if (
-                          ["xls", "xlsx"].includes(fileExtension as string)
+                          ["xls", "xlsx"].includes(fileExtension)
                         ) {
                           fileIcon = faFile;
                           bgColor = "bg-green-100";

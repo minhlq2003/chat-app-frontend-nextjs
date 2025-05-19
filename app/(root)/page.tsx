@@ -30,27 +30,34 @@ import React, { useEffect, useState, useRef } from "react";
 import IconButton from "@/components/IconButton";
 import UserInfoItem from "@/components/ProfileInfoItem";
 import { useTranslation } from "react-i18next";
-import {useRouter, useSearchParams} from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { extractLists, getFileIcon } from "@/constant/help";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faDownload,
+  faEdit,
   faFile,
   faFileWord,
+  faRightFromBracket,
 } from "@fortawesome/free-solid-svg-icons";
 import RenderMedia from "@/components/RenderMedia";
 import SingleChat from "@/components/SingleChat";
 import GroupChat from "@/components/GroupChat";
 import AddFriendModal from "@/components/AddFriendModel";
 import AddGroupModal from "@/components/AddGroupModel";
-import {ChatItemProps, MembersGroupChat, TemporaryUserProps} from "@/constant/type";
+import {
+  ChatItemProps,
+  MembersGroupChat,
+  TemporaryUserProps,
+} from "@/constant/type";
 import { noUserImage } from "@/constant/image";
 import AddNewMemberModal from "@/components/AddNewMemberModal";
 import { toast } from "sonner";
 import ListMembersGroupChat from "@/components/ListMembersGroup";
 import LeaveGroupConfirmationModel from "@/components/LeaveGroupConfirmationModel";
 import ConfirmationModel from "@/components/ConfirmationModel";
+import ChangeGroupNameModal from "@/components/ChangeGroupNameModal";
 function Home() {
   const { t } = useTranslation("common");
   const [type, setType] = useState("all");
@@ -58,6 +65,7 @@ function Home() {
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [chatList, setChatList] = useState<any[]>([]);
   const [selectedChatInfo, setSelectedChatInfo] = useState<any>(null);
+  const [memberRole, setMemberRole] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [user, setUser] = useState<TemporaryUserProps>();
@@ -83,6 +91,7 @@ function Home() {
   const [isNewMemberModalOpen, setIsNewMemberModalOpen] = useState(false);
   const [isConfirmation, setisConfirmation] = useState(false);
   const [isDisbandConfirmation, setisDisbandConfirmation] = useState(false);
+  const [isOpenModalChangeGroupName, setIsOpenModalChangeGroupName] = useState(false);
   const [allMessages, setAllMessages] = useState([]);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
@@ -95,6 +104,57 @@ function Home() {
     // Trigger the file input click event
     if (fileInputRef.current) {
       fileInputRef.current.click();
+    }
+  };
+
+  const handleChangeGroupName = async (newName: string) => {
+    try {
+      if (!selectedChatInfo || !userId) {
+        toast.error("Missing chat information or user ID");
+        return;
+      }
+
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
+      const response = await fetch(`${apiBaseUrl}/group/rename`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chatId: selectedChatInfo.ChatID,
+          userId: userId,
+          newName: newName
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Group name changed successfully");
+        setSelectedChatInfo((prev: any) => ({
+          ...prev,
+          chatName: newName
+        }));
+
+        setChatList(prev =>
+          prev.map(chat => {
+            if (chat.chatId === selectedChatInfo.ChatID) {
+              return {
+                ...chat,
+                name: newName
+              };
+            }
+            return chat;
+          })
+        );
+      } else {
+        toast.error(data.message || "Failed to change group name");
+      }
+    } catch (error) {
+      console.error("Error changing group name:", error);
+      toast.error("An error occurred while changing the group name");
+    } finally {
+      setIsOpenModalChangeGroupName(false);
     }
   };
 
@@ -126,7 +186,10 @@ function Home() {
   const chatRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const onScroll = () => {
-      if (chatRef.current?.scrollTop === 0 && page * PAGE_SIZE < allMessages.length) {
+      if (
+        chatRef.current?.scrollTop === 0 &&
+        page * PAGE_SIZE < allMessages.length
+      ) {
         loadMoreMessages();
       }
     };
@@ -135,7 +198,9 @@ function Home() {
     return () => chatRef.current?.removeEventListener("scroll", onScroll);
   }, [page, allMessages]);
 
-  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) {
       alert("No file selected.");
@@ -157,9 +222,7 @@ function Home() {
         if (response.ok) {
           const data = await response.json();
           const fileUrl = data.imageUrl;
-          // Set the attachment preview instead of showing an alert
           setAttachmentPreview(fileUrl);
-          // Reset input value to allow selecting the same file again
           if (fileInputRef.current) fileInputRef.current.value = "";
         } else {
           console.error("Image upload failed:", await response.json());
@@ -239,7 +302,7 @@ function Home() {
       );
     }
   };
-  let params = useSearchParams()
+  let params = useSearchParams();
   useEffect(() => {
     const temUser = JSON.parse(localStorage.getItem("user") || "{}");
     setUser(temUser);
@@ -477,36 +540,38 @@ function Home() {
 
       if (data.success) {
         // Transform API data to match our component's expected format
-        const formattedChatList = data.data.filter(function(chat: ChatItemProps) {
-          return chat.Status !== "disbanded";
-        }).map((chat: any) => ({
-          id: parseInt(chat.otherUserId) || Math.floor(Math.random() * 1000),
-          image: chat.imageUrl || noUserImage, // Provide a default image path
-          name: chat.chatName || "Chat",
-          message: chat.lastMessage
-            ? chat.lastMessage.content === ""
-              ? chat.lastMessage.type
-                ? `Sent a ${chat.lastMessage.type}`
-                : "Click to view messages"
-              : chat.lastMessage?.content
-            : chat.lastMessage?.content ||
-              "No messages yet" ||
-              "Click to view messages", // Placeholder message
-          time:
-            chat.lastMessage && chat.lastMessage.timestamp
-              ? new Date(chat.lastMessage.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : new Date(chat.CreatedDate).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-          unread: 0,
-          pin: false,
-          type: chat.Type || "private",
-          chatId: chat.ChatID,
-        }));
+        const formattedChatList = data.data
+          .filter(function (chat: ChatItemProps) {
+            return chat.Status !== "disbanded";
+          })
+          .map((chat: any) => ({
+            id: parseInt(chat.otherUserId) || Math.floor(Math.random() * 1000),
+            image: chat.imageUrl || noUserImage, // Provide a default image path
+            name: chat.chatName || "Chat",
+            message: chat.lastMessage
+              ? chat.lastMessage.content === ""
+                ? chat.lastMessage.type
+                  ? `Sent a ${chat.lastMessage.type}`
+                  : "Click to view messages"
+                : chat.lastMessage?.content
+              : chat.lastMessage?.content ||
+                "No messages yet" ||
+                "Click to view messages", // Placeholder message
+            time:
+              chat.lastMessage && chat.lastMessage.timestamp
+                ? new Date(chat.lastMessage.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : new Date(chat.CreatedDate).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+            unread: 0,
+            pin: false,
+            type: chat.Type || "private",
+            chatId: chat.ChatID,
+          }));
 
         setChatList(formattedChatList);
       } else {
@@ -538,6 +603,13 @@ function Home() {
           );
           if (data.data.Type === "group") {
             setListMembers(data.data.members);
+            data.data.members.forEach((member: any) => {
+
+              if(member.userId === Number(userId)) {
+                setMemberRole(member.role);
+                console.log(memberRole)
+              }
+            })
           }
           console.log("Sent joinChat packet for chatId:", chatId);
         } else {
@@ -572,21 +644,26 @@ function Home() {
         // Fetch previous messages using the correct endpoint
         try {
           const messageCount = 50;
-          const messagesResponse = await fetch(`${apiBaseUrl}/chat/${chatId}/history/${messageCount}`);
+          const messagesResponse = await fetch(
+            `${apiBaseUrl}/chat/${chatId}/history/${messageCount}`
+          );
           const messagesData = await messagesResponse.json();
 
           if (messagesData.success && Array.isArray(messagesData.data)) {
             let filteredMessages = messagesData.data
-            .filter((element: {
-              deleteReason: string;
-              userId: string
-            }) => !(element.deleteReason === "remove" && element.userId === userId)) // Remove elements with deleteReason 'remove'
-            .map((element: { deleteReason: string; content: string }) => {
-              if (element.deleteReason === "unsent") {
-                element.content = "This message was unsent";
-              }
-              return element; // Return the modified element
-            });
+              .filter(
+                (element: { deleteReason: string; userId: string }) =>
+                  !(
+                    element.deleteReason === "remove" &&
+                    element.userId === userId
+                  )
+              ) // Remove elements with deleteReason 'remove'
+              .map((element: { deleteReason: string; content: string }) => {
+                if (element.deleteReason === "unsent") {
+                  element.content = "This message was unsent";
+                }
+                return element; // Return the modified element
+              });
 
             // Format and set messages
             const formattedMessages = filteredMessages.map((msg: any) => ({
@@ -977,7 +1054,10 @@ function Home() {
 
             case "receiveChat":
               console.log("Received chat message:", data);
-              if (data.message.userId !== userId || data.message.senderId !== userId) {
+              if (
+                data.message.userId !== userId ||
+                data.message.senderId !== userId
+              ) {
                 playNotificationSound();
               }
               // Check if this message belongs to the currently selected chat
@@ -1094,14 +1174,15 @@ function Home() {
       const user = JSON.parse(userStr);
       const userId = user.id;
       setUserId(userId);
-      let foundChat = params.get("chatId")
+      let foundChat = params.get("chatId");
       if (foundChat) {
         let userSelect = "11111111";
         if (!foundChat.includes("group")) {
-          userSelect = foundChat.split("-").filter(id => Number(id) !== userId)[0]
+          userSelect = foundChat
+            .split("-")
+            .filter((id) => Number(id) !== userId)[0];
         }
         handleUserSelect(Number(userSelect), foundChat);
-
       }
 
       // Initialize WebSocket only once
@@ -1113,7 +1194,7 @@ function Home() {
       fetchChatList(userId);
       setInterval(() => {
         fetchChatList(userId);
-      }, 3000)
+      }, 3000);
 
       // Add visibility change handler for reconnection when tab becomes active
       const handleVisibilityChange = () => {
@@ -1176,6 +1257,7 @@ function Home() {
       const fileUrl = msg.attachmentUrl;
       const fileExtension = fileUrl.split(".").pop()?.toLowerCase();
       const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+      const videoExtensions = ["mp4", "avi", "mov", "wmv", "flv", "mkv"];
 
       // Check if it's an image file
       if (imageExtensions.includes(fileExtension)) {
@@ -1204,7 +1286,33 @@ function Home() {
             )}
           </div>
         );
-      } else {
+      } else if(videoExtensions.includes(fileExtension)) {
+        return (
+          <div className="flex flex-col">
+            <video
+              src={msg.attachmentUrl}
+              controls={false}
+              muted={true}
+              className="rounded-lg mb-1"
+              width={200}
+              height={150}
+            />
+            {msg.content && <p className="mt-1">{msg.content}</p>}
+            {msg.reactions && msg.reactions.length > 0 && (
+              <div className="flex mt-1 gap-1">
+                {msg.reactions.map((reaction: any, index: number) => (
+                  <span
+                    key={index}
+                    className="text-sm bg-gray-100 rounded-full px-2"
+                  >
+                    {reaction.emoji}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      }else {
         // Extract filename from URL
         const fileName = fileUrl.split("/").pop() || "File";
 
@@ -1471,8 +1579,7 @@ function Home() {
           <div className="">
             <div className="px-2">
               <Card className="h-[413px] w-full bg-white rounded-xl p-2 mb-2">
-                <h1 className="text-2xl font-medium">Info</h1>
-                <div className="flex flex-col items-center gap-3 justify-center">
+                <div className="flex flex-col items-center gap-3 justify-center mt-4">
                   <Image
                     src={selectedChatInfo.imageUrl || noUserImage}
                     width={64}
@@ -1489,13 +1596,16 @@ function Home() {
                     {selectedChatInfo?.Type === "group" ? (
                       <>
                         <div className="px-4 py-8 flex flex-col gap-3">
-                          <UserInfoItem
-                            icon={PlusIcon}
-                            text="Change group name"
-                            altText="Change group name"
-                            className="cursor-pointer hover:text-blue-600 transition-colors"
-                            onClick={() => toast.success("Change group name")}
-                          />
+                          <div
+                            className={`cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-2`}
+                            onClick={() => setIsOpenModalChangeGroupName(true)}
+                          >
+                            <FontAwesomeIcon
+                              icon={faEdit}
+                              className="w-5 h-5 pl-1"
+                            />
+                            <p className={``}>Change group name</p>
+                          </div>
                           <UserInfoItem
                             icon={PlusIcon}
                             text="Add new member"
@@ -1503,22 +1613,29 @@ function Home() {
                             className="cursor-pointer hover:text-blue-600 transition-colors"
                             onClick={() => setIsNewMemberModalOpen(true)}
                           />
-                          <UserInfoItem
-                            icon={BlockIcon}
-                            text="Leave group"
-                            altText="Leave group"
-                            textStyle="text-base text-red-600"
-                            className="cursor-pointer"
+
+                          {memberRole !== "owner" && (
+                          <div
+                            className={`cursor-pointer text-base text-red-600 flex items-center gap-2`}
                             onClick={() => setisConfirmation(true)}
-                          />
+                          >
+                            <FontAwesomeIcon
+                              icon={faRightFromBracket}
+                              className="w-5 h-5 pl-1"
+                            />
+                            <p className={``}>Leave group</p>
+                          </div>
+                          )}
+                          {memberRole === "owner" && (
                           <UserInfoItem
                             icon={BlockIcon}
-                            text="Delete group"
-                            altText="Delete group"
+                            text="Disband group"
+                            altText="Disband group"
                             textStyle="text-base text-red-600"
                             className="cursor-pointer hover:text-blue-600 transition-colors"
                             onClick={() => setisDisbandConfirmation(true)}
                           />
+                          )}
                         </div>
                       </>
                     ) : (
@@ -1562,18 +1679,15 @@ function Home() {
                 )}
               </Card>
             </div>
-            {selectedChatInfo.Type === "group" && (
-              <div className="py-2 ">
-                <ListMembersGroupChat
-                  isConfirmation={setisConfirmation}
-                  currentUserId={Number(userId)}
-                  members={listMembers}
-                  currentChat={selectedChatInfo}
-                  requestObject={setReqObj}
-                />
-              </div>
-            )}
-            <RenderMedia data={extractLists(messages)} />
+
+            <RenderMedia
+              isConfirmation={setisConfirmation}
+              currentUserId={Number(userId)}
+              members={listMembers}
+              currentChat={selectedChatInfo}
+              requestObject={setReqObj}
+              data={extractLists(messages)}
+            />
           </div>
         )}
       </div>
@@ -1589,8 +1703,10 @@ function Home() {
           getChatFunc={fetchChatInfo}
           selectedUser={""}
           onClose={() => setIsNewMemberModalOpen(false)}
-        />)}
-      {isConfirmation && (<ConfirmationModel
+        />
+      )}
+      {isConfirmation && (
+        <ConfirmationModel
           listChatFunc={() => fetchChatList(userId || "")}
           chatFunc={setSelectedChatInfo}
           getChatFunc={fetchChatInfo}
@@ -1598,16 +1714,26 @@ function Home() {
           selectedUser={userId}
           onClose={() => setisConfirmation(false)}
           requestObject={reqObj}
-        />)}
-      {isDisbandConfirmation && (<LeaveGroupConfirmationModel
-        listChatFunc={() => fetchChatList(userId || "")}
-        chatFunc={setSelectedChatInfo}
-        selectedChatInfo={selectedChatInfo}
-        selectedUser={userId}
-        onClose={() => setisDisbandConfirmation(false)}
-      />)}
-      <audio ref={notificationSoundRef} src="/noti.mp3" preload="auto"/>
-    </div>);
+        />
+      )}
+      {isDisbandConfirmation && (
+        <LeaveGroupConfirmationModel
+          listChatFunc={() => fetchChatList(userId || "")}
+          chatFunc={setSelectedChatInfo}
+          selectedChatInfo={selectedChatInfo}
+          selectedUser={userId}
+          onClose={() => setisDisbandConfirmation(false)}
+        />
+      )}
+      <audio ref={notificationSoundRef} src="/noti.mp3" preload="auto" />
+      <ChangeGroupNameModal
+        currentName={selectedChatInfo?.ChatName}
+        open={isOpenModalChangeGroupName}
+        onClose={() => setIsOpenModalChangeGroupName(false)}
+        onSubmit={handleChangeGroupName}
+      />
+    </div>
+  );
 }
 
 export default Home;
