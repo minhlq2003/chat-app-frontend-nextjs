@@ -1,7 +1,7 @@
 // app/contact/page.tsx
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Input } from "@nextui-org/react";
 import { useTranslation } from "react-i18next";
 import { Friend } from "@/constant/type";
@@ -28,8 +28,22 @@ const groupFriendsByLetter = (friends: Friend[]) => {
 export default function ContactPage() {
   const [friendsList, setFriendsList] = React.useState<Friend[]>([]);
   const { t } = useTranslation("common");
-  const groupedFriends = groupFriendsByLetter(friendsList);
-  const sortedLetters = Object.keys(groupedFriends).sort();
+  const [search, setSearch] = useState("");
+  const [sortAsc, setSortAsc] = useState(true);
+
+  const filteredFriends = friendsList.filter(
+    (friend) =>
+      friend.name.toLowerCase().includes(search.toLowerCase()) ||
+      friend.phone.includes(search)
+  );
+  const groupedFriends = groupFriendsByLetter(
+    [...filteredFriends].sort((a, b) =>
+      sortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+    )
+  );
+  const sortedLetters = Object.keys(groupedFriends).sort((a, b) =>
+    sortAsc ? a.localeCompare(b) : b.localeCompare(a)
+  );
   const router = useRouter();
   const [userId, setUserId] = React.useState<string | null>(null);
 
@@ -37,7 +51,8 @@ export default function ContactPage() {
     try {
       if (!userId) return;
 
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
       const response = await fetch(
         `${apiBaseUrl}/chat/private?userIdA=${userId}&userIdB=${friendId}`
       );
@@ -65,7 +80,7 @@ export default function ContactPage() {
       const data = await response.json();
 
       if (data.success) {
-        setFriendsList(data.data)
+        setFriendsList(data.data);
       } else {
         console.error("Failed to fetch chat list");
       }
@@ -87,57 +102,78 @@ export default function ContactPage() {
 
     fetchFriendsList(userId || "");
   }, [router]);
-
   return (
     <>
       <h1 className="font-bold text-[32px]">{t("Friends List")}</h1>
       <div className="flex items-center mb-4 mt-2 gap-2">
-        <Input placeholder="Search username, phone,..." className="flex-1" />
-        <Button variant="solid">A-Z</Button>
+        <Input
+          placeholder="Search username, phone,..."
+          className="flex-1"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <Button variant="solid" onPress={() => setSortAsc(!sortAsc)}>
+          {sortAsc ? "A-Z" : "Z-A"}
+        </Button>
       </div>
 
       <div className="overflow-y-auto max-h-[calc(100vh-150px)] pr-2">
-        {sortedLetters.map((letter) => (
-          <div key={letter} className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-600 mb-2">
-              {letter}
-            </h2>
-            {groupedFriends[letter].map((friend, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-4 hover:bg-customPurple/10"
-              >
-                <div className="flex items-center gap-4">
-                  <img
-                    src={friend.imageUrl || "https://cnm-chatapp-bucket.s3.ap-southeast-1.amazonaws.com/ud3x-1745220840806-no-avatar.png" }
-                    alt={friend.name}
-                    className="w-12 h-12 rounded-full"
-                  />
-                  <div>
-                    <p className="font-semibold">{friend.name}</p>
-                    {/*//temporary set this as the location, since the status is not the profile bio*/}
-                    <p className="text-sm text-gray-500">{friend.location ?? "No location set"}</p>
-                    <p className="text-sm text-gray-400">({friend.phone})</p>
+        {sortedLetters.length === 0 ? (
+          <p className="text-gray-500 text-xl text-center mt-10">
+            {t("No friends found.")}
+          </p>
+        ) : (
+          sortedLetters.map((letter) => (
+            <div key={letter} className="mb-6">
+              <h2 className="text-lg font-semibold text-gray-600 mb-2">
+                {letter}
+              </h2>
+              {groupedFriends[letter].map((friend, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-4 hover:bg-customPurple/10"
+                >
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={
+                        friend.imageUrl ||
+                        "https://cnm-chatapp-bucket.s3.ap-southeast-1.amazonaws.com/ud3x-1745220840806-no-avatar.png"
+                      }
+                      alt={friend.name}
+                      className="w-12 h-12 rounded-full"
+                    />
+                    <div>
+                      <p className="font-semibold">{friend.name}</p>
+                      {/*//temporary set this as the location, since the status is not the profile bio*/}
+                      <p className="text-sm text-gray-500">
+                        {friend.location ?? "No location set"}
+                      </p>
+                      <p className="text-sm text-gray-400">({friend.phone})</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleChatClick(friend.contactId)}
+                    >
+                      <FontAwesomeIcon icon={faMessage} />
+                    </Button>
+                    <Button size="sm" variant="ghost">
+                      <FontAwesomeIcon icon={faVideo} />
+                    </Button>
+                    <Button size="sm" variant="ghost">
+                      <FontAwesomeIcon icon={faPhone} />
+                    </Button>
+                    <Button size="sm" variant="ghost">
+                      <FontAwesomeIcon icon={faTrash} />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-3">
-                  <Button size="sm" variant="ghost" onClick={() => handleChatClick(friend.contactId)}>
-                    <FontAwesomeIcon icon={faMessage} />
-                  </Button>
-                  <Button size="sm" variant="ghost">
-                    <FontAwesomeIcon icon={faVideo} />
-                  </Button>
-                  <Button size="sm" variant="ghost">
-                    <FontAwesomeIcon icon={faPhone} />
-                  </Button>
-                  <Button size="sm" variant="ghost">
-                    <FontAwesomeIcon icon={faTrash} />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ))}
+              ))}
+            </div>
+          ))
+        )}
       </div>
     </>
   );

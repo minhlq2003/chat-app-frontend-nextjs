@@ -2,7 +2,7 @@
 
 import { noUserImage } from "@/constant/image";
 import Image from "next/image";
-import React, {Dispatch, useEffect, useRef, useState} from "react";
+import React, { Dispatch, useEffect, useRef, useState } from "react";
 import { Checkbox, notification } from "antd";
 import { toast } from "sonner";
 
@@ -10,14 +10,14 @@ const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
 
 export default function ConfirmationModel({
-                                            onClose,
-                                            selectedUser,
-                                            chatFunc,
-                                            selectedChatInfo,
-                                            listChatFunc,
-                                            requestObject,
-                                            getChatFunc
-                                          }: {
+  onClose,
+  selectedUser,
+  chatFunc,
+  selectedChatInfo,
+  listChatFunc,
+  requestObject,
+  getChatFunc,
+}: {
   onClose: () => void;
   selectedUser?: string | null;
   chatFunc: Dispatch<any> | null;
@@ -27,63 +27,62 @@ export default function ConfirmationModel({
   getChatFunc: (chatId: string) => Promise<void> | null;
 }) {
   useEffect(() => {
-    console.log(selectedChatInfo)
-    console.log(selectedUser)
-    console.log(requestObject)
-  }, [])
+    console.log(selectedChatInfo);
+    console.log(selectedUser);
+    console.log(requestObject);
+  }, []);
 
   const handleSelection = async (answer: boolean) => {
     onClose();
     let reqBody = {
       chatId: selectedChatInfo.ChatID,
       userId: selectedUser,
-    }
-    let operation = "/leave"
-    if(requestObject && requestObject.object) {
+    };
+    let operation = "/leave";
+    if (requestObject && requestObject.object) {
       reqBody = requestObject.object;
       operation = requestObject.operation;
     }
-    if(!answer) {
+    if (!answer) {
     } else {
-      let data ;
+      let data;
       try {
         const response = await fetch(`${apiBaseUrl}/group${operation}`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(reqBody)
+          body: JSON.stringify(reqBody),
         });
         data = await response.json();
 
-
         if (data.success) {
-          toast.success('Operation successfully.');
+          toast.success("Operation successfully.");
           if (listChatFunc && !requestObject.object) {
             await listChatFunc(selectedUser);
           }
           if (chatFunc !== null) {
             if (requestObject.object) {
-              getChatFunc(selectedChatInfo.ChatID)
+              getChatFunc(selectedChatInfo.ChatID);
             } else {
-              chatFunc(null)
+              chatFunc(null);
             }
-        }
-          requestObject = {
-            nodata: true
           }
+          requestObject = {
+            nodata: true,
+          };
         } else {
-          let response = data.message
-          toast.error('Operation failed: '+response);
+          let response = data.message;
+          toast.error("Operation failed: " + response);
           requestObject = {
-            nodata: true
-          }
+            nodata: true,
+          };
         }
-        } catch (error) {
-        console.log(error)
+      } catch (error) {
+        console.log(error);
       }
     }
-  }
+  };
   return (
     <div
       className="fixed inset-0 bg-black/10 z-50 flex items-center justify-center"
@@ -99,7 +98,9 @@ export default function ConfirmationModel({
           <div className="flex items-center gap-10">
             <button
               className="text-black bg-gray-400 px-4 py-1 hover:bg-gray-500 rounded"
-              onClick={() => {handleSelection(false)}}
+              onClick={() => {
+                handleSelection(false);
+              }}
             >
               No
             </button>
@@ -107,7 +108,9 @@ export default function ConfirmationModel({
               className={`px-4 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
 
             }`}
-              onClick={() => {handleSelection(true)}}
+              onClick={() => {
+                handleSelection(true);
+              }}
             >
               Yes
             </button>

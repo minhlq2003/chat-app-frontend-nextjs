@@ -147,7 +147,11 @@ const Page = () => {
           Received Requests ({listRequests.length})
         </h3>
         <div className="grid md:grid-cols-3 gap-4">
-          {listRequests.map((f, index) => (
+          {listRequests.length === 0 ? (
+            <p className="text-black text-xl">You have no friend requests</p>
+          ):(
+            <>
+            {listRequests.map((f, index) => (
             <div key={f.requestId} className="bg-gray-100 rounded-lg p-4 shadow">
               <div className="flex items-start space-x-3">
                 <img
@@ -173,6 +177,9 @@ const Page = () => {
               </div>
             </div>
           ))}
+            </>
+          )}
+          
         </div>
       </div>
 
