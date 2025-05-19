@@ -1,5 +1,6 @@
+"use client";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import IconButton from "./IconButton";
 import {
   CallIcon,
@@ -14,6 +15,7 @@ import { faFile, faFileWord } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
+import { Message } from "@/constant/type";
 
 const SingleChat = ({
   selectedChatInfo,
@@ -69,19 +71,90 @@ const SingleChat = ({
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   renderMessage: (msg: any, isOwn: boolean) => React.ReactNode;
 }) => {
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [result, setResult] = useState<Message[]>([]);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const apiBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+  const searchChat = async (chatId: string, search: string, userId: string) => {
+    if (!search.trim()) return;
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/chat/${chatId}/search?query=${encodeURIComponent(
+          search
+        )}&userId=${userId}`
+      );
+      const data = await response.json();
+      if (data) {
+        setResult(data.data);
+        setHighlightedIndex(0);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!userId) return;
+
+    if (searchTerm.trim()) {
+      searchChat(selectedChatInfo.ChatID, searchTerm, userId);
+    } else {
+      setResult([]);
+      setHighlightedIndex(0);
+    }
+  }, [searchTerm, userId]);
+  const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+  const searchRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setSearchTerm("");
+        setShowSearch(false);
+        setResult([]);
+        setHighlightedIndex(0);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (result.length > 0 && result[highlightedIndex]) {
+      const msgId = result[highlightedIndex].messageId;
+      if (msgId !== undefined) {
+        const el = messageRefs.current[msgId];
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+    }
+  }, [highlightedIndex, result]);
   return (
     <div>
       {selectedChatInfo ? (
         <div className="flex flex-col justify-between h-screen">
-          <div>
+          <div className="relative">
             <div className="flex items-center justify-between border-b-2 p-4">
               <div className="flex items-center gap-10">
                 <Image
-                  src={selectedChatInfo.imageUrl || `https://cnm-chatapp-bucket.s3.ap-southeast-1.amazonaws.com/ud3x-1745220840806-no-avatar.png`}
+                  src={
+                    selectedChatInfo.imageUrl ||
+                    `https://cnm-chatapp-bucket.s3.ap-southeast-1.amazonaws.com/ud3x-1745220840806-no-avatar.png`
+                  }
                   width={64}
                   height={64}
                   alt="Participant"
-                  className="rounded-full"
+                  className="rounded-full max-h-16 max-w-16"
                 />
                 <h1 className="text-2xl text-black">
                   {selectedChatInfo.chatName || "Chat"}
@@ -106,15 +179,59 @@ const SingleChat = ({
                       : ""
                   }`}
                 />
-                <IconButton
-                  icon={SearchIcon}
-                  iconWidth={25}
-                  iconHeight={25}
-                  iconName="Search"
-                  className={`w-[46px] h-[46px] hover:bg-customPurple/50`}
-                />
+                <div onClick={() => setShowSearch(!showSearch)}>
+                  <IconButton
+                    icon={SearchIcon}
+                    iconWidth={25}
+                    iconHeight={25}
+                    iconName="Search"
+                    className={`w-[46px] h-[46px] hover:bg-customPurple/50`}
+                  />
+                </div>
               </div>
             </div>
+            {showSearch && (
+              <div
+                ref={searchRef}
+                className="absolute flex items-center z-40 top-30 right-0 w-full border border-gray-400 border-t-2 border-l-2 border-r-2 border-b-2 bg-white"
+              >
+                <input
+                  type="text"
+                  className="p-1 outline-none w-[70%]"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {result.length === 0 ? (
+                  <></>
+                ) : (
+                  <div className="flex gap-2 items-center justify-end w-[40%]">
+                    <p className="min-w-[100px]">
+                      Result: {highlightedIndex + 1} / {result.length}
+                    </p>
+                    <button
+                      onClick={() => {
+                        setHighlightedIndex((prev) =>
+                          prev <= 0 ? result.length - 1 : prev - 1
+                        );
+                      }}
+                      className="px-2 py-1 bg-gray-300 rounded"
+                    >
+                      Prev
+                    </button>
+                    <button
+                      onClick={() => {
+                        setHighlightedIndex((prev) =>
+                          prev >= result.length - 1 ? 0 : prev + 1
+                        );
+                      }}
+                      className="px-2 py-1 bg-gray-300 rounded"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             <div
               ref={messageContainerRef}
               className="space-y-4 pt-10 px-2 max-h-[calc(100vh-200px)] overflow-y-auto"
@@ -130,9 +247,16 @@ const SingleChat = ({
                   return (
                     <div
                       key={msg.messageId}
+                      ref={(el) => {
+                        messageRefs.current[msg.messageId] = el;
+                      }}
                       className={`flex ${
                         isOwn ? "justify-end" : "justify-start"
-                      } `}
+                      } ${
+                        result[highlightedIndex]?.messageId === msg.messageId
+                          ? " bg-customPurple/20"
+                          : ""
+                      }`}
                     >
                       {/* Message */}
                       <div
