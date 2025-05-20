@@ -1,4 +1,5 @@
 "use client";
+
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import IconButton from "./IconButton";
@@ -47,6 +48,10 @@ const SingleChat = ({
   handleFileInputChange,
   fileInputRef,
   renderMessage,
+  replyMessage,
+  setReplyMessage,
+  setForwardMessage,
+  forwardMessage,
 }: {
   selectedChatInfo: any;
   chatList: any;
@@ -75,6 +80,10 @@ const SingleChat = ({
   handleFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   renderMessage: (msg: any, isOwn: boolean) => React.ReactNode;
+  replyMessage: Message | null;
+  setReplyMessage: React.Dispatch<React.SetStateAction<Message | null>>;
+  setForwardMessage: React.Dispatch<React.SetStateAction<Message | null>>;
+  forwardMessage: Message | null;
 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -144,6 +153,11 @@ const SingleChat = ({
       }
     }
   }, [highlightedIndex, result]);
+
+  useEffect(() => {
+    console.log("Messages updated:", messages);
+  }, [messages]);
+
   return (
     <div>
       {selectedChatInfo ? (
@@ -316,10 +330,8 @@ const SingleChat = ({
                                   onClick={(e) => {
                                     console.log("Reply to", msg.messageId);
                                     e.stopPropagation();
-                                    setMessageMenuId({
-                                      id: msg.messageId,
-                                      type: "reply",
-                                    });
+                                    setReplyMessage(msg);
+                                    setMessageMenuId(null);
                                   }}
                                   className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                 >
@@ -329,10 +341,8 @@ const SingleChat = ({
                                   onClick={(e) => {
                                     console.log("Forward", msg.messageId);
                                     e.stopPropagation();
-                                    setMessageMenuId({
-                                      id: msg.messageId,
-                                      type: "forward",
-                                    });
+                                    setForwardMessage(msg);
+                                    setMessageMenuId(null);
                                   }}
                                   className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                 >
@@ -371,10 +381,8 @@ const SingleChat = ({
                                   onClick={(e) => {
                                     console.log("Reply to", msg.messageId);
                                     e.stopPropagation();
-                                    setMessageMenuId({
-                                      id: msg.messageId,
-                                      type: "reply",
-                                    });
+                                    setReplyMessage(msg);
+                                    setMessageMenuId(null);
                                   }}
                                   className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                 >
@@ -384,10 +392,8 @@ const SingleChat = ({
                                   onClick={(e) => {
                                     console.log("Forward", msg.messageId);
                                     e.stopPropagation();
-                                    setMessageMenuId({
-                                      id: msg.messageId,
-                                      type: "forward",
-                                    });
+                                    setForwardMessage(msg);
+                                    setMessageMenuId(null);
                                   }}
                                   className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                 >
@@ -446,6 +452,22 @@ const SingleChat = ({
             </div>
           </div>
           <div className="border-t-2 p-4 relative">
+            {replyMessage && (
+              <div className="absolute bottom-full left-0 right-0 py-3 px-5 bg-gray-100 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Replying to:</p>
+                    <p className="text-black">{replyMessage.content}</p>
+                  </div>
+                  <button
+                    onClick={() => setReplyMessage(null)}
+                    className="text-gray-500 hover:text-red-500 p-1"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
             {attachmentPreview && (
               <div className="absolute bottom-full left-0 right-0 p-3 bg-gray-100 border-t border-gray-200">
                 <div className="flex items-center justify-between">

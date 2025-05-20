@@ -19,7 +19,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
-import { Message } from "postcss";
+import { Message } from "@/constant/type";
 
 // Define file type constants
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp"];
@@ -55,6 +55,10 @@ const GroupChat = ({
   handleFileInputChange,
   fileInputRef,
   renderMessage,
+  replyMessage,
+  setReplyMessage,
+  setForwardMessage,
+  forwardMessage,
 }: {
   selectedChatInfo: any;
   chatList: any;
@@ -82,7 +86,11 @@ const GroupChat = ({
   handleFileSelect: () => void;
   handleFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  renderMessage: (msg: any, isOwn: boolean) => React.ReactNode;
+  renderMessage: (msg: Message, isOwn: boolean) => React.ReactNode;
+  replyMessage: Message | null;
+  setReplyMessage: React.Dispatch<React.SetStateAction<Message | null>>;
+  setForwardMessage: React.Dispatch<React.SetStateAction<Message | null>>;
+  forwardMessage: Message | null;
 }) => {
   // State to track the type of the selected media
   const [selectedMediaType, setSelectedMediaType] = useState<
@@ -465,10 +473,8 @@ const GroupChat = ({
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setMessageMenuId({
-                                        id: msg.messageId,
-                                        type: "reply",
-                                      });
+                                      setMessageMenuId(null);
+                                      setReplyMessage(msg);
                                     }}
                                     className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                   >
@@ -562,6 +568,22 @@ const GroupChat = ({
             </div>
           </div>
           <div className="border-t-2 p-4 relative">
+            {replyMessage && (
+              <div className="absolute bottom-full left-0 right-0 py-3 px-5 bg-gray-100 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Replying to:</p>
+                    <p className="text-black">{replyMessage.content}</p>
+                  </div>
+                  <button
+                    onClick={() => setReplyMessage(null)}
+                    className="text-gray-500 hover:text-red-500 p-1"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
             {attachmentPreview && (
               <div className="absolute bottom-full left-0 right-0 p-3 bg-gray-100 border-t border-gray-200">
                 <div className="flex items-center justify-between">

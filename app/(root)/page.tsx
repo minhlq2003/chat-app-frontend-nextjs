@@ -6,28 +6,15 @@ import {
   BlockIcon,
   CalendarIcon,
   CallIcon,
-  EmojiIcon,
-  FileSendIcon,
   LocationIcon,
-  MicroIcon,
-  PinIcon,
   PlusIcon,
   SearchIcon,
-  SendIcon,
   WorkIcon,
 } from "@/constant/image";
 import Image, { StaticImageData } from "next/image";
-import {
-  Accordion,
-  AccordionItem,
-  Button,
-  Card,
-  Input,
-} from "@nextui-org/react";
+import { Button, Card, Input } from "@nextui-org/react";
 import ChatList from "@/components/ChatList";
-import { fileList, imageData, listLink } from "@/constant/data";
 import React, { useEffect, useState, useRef } from "react";
-import IconButton from "@/components/IconButton";
 import UserInfoItem from "@/components/ProfileInfoItem";
 import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -44,7 +31,6 @@ import {
 import RenderMedia from "@/components/RenderMedia";
 import SingleChat from "@/components/SingleChat";
 import GroupChat from "@/components/GroupChat";
-import AddFriendModal from "@/components/AddFriendModel";
 import AddGroupModal from "@/components/AddGroupModel";
 import {
   ChatItemProps,
@@ -55,7 +41,6 @@ import {
 import { noUserImage } from "@/constant/image";
 import AddNewMemberModal from "@/components/AddNewMemberModal";
 import { toast } from "sonner";
-import ListMembersGroupChat from "@/components/ListMembersGroup";
 import LeaveGroupConfirmationModel from "@/components/LeaveGroupConfirmationModel";
 import ConfirmationModel from "@/components/ConfirmationModel";
 import ChangeGroupNameModal from "@/components/ChangeGroupNameModal";
@@ -67,7 +52,7 @@ function Home() {
   const [chatList, setChatList] = useState<any[]>([]);
   const [selectedChatInfo, setSelectedChatInfo] = useState<any>(null);
   const [memberRole, setMemberRole] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [user, setUser] = useState<TemporaryUserProps>();
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(
@@ -112,7 +97,8 @@ function Home() {
       fileInputRef.current.click();
     }
   };
-
+  const [replyMessage, setReplyMessage] = useState<Message | null>(null);
+  const [forwardMessage, setForwardMessage] = useState<Message | null>(null);
   const handleChangeGroupName = async (newName: string) => {
     try {
       if (!selectedChatInfo || !userId) {
@@ -248,12 +234,13 @@ function Home() {
       setAttachmentPreview(null);
       setAttachmentCaption("");
       setInputMessage("");
+      setReplyMessage(null);
     } else if (inputMessage.trim()) {
       sendMessage();
+      setReplyMessage(null);
     }
   };
 
-  // Add this function to remove the attachment preview
   const removeAttachmentPreview = () => {
     setAttachmentPreview(null);
     setAttachmentCaption("");
@@ -651,9 +638,11 @@ function Home() {
         try {
           const messageCount = 50;
           const messagesResponse = await fetch(
-            `${apiBaseUrl}/chat/${chatId}/history/${messageCount}`
+            `${apiBaseUrl}/chat/${chatId}/history/${messageCount}?userId=${userId}`
           );
           const messagesData = await messagesResponse.json();
+
+          console.log("Fetched messages data:", messagesData);
 
           if (messagesData.success && Array.isArray(messagesData.data)) {
             let filteredMessages = messagesData.data
@@ -673,6 +662,7 @@ function Home() {
 
             // Format and set messages
             const formattedMessages = filteredMessages.map((msg: any) => ({
+              ...msg,
               messageId: msg.messageId,
               senderId: msg.userId, // Note: backend uses userId instead of senderId
               content: msg.content,
@@ -688,6 +678,8 @@ function Home() {
 
             // Reverse the array to show oldest messages first
             /*setMessages(formattedMessages.reverse());*/
+            console.log("Formatted messages:", formattedMessages);
+
             const reversed = formattedMessages.reverse(); // Oldest first
             setAllMessages(reversed);
             setMessages(reversed.slice(-PAGE_SIZE)); // Initial page (latest 10)
@@ -730,8 +722,10 @@ function Home() {
         senderId: userId,
         senderImage: user?.image || "https://ui-avatars.com/api/?name=John+Doe",
         senderName: user?.name || "No User",
+        replyTo: replyMessage?.messageId || null,
       },
     };
+    console.log("Sending message:", messageObj);
 
     setChatList((prev) =>
       prev.map((chat) => {
@@ -800,17 +794,17 @@ function Home() {
               content: pendingMessage,
               timestamp: new Date().toLocaleTimeString(),
               type: "text",
+              replyTo: replyMessage || undefined,
             };
 
             setMessages((prev) => {
               const updatedMessages = [...prev, newMessage];
-              // Schedule scroll to bottom after state update
               setTimeout(scrollToBottom, 100);
               return updatedMessages;
             });
           } else {
             toast.error("Failed to reconnect. Please try again.");
-            setInputMessage(pendingMessage); // Restore the message input
+            setInputMessage(pendingMessage);
           }
         }, 1000);
       }
@@ -1073,6 +1067,8 @@ function Home() {
                   selectedChatInfo.ChatID
                 );
                 // Add message to the chat
+                console.log("Adding message to chat:", data.message);
+
                 const newMessage = {
                   messageId: data.message.messageId || Date.now(),
                   senderId: data.message.userId || data.message.senderId,
@@ -1085,6 +1081,7 @@ function Home() {
                   senderName: data.message.senderName,
                   senderImage: data.message.senderImage,
                   reactions: data.message.reactions || [],
+                  replyTo: data.message.replyTo || undefined,
                 };
 
                 console.log("Adding new message to chat:", newMessage);
@@ -1255,79 +1252,73 @@ function Home() {
   const defaultContent =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
-  const renderMessage = (msg: any, isOwn: boolean) => {
+  const renderMessage = (msg: Message, isOwn: boolean) => {
     if (!msg) return null;
 
-    // Determine file type from URL if it's an attachment
-    if (msg.type === "attachment" && msg.attachmentUrl) {
-      const fileUrl = msg.attachmentUrl;
-      const fileExtension = fileUrl.split(".").pop()?.toLowerCase();
-      const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
-      const videoExtensions = ["mp4", "avi", "mov", "wmv", "flv", "mkv"];
+    const fileUrl = msg.attachmentUrl || "";
+    const fileExtension = fileUrl.split(".").pop()?.toLowerCase() || "";
+    const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
+    const videoExtensions = ["mp4", "avi", "mov", "wmv", "flv", "mkv"];
 
-      // Check if it's an image file
+    const renderReplyTo = () =>
+      msg.replyTo && (
+        <div
+          className={`${
+            isOwn ? "bg-blue-500" : "bg-gray-400"
+          } p-2 rounded-sm border-l-[5px] border-[#4e4e4e] mb-2`}
+        >
+          <p className="text-sm font-medium">{msg.replyTo.senderName}</p>
+          <p className="text-[13px] opacity-80">{msg.replyTo.content}</p>
+        </div>
+      );
+
+    const renderReactions = () =>
+      msg.reactions && msg.reactions.length > 0 ? (
+        <div className="flex mt-1 gap-1">
+          {msg.reactions.map((reaction: any, index: number) => (
+            <span key={index} className="text-sm bg-gray-100 rounded-full px-2">
+              {reaction.emoji}
+            </span>
+          ))}
+        </div>
+      ) : null;
+
+    let mainContent: React.ReactNode = null;
+
+    if (msg.type === "attachment" && msg.attachmentUrl) {
       if (imageExtensions.includes(fileExtension)) {
-        // Render as image
-        return (
+        mainContent = (
           <div className="flex flex-col">
             <Image
-              src={msg.attachmentUrl}
+              src={fileUrl}
               alt="Image"
               width={200}
               height={150}
               className="rounded-lg mb-1"
             />
             {msg.content && <p className="mt-1">{msg.content}</p>}
-            {msg.reactions && msg.reactions.length > 0 && (
-              <div className="flex mt-1 gap-1">
-                {msg.reactions.map((reaction: any, index: number) => (
-                  <span
-                    key={index}
-                    className="text-sm bg-gray-100 rounded-full px-2"
-                  >
-                    {reaction.emoji}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         );
       } else if (videoExtensions.includes(fileExtension)) {
-        return (
+        mainContent = (
           <div className="flex flex-col">
             <video
-              src={msg.attachmentUrl}
-              controls={false}
-              muted={true}
+              src={fileUrl}
+              controls
+              muted
               className="rounded-lg mb-1"
               width={200}
               height={150}
             />
             {msg.content && <p className="mt-1">{msg.content}</p>}
-            {msg.reactions && msg.reactions.length > 0 && (
-              <div className="flex mt-1 gap-1">
-                {msg.reactions.map((reaction: any, index: number) => (
-                  <span
-                    key={index}
-                    className="text-sm bg-gray-100 rounded-full px-2"
-                  >
-                    {reaction.emoji}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         );
       } else {
-        // Extract filename from URL
         const fileName = fileUrl.split("/").pop() || "File";
-
-        // Determine file icon based on extension
         let fileIcon = faFile;
         let bgColor = "bg-blue-100";
         let iconColor = "text-blue-500";
 
-        // Set specific icons based on file type
         if (["doc", "docx"].includes(fileExtension)) {
           fileIcon = faFileWord;
           bgColor = "bg-blue-100";
@@ -1342,17 +1333,16 @@ function Home() {
           iconColor = "text-green-500";
         }
 
-        // Render as file attachment
-        return (
+        mainContent = (
           <div className="flex flex-col">
-            <div className="flex items-center justify-between bg-gray-800 p-3 rounded-lg w-full ">
-              <div className="flex items-center gap-3 ">
+            <div className="flex items-center justify-between bg-gray-800 p-3 rounded-lg w-full">
+              <div className="flex items-center gap-3">
                 <div
                   className={`${bgColor} w-10 h-10 flex items-center justify-center rounded-lg`}
                 >
                   <FontAwesomeIcon
                     icon={fileIcon}
-                    className={`${iconColor}`}
+                    className={iconColor}
                     size="lg"
                   />
                 </div>
@@ -1375,48 +1365,24 @@ function Home() {
               </a>
             </div>
             {msg.content && <p className="mt-2">{msg.content}</p>}
-            {msg.reactions && msg.reactions.length > 0 && (
-              <div className="flex mt-1 gap-1">
-                {msg.reactions.map((reaction: any, index: number) => (
-                  <span
-                    key={index}
-                    className="text-sm bg-gray-100 rounded-full px-2"
-                  >
-                    {reaction.emoji}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         );
       }
     } else if (msg.type === "image") {
-      return (
+      mainContent = (
         <div className="flex flex-col">
           <Image
-            src={msg.content || msg.attachmentUrl}
+            src={msg.content || msg.attachmentUrl || ""}
             alt="Image"
             width={200}
             height={150}
             className="rounded-lg mb-1"
           />
           {msg.caption && <p>{msg.caption}</p>}
-          {msg.reactions && msg.reactions.length > 0 && (
-            <div className="flex mt-1 gap-1">
-              {msg.reactions.map((reaction: any, index: number) => (
-                <span
-                  key={index}
-                  className="text-sm bg-gray-100 rounded-full px-2"
-                >
-                  {reaction.emoji}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       );
     } else {
-      let content: string = msg.content;
+      const content = msg.content || "";
       const urlRegex = new RegExp(
         /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*))/g
       );
@@ -1428,40 +1394,34 @@ function Home() {
         };
       });
 
-      return (
-        <div>
-          <p>
-            {delim.map((text, idx) => {
-              if (!text.isURL) return text.content;
-              return (
-                <Link
-                  className={`${
-                    isOwn ? "text-white" : "text-blue-500"
-                  } underline`}
-                  href={text.content}
-                  target={"_blank"}
-                  key={`text-content-${idx}`}
-                >
-                  {text.content}
-                </Link>
-              );
-            })}
-          </p>
-          {msg.reactions && msg.reactions.length > 0 && (
-            <div className="flex mt-1 gap-1">
-              {msg.reactions.map((reaction: any, index: number) => (
-                <span
-                  key={index}
-                  className="text-sm bg-gray-100 rounded-full px-2"
-                >
-                  {reaction.emoji}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+      mainContent = (
+        <p>
+          {delim.map((text, idx) => {
+            if (!text.isURL) return text.content;
+            return (
+              <Link
+                className={`${
+                  isOwn ? "text-white" : "text-blue-500"
+                } underline`}
+                href={text.content}
+                target="_blank"
+                key={`text-content-${idx}`}
+              >
+                {text.content}
+              </Link>
+            );
+          })}
+        </p>
       );
     }
+
+    return (
+      <div>
+        {renderReplyTo()}
+        {mainContent}
+        {renderReactions()}
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -1536,38 +1496,40 @@ function Home() {
           {showSearch && (
             <div className="px-4 w-full h-screen bg-white absolute top-24 right-0 z-50 overflow-auto">
               <h1 className="pl-4 pt-4 text-lg font-bold text-black">All</h1>
-              {(searchTerm.trim() ? searchResult : chatList).map((item, index) => {
-                const isSearchResult = !!searchTerm.trim();
-                const userId = isSearchResult ? item.otherUserId : item.id;
-                const chatId = item.chatId || item.ChatID;
-                return (
-                  <div
-                    key={index}
-                    className="flex flex-row items-center w-full gap-2 bg-transparent p-2 hover:bg-customPurple/20 rounded-lg transition-colors duration-200 cursor-pointer"
-                    onClick={() => handleUserSelect(userId, chatId)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        () => handleUserSelect(item.id, item.chatId || "");
-                      }
-                    }}
-                  >
-                    <Image
-                      src={item.image || item.imageUrl || noUserImage}
-                      alt="People 01"
-                      width={48}
-                      height={48}
-                      className="w-[48px] h-[48px] rounded-full flex-shrink-0"
-                    />
-                    <div className="flex flex-row justify-between w-full min-w-0">
-                      <p className="text-sm font-medium text-black truncate">
-                        {item.name || item.chatName}
-                      </p>
+              {(searchTerm.trim() ? searchResult : chatList).map(
+                (item, index) => {
+                  const isSearchResult = !!searchTerm.trim();
+                  const userId = isSearchResult ? item.otherUserId : item.id;
+                  const chatId = item.chatId || item.ChatID;
+                  return (
+                    <div
+                      key={index}
+                      className="flex flex-row items-center w-full gap-2 bg-transparent p-2 hover:bg-customPurple/20 rounded-lg transition-colors duration-200 cursor-pointer"
+                      onClick={() => handleUserSelect(userId, chatId)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          () => handleUserSelect(item.id, item.chatId || "");
+                        }
+                      }}
+                    >
+                      <Image
+                        src={item.image || item.imageUrl || noUserImage}
+                        alt="People 01"
+                        width={48}
+                        height={48}
+                        className="w-[48px] h-[48px] rounded-full flex-shrink-0"
+                      />
+                      <div className="flex flex-row justify-between w-full min-w-0">
+                        <p className="text-sm font-medium text-black truncate">
+                          {item.name || item.chatName}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
             </div>
           )}
 
@@ -1636,6 +1598,10 @@ function Home() {
             fileInputRef={fileInputRef}
             renderMessage={renderMessage}
             onEmojiClick={handleEmojiClick}
+            replyMessage={replyMessage}
+            setReplyMessage={setReplyMessage}
+            setForwardMessage={setForwardMessage}
+            forwardMessage={forwardMessage}
           />
         ) : (
           <GroupChat
@@ -1664,6 +1630,10 @@ function Home() {
             fileInputRef={fileInputRef}
             renderMessage={renderMessage}
             onEmojiClick={handleEmojiClick}
+            replyMessage={replyMessage}
+            setReplyMessage={setReplyMessage}
+            setForwardMessage={setForwardMessage}
+            forwardMessage={forwardMessage}
           />
         )}
         {/*        */}
