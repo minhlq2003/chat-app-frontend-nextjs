@@ -106,17 +106,36 @@ export interface Friend {
   avatar: string;
 }
 
-export interface Message {
+export interface MessagePayLoad {
   messageId?: number;
   userId?: number;
   type?: string;
-  timestamp?: Date;
+  timestamp?: string;
   content?: string;
   attachmentUrl?: string | null;
   deleteReason?: string | null;
   senderName?: string;
   senderImage?: string;
   reactions?: string[];
+  senderId?: string;
+  replyTo?: number;
+  caption?: string;
+}
+
+export interface Message {
+  messageId?: number;
+  userId?: number;
+  type?: string;
+  timestamp?: string;
+  content?: string;
+  attachmentUrl?: string | null;
+  deleteReason?: string | null;
+  senderName?: string;
+  senderImage?: string;
+  reactions?: string[];
+  senderId?: string;
+  replyTo?: Message;
+  caption?: string;
 }
 
 export interface GroupChat {
