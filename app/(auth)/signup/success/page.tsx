@@ -17,7 +17,7 @@ import { Button } from "@nextui-org/button";
 import { getSessionUser } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-
+import { toast } from "sonner";
 
 function formatDateToInputValue(date: string | Date | undefined): string {
   if (!date) return "";
@@ -152,11 +152,11 @@ const Page = () => {
       } else {
         const errorData = await response.json();
         console.error("Update failed:", errorData);
-        alert("Update failed: " + errorData.message);
+        toast.error("Update failed: " + errorData.message);
       }
     } catch (error) {
       console.error("Error during update:", error);
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     }
   };
 
@@ -197,11 +197,11 @@ const Page = () => {
           }));
         } else {
           console.error("Image upload failed:", await response.json());
-          alert("Failed to upload image. Please try again.");
+          toast.error("Failed to upload image. Please try again.");
         }
       } catch (error) {
         console.error("Error during image upload:", error);
-        alert("An error occurred while uploading the image.");
+        toast.error("An error occurred while uploading the image.");
       }
     }
   };

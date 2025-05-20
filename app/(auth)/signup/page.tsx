@@ -15,6 +15,7 @@ import { FormSignUpData, FormSignUpErrors } from "@/constant/type";
 import { useRouter } from "next/navigation";
 import { loginWithGoogle } from "@/lib/actions/auth";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 const Page = () => {
   const { t } = useTranslation("common");
   const [formData, setFormData] = useState<FormSignUpData>({
@@ -116,7 +117,7 @@ const Page = () => {
         } else {
           const errorData = await response.json();
           console.error("Signup failed:", errorData);
-          alert("Signup failed: "+ errorData.message)
+          toast.error("Signup failed: "+ errorData.message)
         }
       } catch (error) {
         console.error("Error during signup:", error);

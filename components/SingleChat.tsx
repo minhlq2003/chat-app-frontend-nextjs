@@ -11,7 +11,12 @@ import {
   SearchIcon,
   SendIcon,
 } from "@/constant/image";
-import { faFile, faFileWord } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowLeft,
+  faArrowRight,
+  faFile,
+  faFileWord,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
@@ -77,6 +82,8 @@ const SingleChat = ({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+  const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+  const searchRef = useRef<HTMLDivElement | null>(null);
   const searchChat = async (chatId: string, search: string, userId: string) => {
     if (!search.trim()) return;
     try {
@@ -105,8 +112,6 @@ const SingleChat = ({
       setHighlightedIndex(0);
     }
   }, [searchTerm, userId]);
-  const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
-  const searchRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -214,9 +219,13 @@ const SingleChat = ({
                           prev <= 0 ? result.length - 1 : prev - 1
                         );
                       }}
-                      className="px-2 py-1 bg-gray-300 rounded"
+                      className="px-2 py-0.5 bg-gray-300 rounded"
                     >
-                      Prev
+                      <FontAwesomeIcon
+                        icon={faArrowLeft}
+                        className=""
+                        size="sm"
+                      />
                     </button>
                     <button
                       onClick={() => {
@@ -224,9 +233,13 @@ const SingleChat = ({
                           prev >= result.length - 1 ? 0 : prev + 1
                         );
                       }}
-                      className="px-2 py-1 bg-gray-300 rounded"
+                      className="px-2 py-0.5 bg-gray-300 rounded"
                     >
-                      Next
+                      <FontAwesomeIcon
+                        icon={faArrowRight}
+                        className=""
+                        size="sm"
+                      />
                     </button>
                   </div>
                 )}

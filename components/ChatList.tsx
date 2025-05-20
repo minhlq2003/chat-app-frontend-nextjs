@@ -3,8 +3,8 @@ import ChatItem from "./ChatItem";
 import {ChatListProps} from "../constant/type";
 
 export default function ChatList({
-                                   chatList, filterType, pin, onSelectUser,
-                                 }: ChatListProps & { onSelectUser: (id: number, chatId: string) => void }) {
+  chatList, filterType, pin, onSelectUser,
+}: ChatListProps & { onSelectUser: (id: number, chatId: string) => void }) {
   if (!chatList || chatList.length === 0) {
     return <div className="px-4">No chats available</div>;
   }

@@ -49,6 +49,7 @@ import AddGroupModal from "@/components/AddGroupModel";
 import {
   ChatItemProps,
   MembersGroupChat,
+  Message,
   TemporaryUserProps,
 } from "@/constant/type";
 import { noUserImage } from "@/constant/image";
@@ -91,7 +92,8 @@ function Home() {
   const [isNewMemberModalOpen, setIsNewMemberModalOpen] = useState(false);
   const [isConfirmation, setisConfirmation] = useState(false);
   const [isDisbandConfirmation, setisDisbandConfirmation] = useState(false);
-  const [isOpenModalChangeGroupName, setIsOpenModalChangeGroupName] = useState(false);
+  const [isOpenModalChangeGroupName, setIsOpenModalChangeGroupName] =
+    useState(false);
   const [allMessages, setAllMessages] = useState([]);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
@@ -100,6 +102,10 @@ function Home() {
   const [reqObj, setReqObj] = useState<any>({
     nodata: true,
   });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const searchRef = useRef<HTMLDivElement | null>(null);
+  const [searchResult, setSearchResult] = useState<Message[]>([]);
   const handleFileSelect = () => {
     // Trigger the file input click event
     if (fileInputRef.current) {
@@ -114,7 +120,8 @@ function Home() {
         return;
       }
 
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
       const response = await fetch(`${apiBaseUrl}/group/rename`, {
         method: "POST",
         headers: {
@@ -123,7 +130,7 @@ function Home() {
         body: JSON.stringify({
           chatId: selectedChatInfo.ChatID,
           userId: userId,
-          newName: newName
+          newName: newName,
         }),
       });
 
@@ -133,15 +140,15 @@ function Home() {
         toast.success("Group name changed successfully");
         setSelectedChatInfo((prev: any) => ({
           ...prev,
-          chatName: newName
+          chatName: newName,
         }));
 
-        setChatList(prev =>
-          prev.map(chat => {
+        setChatList((prev) =>
+          prev.map((chat) => {
             if (chat.chatId === selectedChatInfo.ChatID) {
               return {
                 ...chat,
-                name: newName
+                name: newName,
               };
             }
             return chat;
@@ -203,7 +210,7 @@ function Home() {
   ) => {
     const file = e.target.files?.[0];
     if (!file) {
-      alert("No file selected.");
+      toast.error("No file selected.");
       return;
     }
     if (file) {
@@ -226,11 +233,11 @@ function Home() {
           if (fileInputRef.current) fileInputRef.current.value = "";
         } else {
           console.error("Image upload failed:", await response.json());
-          alert("Failed to upload image. Please try again.");
+          toast.error("Failed to upload image. Please try again.");
         }
       } catch (error) {
         console.error("Error during image upload:", error);
-        alert("An error occurred while uploading the image.");
+        toast.error("An error occurred while uploading the image.");
       }
     }
   };
@@ -604,12 +611,11 @@ function Home() {
           if (data.data.Type === "group") {
             setListMembers(data.data.members);
             data.data.members.forEach((member: any) => {
-
-              if(member.userId === Number(userId)) {
+              if (member.userId === Number(userId)) {
                 setMemberRole(member.role);
-                console.log(memberRole)
+                console.log(memberRole);
               }
-            })
+            });
           }
           console.log("Sent joinChat packet for chatId:", chatId);
         } else {
@@ -803,7 +809,7 @@ function Home() {
               return updatedMessages;
             });
           } else {
-            alert("Failed to reconnect. Please try again.");
+            toast.error("Failed to reconnect. Please try again.");
             setInputMessage(pendingMessage); // Restore the message input
           }
         }, 1000);
@@ -849,7 +855,7 @@ function Home() {
       wsRef.current.send(JSON.stringify(messageObj));
     } else {
       console.error("WebSocket not connected, attachment not sent");
-      alert("Connection lost. Please refresh the page and try again.");
+      toast.error("Connection lost. Please refresh the page and try again.");
     }
   };
 
@@ -1286,7 +1292,7 @@ function Home() {
             )}
           </div>
         );
-      } else if(videoExtensions.includes(fileExtension)) {
+      } else if (videoExtensions.includes(fileExtension)) {
         return (
           <div className="flex flex-col">
             <video
@@ -1312,7 +1318,7 @@ function Home() {
             )}
           </div>
         );
-      }else {
+      } else {
         // Extract filename from URL
         const fileName = fileUrl.split("/").pop() || "File";
 
@@ -1339,8 +1345,8 @@ function Home() {
         // Render as file attachment
         return (
           <div className="flex flex-col">
-            <div className="flex items-center justify-between bg-gray-800 p-3 rounded-lg">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between bg-gray-800 p-3 rounded-lg w-full ">
+              <div className="flex items-center gap-3 ">
                 <div
                   className={`${bgColor} w-10 h-10 flex items-center justify-center rounded-lg`}
                 >
@@ -1351,7 +1357,9 @@ function Home() {
                   />
                 </div>
                 <div className="text-white">
-                  <p className="text-sm font-medium">{fileName}</p>
+                  <p className="text-sm font-medium max-w-[400px] line-clamp-2">
+                    {fileName}
+                  </p>
                   <p className="text-xs opacity-70">Click to download</p>
                 </div>
               </div>
@@ -1456,19 +1464,63 @@ function Home() {
     }
   };
 
-  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setSearchResult([]);
+        setShowSearch(false);
+        setSearchTerm("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const searchPeople = async (searhTerm: string, userId: string) => {
+    const apiBaseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+    if (!searchTerm.trim()) return;
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/chat/search?userId=${userId}&query=${searhTerm}`
+      );
+      const data = await response.json();
+      if (data) {
+        setSearchResult(data.data);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+    }
+  };
+  useEffect(() => {
+    if (!userId) return;
+
+    if (searchTerm.trim()) {
+      searchPeople(searchTerm, userId);
+    } else {
+      setSearchResult([]);
+    }
+  }, [searchTerm, userId]);
+
   return (
     <div className="grid grid-cols-9 gap-2 h-screen">
       <div className="col-span-2 border-1 bg-white rounded-xl max-h-screen overflow-y-auto scrollbar-hide">
-        <div className="sticky top-0 z-10 px-4 bg-white">
+        <div ref={searchRef} className="sticky top-0 z-10 px-4 bg-white">
           <div className="flex items-center space-x-2">
             <h1 className="font-bold text-[32px]">{t("Messages")}</h1>
             <div className="bg-customPurple rounded-full w-[30px] h-[30px] flex items-center justify-center">
-              <p className="text-white text-[16px]">10</p>
+              <p className="text-white text-[16px]">{chatList.length}</p>
             </div>
           </div>
 
-          <div className="py-2">
+          <div className="py-2 ">
             <Input
               labelPlacement="outside"
               placeholder="Search message, people"
@@ -1476,8 +1528,49 @@ function Home() {
               startContent={
                 <Image src={SearchIcon} width={24} height={24} alt="Search" />
               }
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={() => setShowSearch(true)}
             />
           </div>
+          {showSearch && (
+            <div className="px-4 w-full h-screen bg-white absolute top-24 right-0 z-50 overflow-auto">
+              <h1 className="pl-4 pt-4 text-lg font-bold text-black">All</h1>
+              {(searchTerm.trim() ? searchResult : chatList).map((item, index) => {
+                const isSearchResult = !!searchTerm.trim();
+                const userId = isSearchResult ? item.otherUserId : item.id;
+                const chatId = item.chatId || item.ChatID;
+                return (
+                  <div
+                    key={index}
+                    className="flex flex-row items-center w-full gap-2 bg-transparent p-2 hover:bg-customPurple/20 rounded-lg transition-colors duration-200 cursor-pointer"
+                    onClick={() => handleUserSelect(userId, chatId)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        () => handleUserSelect(item.id, item.chatId || "");
+                      }
+                    }}
+                  >
+                    <Image
+                      src={item.image || item.imageUrl || noUserImage}
+                      alt="People 01"
+                      width={48}
+                      height={48}
+                      className="w-[48px] h-[48px] rounded-full flex-shrink-0"
+                    />
+                    <div className="flex flex-row justify-between w-full min-w-0">
+                      <p className="text-sm font-medium text-black truncate">
+                        {item.name || item.chatName}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <div className="flex items-center justify-between py-4 max-w-[250px] ">
             <Button
               size="sm"
@@ -1616,26 +1709,26 @@ function Home() {
                           />
 
                           {memberRole !== "owner" && (
-                          <div
-                            className={`cursor-pointer text-base text-red-600 flex items-center gap-2`}
-                            onClick={() => setisConfirmation(true)}
-                          >
-                            <FontAwesomeIcon
-                              icon={faRightFromBracket}
-                              className="w-5 h-5 pl-1"
-                            />
-                            <p className={``}>Leave group</p>
-                          </div>
+                            <div
+                              className={`cursor-pointer text-base text-red-600 flex items-center gap-2`}
+                              onClick={() => setisConfirmation(true)}
+                            >
+                              <FontAwesomeIcon
+                                icon={faRightFromBracket}
+                                className="w-5 h-5 pl-1"
+                              />
+                              <p className={``}>Leave group</p>
+                            </div>
                           )}
                           {memberRole === "owner" && (
-                          <UserInfoItem
-                            icon={BlockIcon}
-                            text="Disband group"
-                            altText="Disband group"
-                            textStyle="text-base text-red-600"
-                            className="cursor-pointer hover:text-blue-600 transition-colors"
-                            onClick={() => setisDisbandConfirmation(true)}
-                          />
+                            <UserInfoItem
+                              icon={BlockIcon}
+                              text="Disband group"
+                              altText="Disband group"
+                              textStyle="text-base text-red-600"
+                              className="cursor-pointer hover:text-blue-600 transition-colors"
+                              onClick={() => setisDisbandConfirmation(true)}
+                            />
                           )}
                         </div>
                       </>
