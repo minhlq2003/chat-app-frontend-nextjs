@@ -188,11 +188,11 @@ export default function AddGroupModal({
           })
         } else {
           console.error("Image upload failed:", await response.json());
-          alert("Failed to upload image. Please try again.");
+          toast.error("Failed to upload image. Please try again.");
         }
       } catch (error) {
         console.error("Error during image upload:", error);
-        alert("An error occurred while uploading the image.");
+        toast.error("An error occurred while uploading the image.");
       }
     }
   };

@@ -1,13 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { GoogleIcon, FacebookIcon, KeyIcon, PhoneIcon } from "@/constant/image";
-import Image from "next/image";
+import { KeyIcon, PhoneIcon } from "@/constant/image";
 import { logout } from "@/lib/actions/auth";
 import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
 import { useTranslation } from "react-i18next";
 import { useParams, useRouter } from "next/navigation";
 import { FormSuccessErrors, TemporaryUserProps } from "@/constant/type";
+import { toast } from "sonner";
 const Page = () => {
   const { t } = useTranslation("common");
   const router = useRouter();
@@ -93,15 +93,15 @@ const Page = () => {
         };
         let data = await getUserInfo("phone", newUser.phone)
         if(!data) {
-          alert("Phone number not found");
+          toast.error("Phone number not found");
           return;
         }
         if(data.password !== form.oldPassword) {
-          alert("Old password is incorrect");
+          toast.error("Old password is incorrect");
           return;
         }
         if(data.password === form.newPassword) {
-          alert("New password must be different from old password");
+          toast.error("New password must be different from old password");
           return;
         }
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/changepass`, {
@@ -112,10 +112,10 @@ const Page = () => {
           body: JSON.stringify({phone: newUser.phone, oldpassword: form.oldPassword, newpassword: form.newPassword}),
         });
         if (!res.ok) {
-          alert("Failed to update password");
+          toast.error("Failed to update password");
           return;
         }
-        alert("Password changed!")
+        toast.success("Password changed!")
         localStorage.removeItem("user");
         logout();
 
@@ -124,7 +124,7 @@ const Page = () => {
   };
   useEffect(() => {}, []);
   return (
-    <div className="py-10 flex flex-col items-center justify-center h-screen mx-auto">
+    <div className="py-10 flex flex-col items-center gap-24 h-screen mx-auto">
       {isForgot ? (
         <h1 className="uppercase font-semibold text-4xl pt-14">
           {t("Forgot Password")}
@@ -135,7 +135,7 @@ const Page = () => {
         </h1>
       )}
       <div className="relative py-5">
-        <div className="bg-customPurple w-[1000px] h-[730px] rounded-3xl absolute z-10">
+        <div className="bg-customPurple w-[1000px] h-[430px] rounded-3xl absolute z-10">
           <div className="flex flex-col px-28 pt-20 gap-10 ">
             {isForgot ? (
               <InputField
@@ -166,7 +166,7 @@ const Page = () => {
             {t("Confirm")}
           </Button>
         </div>
-        <div className="bg-customPurple/50 w-[1000px] h-[730px] rounded-3xl ml-14 mt-14"></div>
+        <div className="bg-customPurple/50 w-[1000px] h-[430px] rounded-3xl ml-14 mt-14"></div>
       </div>
     </div>
   );

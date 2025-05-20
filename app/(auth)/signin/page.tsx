@@ -9,6 +9,7 @@ import { loginWithGoogle } from "@/lib/actions/auth";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import {FormLoginData} from "@/constant/type";
+import { toast } from "sonner";
 const Page = () => {
   const { t } = useTranslation("common");
   const router = useRouter();
@@ -33,7 +34,7 @@ const Page = () => {
   const handleLogin = async () => {
     const { phone, password } = formData;
     if (!phone || !password) {
-      alert("Please fill in all fields.");
+      toast.error("Please fill in all fields.");
       return;
     }
     try {
@@ -53,7 +54,7 @@ const Page = () => {
         router.replace("/");
       } else {
         const data = await res.json();
-        alert("Error: "+data.message);
+        toast.error("Error: "+data.message);
       }
     } catch (error) {
       console.error("Error logging in:", error);

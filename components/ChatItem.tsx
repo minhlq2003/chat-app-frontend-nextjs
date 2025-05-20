@@ -4,14 +4,14 @@ import Image from "next/image";
 import { ChatItemProps } from "@/constant/type";
 
 export default function ChatItem({
-                                   image,
-                                   name,
-                                   message,
-                                   time,
-                                   unread,
-                                   pin,
-                                   onClick,
-                                 }: ChatItemProps & { onClick: () => void }) {
+  image,
+  name,
+  message,
+  time,
+  unread,
+  pin,
+  onClick,
+}: ChatItemProps & { onClick: () => void }) {
   return (
     <div
       className="flex flex-row w-full gap-2 bg-transparent p-2 hover:bg-customPurple/20 rounded-lg transition-colors duration-200 cursor-pointer"

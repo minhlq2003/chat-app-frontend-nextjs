@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, {useEffect, useRef, useState} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import IconButton from "./IconButton";
 import {
   CallIcon,
@@ -11,6 +11,8 @@ import {
   SendIcon,
 } from "@/constant/image";
 import {
+  faArrowLeft,
+  faArrowRight,
   faFile,
   faFileWord,
 } from "@fortawesome/free-solid-svg-icons";
@@ -83,7 +85,9 @@ const GroupChat = ({
   renderMessage: (msg: any, isOwn: boolean) => React.ReactNode;
 }) => {
   // State to track the type of the selected media
-  const [selectedMediaType, setSelectedMediaType] = useState<"image" | "video" | null>(null);
+  const [selectedMediaType, setSelectedMediaType] = useState<
+    "image" | "video" | null
+  >(null);
 
   // Refs for video elements
   const modalVideoRef = useRef<HTMLVideoElement>(null);
@@ -123,69 +127,72 @@ const GroupChat = ({
     if (!imageUrl) return;
 
     const extension = getFileExtension(imageUrl);
-    if (IMAGE_EXTENSIONS.includes(extension) || VIDEO_EXTENSIONS.includes(extension)) {
+    if (
+      IMAGE_EXTENSIONS.includes(extension) ||
+      VIDEO_EXTENSIONS.includes(extension)
+    ) {
       setSelectedImage(imageUrl);
     }
     // Do nothing for other file types
   };
 
   const [showSearch, setShowSearch] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [result, setResult] = useState<Message[]>([]);
-    const [highlightedIndex, setHighlightedIndex] = useState(0);
-    const apiBaseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
-    const searchChat = async (chatId: string, search: string, userId: string) => {
-      if (!search.trim()) return;
-      try {
-        const response = await fetch(
-          `${apiBaseUrl}/chat/${chatId}/search?query=${encodeURIComponent(
-            search
-          )}&userId=${userId}`
-        );
-        const data = await response.json();
-        if (data) {
-          setResult(data.data);
-          setHighlightedIndex(0);
-        }
-      } catch (error) {
-        console.error("Search error:", error);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [result, setResult] = useState<Message[]>([]);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const apiBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+  const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+  const searchRef = useRef<HTMLDivElement | null>(null);
+  const searchChat = async (chatId: string, search: string, userId: string) => {
+    if (!search.trim()) return;
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/chat/${chatId}/search?query=${encodeURIComponent(
+          search
+        )}&userId=${userId}`
+      );
+      const data = await response.json();
+      if (data) {
+        setResult(data.data);
+        setHighlightedIndex(0);
       }
-    };
-  
-    useEffect(() => {
-      if (!userId) return;
-  
-      if (searchTerm.trim()) {
-        searchChat(selectedChatInfo.ChatID, searchTerm, userId);
-      } else {
+    } catch (error) {
+      console.error("Search error:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!userId) return;
+
+    if (searchTerm.trim()) {
+      searchChat(selectedChatInfo.ChatID, searchTerm, userId);
+    } else {
+      setResult([]);
+      setHighlightedIndex(0);
+    }
+  }, [searchTerm, userId]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setSearchTerm("");
+        setShowSearch(false);
         setResult([]);
         setHighlightedIndex(0);
       }
-    }, [searchTerm, userId]);
-    const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
-    const searchRef = useRef<HTMLDivElement | null>(null);
-  
-    useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-        if (
-          searchRef.current &&
-          !searchRef.current.contains(event.target as Node)
-        ) {
-          setSearchTerm("")
-          setShowSearch(false);
-          setResult([]);
-          setHighlightedIndex(0);
-        }
-      };
-  
-      document.addEventListener("mousedown", handleClickOutside);
-  
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }, []);
-useEffect(() => {
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+  useEffect(() => {
     if (result.length > 0 && result[highlightedIndex]) {
       const msgId = result[highlightedIndex].messageId;
       if (msgId !== undefined) {
@@ -204,7 +211,10 @@ useEffect(() => {
             <div className="flex items-center justify-between border-b-2 p-4">
               <div className="flex items-center gap-10">
                 <Image
-                  src={selectedChatInfo.imageUrl || `https://cnm-chatapp-bucket.s3.ap-southeast-1.amazonaws.com/ud3x-1745220840806-no-avatar.png`}
+                  src={
+                    selectedChatInfo.imageUrl ||
+                    `https://cnm-chatapp-bucket.s3.ap-southeast-1.amazonaws.com/ud3x-1745220840806-no-avatar.png`
+                  }
                   width={64}
                   height={64}
                   alt="Participant"
@@ -234,13 +244,13 @@ useEffect(() => {
                   }`}
                 />
                 <div onClick={() => setShowSearch(!showSearch)}>
-                <IconButton
-                  icon={SearchIcon}
-                  iconWidth={25}
-                  iconHeight={25}
-                  iconName="Search"
-                  className={`w-[46px] h-[46px] hover:bg-customPurple/50`}
-                />
+                  <IconButton
+                    icon={SearchIcon}
+                    iconWidth={25}
+                    iconHeight={25}
+                    iconName="Search"
+                    className={`w-[46px] h-[46px] hover:bg-customPurple/50`}
+                  />
                 </div>
               </div>
             </div>
@@ -268,9 +278,13 @@ useEffect(() => {
                           prev <= 0 ? result.length - 1 : prev - 1
                         );
                       }}
-                      className="px-2 py-1 bg-gray-300 rounded"
+                      className="px-2 py-0.5 bg-gray-300 rounded"
                     >
-                      Prev
+                      <FontAwesomeIcon
+                        icon={faArrowLeft}
+                        className=""
+                        size="sm"
+                      />
                     </button>
                     <button
                       onClick={() => {
@@ -280,7 +294,11 @@ useEffect(() => {
                       }}
                       className="px-2 py-1 bg-gray-300 rounded"
                     >
-                      Next
+                      <FontAwesomeIcon
+                        icon={faArrowRight}
+                        className=""
+                        size="sm"
+                      />
                     </button>
                   </div>
                 )}
@@ -299,14 +317,17 @@ useEffect(() => {
                   const isOpen = messageMenuId === msg.messageId;
 
                   // Check if the message has a previewable attachment
-                  const fileExtension = imageUrl ? getFileExtension(imageUrl) : "";
-                  const isPreviewable = IMAGE_EXTENSIONS.includes(fileExtension) ||
-                                      VIDEO_EXTENSIONS.includes(fileExtension);
+                  const fileExtension = imageUrl
+                    ? getFileExtension(imageUrl)
+                    : "";
+                  const isPreviewable =
+                    IMAGE_EXTENSIONS.includes(fileExtension) ||
+                    VIDEO_EXTENSIONS.includes(fileExtension);
 
                   return (
                     <div
                       key={msg.messageId}
-                     ref={(el) => {
+                      ref={(el) => {
                         messageRefs.current[msg.messageId] = el;
                       }}
                       className={`flex ${
@@ -318,12 +339,17 @@ useEffect(() => {
                       }`}
                     >
                       {/* Message container */}
-                      <div className={`flex items-end gap-2 max-w-[70%] ${
-                        isOwn ? "flex-row-reverse" : "justify-start"
-                      }`}>
+                      <div
+                        className={`flex items-end gap-2 max-w-[70%] ${
+                          isOwn ? "flex-row-reverse" : "justify-start"
+                        }`}
+                      >
                         {/* Sender Image */}
                         <img
-                          src={msg.senderImage || `https://ui-avatars.com/api/?name=${msg.senderName}`}
+                          src={
+                            msg.senderImage ||
+                            `https://ui-avatars.com/api/?name=${msg.senderName}`
+                          }
                           alt={msg.senderName}
                           className=" w-6 h-6 rounded-full object-cover mt-1"
                         />
@@ -336,7 +362,9 @@ useEffect(() => {
                                 ? "bg-customPurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
                                 : "bg-customPurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
                             }
-                            p-2 relative group w-full ${isPreviewable ? "cursor-pointer" : ""}
+                            p-2 relative group w-full ${
+                              isPreviewable ? "cursor-pointer" : ""
+                            }
                           `}
                           onClick={() => {
                             if (isPreviewable) {
@@ -345,9 +373,11 @@ useEffect(() => {
                           }}
                         >
                           {/* Sender name (for group chat) */}
-                          <div className={`text-xs font-semibold mb-1 ${
-                            isOwn ? "text-white" : "text-black"
-                          }`}>
+                          <div
+                            className={`text-xs font-semibold mb-1 ${
+                              isOwn ? "text-white" : "text-black"
+                            }`}
+                          >
                             {msg.senderName}
                           </div>
 
@@ -583,9 +613,7 @@ useEffect(() => {
                           fileIcon = faFile;
                           bgColor = "bg-red-100";
                           iconColor = "text-red-500";
-                        } else if (
-                          ["xls", "xlsx"].includes(fileExtension)
-                        ) {
+                        } else if (["xls", "xlsx"].includes(fileExtension)) {
                           fileIcon = faFile;
                           bgColor = "bg-green-100";
                           iconColor = "text-green-500";
