@@ -1,13 +1,14 @@
 "use client";
 
 import { Geist, Geist_Mono } from "next/font/google";
-import "../../globals.css";
+import "../../styles/globals.css";
 import SidebarWrapper from "../../components/SidebarWrapper";
 import { NextUIProvider } from "@nextui-org/react";
 import { I18nextProvider } from "react-i18next";
 import { i18nInstance } from "../language/i18n";
 import { Suspense } from "react";
 import LocaleProvider from "@/components/locale-provider";
+import { Toaster } from "@/components/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +39,16 @@ export default function RootLayout({
                     <div className="h-full">
                       <SidebarWrapper />
                     </div>
-                    <div className="col-span-8 h-full">{children}</div>
+                    <div className="col-span-8 h-full">{children}
+                      <Toaster 
+                        position="top-center"
+                        richColors
+                        closeButton={false}
+                        duration={5000}
+                        visibleToasts={3}
+                        offset={5}
+                        />
+                    </div>
                   </div>
                 </NextUIProvider>
               </I18nextProvider>

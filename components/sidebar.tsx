@@ -3,7 +3,7 @@ import Link from "next/link";
 import { LogoIcon, SettingIcon } from "../constant/image";
 import IconButton from "./IconButton";
 import { SidebarIconData } from "../constant/data";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Dropdown,
   DropdownItem,
@@ -11,13 +11,33 @@ import {
   DropdownTrigger,
 } from "@nextui-org/react";
 import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
+import { logout } from "@/lib/actions/auth";
 
 const Sidebar = () => {
   const { t, i18n } = useTranslation("common");
   const pathname = usePathname();
-  console.log("i18n language:", i18n.language);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const currentLang =
+    searchParams.get("lang") || localStorage.getItem("lang") || "en";
+  /*  console.log("i18n language:", i18n.language);
   console.log("i18n namespace:", i18n.options.ns);
-  console.log("i18n resources:", i18n.options.resources);
+  console.log("i18n resources:", i18n.options.resources);*/
+
+  const changeLanguage = (newLang: string) => {
+    i18n.changeLanguage(newLang);
+    localStorage.setItem("lang", newLang);
+
+    const params = new URLSearchParams(searchParams);
+    params.set("lang", newLang);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  useEffect(() => {
+    localStorage.setItem("lang", currentLang);
+    i18n.changeLanguage(currentLang);
+  }, [currentLang]);
 
   return (
     <div className="flex flex-col items-center justify-between py-5 h-screen bg-white rounded-xl">
@@ -58,19 +78,32 @@ const Sidebar = () => {
           </div>
         </DropdownTrigger>
         <DropdownMenu>
-          <DropdownItem key="vi">{t("Vietnamese")}</DropdownItem>
-          <DropdownItem key="en">{t("English")}</DropdownItem>
+          <DropdownItem key="vi">
+            <div onClick={() => changeLanguage("vi")}>{t("Vietnamese")}</div>
+          </DropdownItem>
+          <DropdownItem key="en">
+            <div onClick={() => changeLanguage("en")}>{t("English")}</div>
+          </DropdownItem>
           <DropdownItem key="dark">Darkmode</DropdownItem>
           <DropdownItem key="light">Lightmode</DropdownItem>
           <DropdownItem
             key="change_account"
             className="text-red-600"
             color="danger"
+            onPress={() => router.push("/password/changepassword")}
           >
-            Change Account
+            {t("Change Password")}
           </DropdownItem>
-          <DropdownItem key="logout" className="text-red-600" color="danger">
-            Logout
+          <DropdownItem
+            key="logout"
+            className="text-red-600"
+            color="danger"
+            onPress={() => {
+              localStorage.removeItem("user");
+              logout();
+            }}
+          >
+            {t("Logout")}
           </DropdownItem>
         </DropdownMenu>
       </Dropdown>

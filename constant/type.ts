@@ -1,14 +1,26 @@
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { StaticImageData } from "next/image";
 
 export interface InputFieldProps {
-  image: StaticImageData;
-  placeholder: string;
+  isEditable?: boolean;
+  storageKey?: string;
+  image?: StaticImageData;
+  icon?: IconProp;
+  type: string;
+  placeholder?: string;
   password?: boolean;
   error?: string;
+  errorClassname?: string;
+  value?: string;
+  textClassname?: string;
   onFocus?: () => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
+export interface FormLoginData {
+  phone: string;
+  password: string;
+}
 export interface FormSignUpData {
   name: string;
   phone: string;
@@ -23,6 +35,13 @@ export interface FormSignUpErrors {
   confirmPassword: string;
 }
 
+export interface FormSuccessErrors {
+  name: string;
+  phone: string;
+  password: string;
+  birthday: string;
+}
+
 export interface IconButtonProps {
   icon: StaticImageData;
   iconWidth: number;
@@ -35,6 +54,8 @@ export interface IconButtonProps {
 }
 
 export interface ChatItemProps {
+  Status: string;
+  Type: string;
   id: number;
   image: StaticImageData;
   name: string;
@@ -43,6 +64,7 @@ export interface ChatItemProps {
   unread: number;
   pin: boolean;
   type?: string;
+  chatId?: string; // Added chatId property
 }
 
 export interface ChatListProps {
@@ -56,4 +78,91 @@ export interface ProfileInfoItemProps {
   text: string;
   altText: string;
   textStyle?: string;
+  className?: string;
+  onClick?: () => void;
+}
+
+export interface TemporaryUserProps {
+  id: number;
+  name: string;
+  password: string;
+  phone: string;
+  image: null | string | StaticImageData;
+  location: null | string;
+  birthday: null | Date;
+  email: string;
+  gender?: string;
+  work?: string;
+}
+
+export interface Friend {
+  contactId: string;
+  imageUrl: string;
+  location: string | "No location set";
+  id: number;
+  name: string;
+  status: string;
+  phone: string;
+  avatar: string;
+}
+
+export interface MessagePayLoad {
+  messageId?: number;
+  userId?: number;
+  type?: string;
+  timestamp?: string;
+  content?: string;
+  attachmentUrl?: string | null;
+  deleteReason?: string | null;
+  senderName?: string;
+  senderImage?: string;
+  reactions?: string[];
+  senderId?: string;
+  replyTo?: number;
+  caption?: string;
+}
+
+export interface Message {
+  messageId?: number;
+  userId?: number;
+  type?: string;
+  timestamp?: string;
+  content?: string;
+  attachmentUrl?: string | null;
+  deleteReason?: string | null;
+  senderName?: string;
+  senderImage?: string;
+  reactions?: string[];
+  senderId?: string;
+  replyTo?: Message;
+  caption?: string;
+}
+
+export interface GroupChat {
+  Status: string;
+  ChatID: string;
+  chatId: string;
+  chatName: string;
+  imageUrl?: string;
+  Type?: string;
+  members: {
+    userId: number;
+    name: string;
+    imageUrl?: string;
+    phone?: string;
+    email?: string;
+    location?: string;
+  }[];
+  latestMessage?: {
+    content: string;
+    timestamp: string;
+    senderName: string;
+  };
+}
+
+export interface MembersGroupChat {
+  userId: number;
+  role: string;
+  name: string;
+  imageUrl?: string;
 }

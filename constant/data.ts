@@ -1,12 +1,5 @@
-import { image } from "@nextui-org/react";
-import {
-  ChatIcon,
-  ContactIcon,
-  People01,
-  People02,
-  People03,
-  ProfileIcon,
-} from "./image";
+import { ChatIcon, ContactIcon, imgTest, ProfileIcon } from "./image";
+import { GroupChat } from "./type";
 
 export const SidebarIconData = [
   {
@@ -32,121 +25,108 @@ export const SidebarIconData = [
   },
 ];
 
-export const chatListData = [
+export const imageData = [
+  {
+    date: "2024-12-01",
+    images: [imgTest, imgTest, imgTest, imgTest, imgTest, imgTest],
+  },
+  {
+    date: "2024-11-01",
+    images: [imgTest, imgTest, imgTest, imgTest, imgTest, imgTest],
+  },
+];
+
+export const fileList = [
+  {
+    name: "a.pdf",
+    size: "5mb",
+    type: "pdf",
+  },
+  {
+    name: "a.docx",
+    size: "200mb",
+    type: "word",
+  },
+  {
+    name: "a.xxl",
+    size: "5mb",
+    type: "excel",
+  },
+  {
+    name: "b.pdf",
+    size: "5mb",
+    type: "pdf",
+  },
+  {
+    name: "b.file",
+    size: "5mb",
+    type: "file",
+  },
+];
+
+export const listLink = [
   {
     id: 1,
-    image: People01,
-    name: "John Doe",
-    message: "Hello, how are you?",
-    time: "12:00",
-    unread: 3,
-    pin: true,
+    title: "Animation video",
+    url: "http://..........",
+    date: "12/02",
+    thumbnail: "https://i.imgur.com/YhIhK7I.png",
   },
-  { id: 2,
-    image: People02,
-    name: "Jane Doe",
-    message: "Hello, how are you?",
-    time: "12:00",
-    unread: 3,
-    pin: false,
-  },
-  { id: 3,
-    image: People03,
-    name: "John Smith",
-    message: "Hello, how are you?",
-    time: "12:00",
-    unread: 3,
-    pin: true,
-  },
-  { id: 4,
-    image: People01,
-    name: "John Doe",
-    message: "Hello, how are you?",
-    time: "12:00",
-    unread: 3,
-    pin: false,
-  },
-  { id: 5,
-    image: People02,
-    name: "Jane Doe",
-    message: "Hello, how are you?",
-    time: "12:00",
-    unread: 0,
-    pin: true,
-  },
-  { id: 6,
-    image: People03,
-    name: "John Smith",
-    message: "Hello, how are you?",
-    time: "12:00",
-    unread: 0,
-    pin: false,
-  },
-  { id: 7,
-    image: People03,
-    name: "John Smith Group",
-    message: "Hello, how are you?",
-    time: "12:00",
-    unread: 0,
-    pin: true,
-    type: "group"
-  },
-  { id: 8,
-    image: People01,
-    name: "John Doe",
-    message: "Hello, how are you?",
-    time: "12:00",
-    unread: 3,
-    pin: false,
-  },
-  { id: 9,
-    image: People02,
-    name: "Jane Doe Group",
-    message: "Hello, how are you?",
-    time: "12:00",
-    unread: 3,
-    pin: true,
-    type: "group"
-  },
-  { id: 10,
-    image: People01,
-    name: "John Doe Group",
-    message: "Hello, how are you?",
-    time: "12:00",
-    unread: 0,
-    pin: false,
-    type: "group"
-  },
-  { id: 11,
-    image: People03,
-    name: "John Do3",
-    message: "Hello, how are you?",
-    time: "12:00",
-    unread: 3,
-    pin: false,
-  },
-];
-
-export const chatHistoryData = [
   {
-    participants: [
-      { userId: 1, username: "John Doe", image: People01 },
-      { userId: "admin", username: "Admin" },
-    ],
-    messages: [
-      { messageId: "msg1", senderId: "admin", timestamp: "10:00", type: "text", content: "Hey! How's it going?" },
-      { messageId: "msg2", senderId: 1, timestamp: "10:02", type: "text", content: "Hi Admin! I'm good, just working on a project. You?" },
-    ],
+    id: 2,
+    title: "Animation video",
+    url: "http://..........",
+    date: "12/02",
+    thumbnail: "https://i.imgur.com/YhIhK7I.png",
   },
 ];
 
-export const profileData = {
-  id: 1,
-  name: "John Doe",
-  phone: "123456789",
-  image: People01,
-  work: "Software Engineer",
-  birthday: "01/01/1990",
-  location: "New York, USA",
+export const friendRequests = {
+  received: [
+    {
+      id: 1,
+      name: "Thọ Simon",
+      date: "25/03",
+      source: "Từ nhóm trò chuyện",
+      avatar: "https://i.pravatar.cc/150?img=3",
+      message:
+        "Hi, my name is Thọ Simon. We know each other through common group. Please accept my request!",
+    },
+    {
+      id: 2,
+      name: "Hồng Tiến",
+      date: "24/03",
+      source: "Từ danh thiếp",
+      avatar: "",
+      message:
+        "Xin chào, mình là Hồng Tiến. Mình biết bạn qua Hồ Như Nguyên giới thiệu.",
+    },
+    {
+      id: 3,
+      name: "Bảo Anh",
+      date: "06/03",
+      source: "Từ số điện thoại",
+      avatar: "https://i.pravatar.cc/150?img=4",
+      message: "Xin chào, mình là Bảo Anh. Kết bạn với mình nhé!",
+    },
+  ],
+  sent: [
+    {
+      id: 4,
+      name: "Ngọc",
+      date: "Gửi lời mời",
+      avatar: "https://i.pravatar.cc/150?img=5",
+    },
+  ],
+  suggestions: [
+    { id: 5, name: "Trịnh Ngọc Thái", commonGroups: 11 },
+    { id: 6, name: "Nguyễn Văn", commonGroups: 2 },
+    { id: 7, name: "Minh Triệu", commonGroups: 9 },
+    { id: 8, name: "Võ Minh Thịnh", commonGroups: 6 },
+    { id: 9, name: "Long", commonGroups: 4 },
+    { id: 10, name: "Hoàng Huy", commonGroups: 2 },
+    { id: 11, name: "Thành Lương", commonGroups: 4 },
+    { id: 12, name: "Trịnh Ngô", commonGroups: 2 },
+    { id: 13, name: "Pp", commonGroups: 2 },
+  ],
 };
-

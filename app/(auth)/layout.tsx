@@ -1,7 +1,7 @@
 "use client";
 
 import { Geist, Geist_Mono } from "next/font/google";
-import "../../globals.css";
+import "../../styles/globals.css";
 import { NextUIProvider } from "@nextui-org/react";
 import { I18nextProvider } from "react-i18next";
 import { i18nInstance } from "../language/i18n";
@@ -23,11 +23,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  console.log("i18n instance in provider:", i18nInstance);
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-customPurple/10 h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased  h-screen bg-white`}
       >
         <Suspense fallback={<div>Loading UI...</div>}>
           <LocaleProvider>
