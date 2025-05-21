@@ -59,6 +59,7 @@ const GroupChat = ({
   setReplyMessage,
   setForwardMessage,
   forwardMessage,
+  messageRefs,
 }: {
   selectedChatInfo: any;
   chatList: any;
@@ -91,6 +92,7 @@ const GroupChat = ({
   setReplyMessage: React.Dispatch<React.SetStateAction<Message | null>>;
   setForwardMessage: React.Dispatch<React.SetStateAction<Message | null>>;
   forwardMessage: Message | null;
+  messageRefs: React.RefObject<Record<string, HTMLDivElement | null>>;
 }) => {
   // State to track the type of the selected media
   const [selectedMediaType, setSelectedMediaType] = useState<
@@ -150,8 +152,8 @@ const GroupChat = ({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
-  const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const searchRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const searchChat = async (chatId: string, search: string, userId: string) => {
     if (!search.trim()) return;
     try {
@@ -346,13 +348,11 @@ const GroupChat = ({
                           : ""
                       }`}
                     >
-                      {/* Message container */}
                       <div
                         className={`flex items-end gap-2 max-w-[70%] ${
                           isOwn ? "flex-row-reverse" : "justify-start"
                         }`}
                       >
-                        {/* Sender Image */}
                         <img
                           src={
                             msg.senderImage ||
@@ -361,8 +361,6 @@ const GroupChat = ({
                           alt={msg.senderName}
                           className=" w-6 h-6 rounded-full object-cover mt-1"
                         />
-
-                        {/* Message Bubble */}
                         <div
                           className={`
                             ${
@@ -422,10 +420,9 @@ const GroupChat = ({
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setMessageMenuId({
-                                        id: msg.messageId,
-                                        type: "reply",
-                                      });
+                                      setMessageMenuId(null);
+                                      setReplyMessage(msg);
+                                      inputRef.current?.focus();
                                     }}
                                     className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                   >
@@ -434,10 +431,8 @@ const GroupChat = ({
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setMessageMenuId({
-                                        id: msg.messageId,
-                                        type: "forward",
-                                      });
+                                      setMessageMenuId(null);
+                                      setForwardMessage(msg);
                                     }}
                                     className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                   >
@@ -475,6 +470,7 @@ const GroupChat = ({
                                       e.stopPropagation();
                                       setMessageMenuId(null);
                                       setReplyMessage(msg);
+                                      inputRef.current?.focus();
                                     }}
                                     className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                   >
@@ -483,10 +479,9 @@ const GroupChat = ({
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setMessageMenuId({
-                                        id: msg.messageId,
-                                        type: "forward",
-                                      });
+
+                                      setMessageMenuId(null);
+                                      setForwardMessage(msg);
                                     }}
                                     className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                   >
@@ -497,10 +492,7 @@ const GroupChat = ({
                             </div>
                           )}
 
-                          {/* Message text/image */}
                           {renderMessage(msg, isOwn)}
-
-                          {/* Timestamp */}
                           <span
                             className={`text-sm ${
                               isOwn

@@ -23,7 +23,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  console.log("i18n instance in provider:", i18nInstance);
   return (
     <html lang="en">
       <body

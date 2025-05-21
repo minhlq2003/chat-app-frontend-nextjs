@@ -52,6 +52,7 @@ const SingleChat = ({
   setReplyMessage,
   setForwardMessage,
   forwardMessage,
+  messageRefs,
 }: {
   selectedChatInfo: any;
   chatList: any;
@@ -84,6 +85,7 @@ const SingleChat = ({
   setReplyMessage: React.Dispatch<React.SetStateAction<Message | null>>;
   setForwardMessage: React.Dispatch<React.SetStateAction<Message | null>>;
   forwardMessage: Message | null;
+  messageRefs: React.RefObject<{ [key: number]: HTMLDivElement | null }>;
 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,8 +93,8 @@ const SingleChat = ({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
-  const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const searchRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const searchChat = async (chatId: string, search: string, userId: string) => {
     if (!search.trim()) return;
     try {
@@ -154,9 +156,17 @@ const SingleChat = ({
     }
   }, [highlightedIndex, result]);
 
-  useEffect(() => {
-    console.log("Messages updated:", messages);
-  }, [messages]);
+  const scrollToMessage = (messageId: number) => {
+    const element = messageRefs.current[messageId];
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Optional: highlight hoặc hiệu ứng nháy
+      element.classList.add("ring-2", "ring-blue-400");
+      setTimeout(() => {
+        element.classList.remove("ring-2", "ring-blue-400");
+      }, 1500);
+    }
+  };
 
   return (
     <div>
@@ -332,6 +342,7 @@ const SingleChat = ({
                                     e.stopPropagation();
                                     setReplyMessage(msg);
                                     setMessageMenuId(null);
+                                    inputRef.current?.focus();
                                   }}
                                   className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                 >
@@ -383,6 +394,7 @@ const SingleChat = ({
                                     e.stopPropagation();
                                     setReplyMessage(msg);
                                     setMessageMenuId(null);
+                                    inputRef.current?.focus();
                                   }}
                                   className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                 >
@@ -559,6 +571,7 @@ const SingleChat = ({
               </div>
             )}
             <Input
+              ref={inputRef}
               placeholder={
                 attachmentPreview ? "Add a caption..." : "Type messages"
               }
