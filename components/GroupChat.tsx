@@ -60,6 +60,7 @@ const GroupChat = ({
   setReplyMessage,
   setForwardMessage,
   forwardMessage,
+  messageRefs,
 }: {
   selectedChatInfo: any;
   chatList: any;
@@ -92,10 +93,11 @@ const GroupChat = ({
   setReplyMessage: React.Dispatch<React.SetStateAction<Message | null>>;
   setForwardMessage: React.Dispatch<React.SetStateAction<Message | null>>;
   forwardMessage: Message | null;
+  messageRefs: React.RefObject<Record<string, HTMLDivElement | null>>;
 }) => {
   // Group messages by date
   const groupedMessages = groupMessagesByDate(messages);
-  
+
   // State to track the type of the selected media
   const [selectedMediaType, setSelectedMediaType] = useState<
     "image" | "video" | null
@@ -154,8 +156,8 @@ const GroupChat = ({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
-  const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const searchRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const searchChat = async (chatId: string, search: string, userId: string) => {
     if (!search.trim()) return;
     try {
@@ -332,7 +334,7 @@ const GroupChat = ({
                       </div>
                       <div className="h-[1px] bg-gray-300 flex-grow"></div>
                     </div>
-                    
+
                     {/* Messages for this date */}
                     {group.messages.map((msg) => {
                       const isOwn = msg.senderId === userId;
@@ -340,168 +342,171 @@ const GroupChat = ({
                       const imageUrl = msg.attachmentUrl;
                       const isOpen = messageMenuId === msg.messageId;
 
-                      // Check if the message has a previewable attachment
-                      const fileExtension = imageUrl
-                        ? getFileExtension(imageUrl)
-                        : "";
-                      const isPreviewable =
-                        IMAGE_EXTENSIONS.includes(fileExtension) ||
-                        VIDEO_EXTENSIONS.includes(fileExtension);
-                      return (
+                  // Check if the message has a previewable attachment
+                  const fileExtension = imageUrl
+                    ? getFileExtension(imageUrl)
+                    : "";
+                  const isPreviewable =
+                    IMAGE_EXTENSIONS.includes(fileExtension) ||
+                    VIDEO_EXTENSIONS.includes(fileExtension);
+
+                  return (
+                    <div
+                      key={msg.messageId}
+                      ref={(el) => {
+                        messageRefs.current[msg.messageId] = el;
+                      }}
+                      className={`flex ${
+                        isOwn ? "justify-end" : "justify-start"
+                      } ${
+                        result[highlightedIndex]?.messageId === msg.messageId
+                          ? " bg-customPurple/20"
+                          : ""
+                      }`}
+                    >
+                      <div
+                        className={`flex items-end gap-2 max-w-[70%] ${
+                          isOwn ? "flex-row-reverse" : "justify-start"
+                        }`}
+                      >
+                        <img
+                          src={
+                            msg.senderImage ||
+                            `https://ui-avatars.com/api/?name=${msg.senderName}`
+                          }
+                          alt={msg.senderName}
+                          className=" w-6 h-6 rounded-full object-cover mt-1"
+                        />
                         <div
-                          key={msg.messageId}
-                          ref={(el) => {
-                            messageRefs.current[msg.messageId] = el;
+                          className={`
+                            ${
+                              isOwn
+                                ? "bg-customPurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
+                                : "bg-customPurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
+                            }
+                            p-2 relative group w-full ${
+                              isPreviewable ? "cursor-pointer" : ""
+                            }
+                          `}
+                          onClick={() => {
+                            if (isPreviewable) {
+                              handleMessageClick(imageUrl);
+                            }
                           }}
-                          className={`flex ${
-                            isOwn ? "justify-end" : "justify-start"
-                          } ${
-                            result[highlightedIndex]?.messageId === msg.messageId
-                              ? " bg-customPurple/20"
-                              : ""
-                          } mb-4`}
                         >
-                          {/* Message container */}
+                          {/* Sender name (for group chat) */}
                           <div
-                            className={`flex items-end gap-2 max-w-[70%] ${
-                              isOwn ? "flex-row-reverse" : "justify-start"
+                            className={`text-xs font-semibold mb-1 ${
+                              isOwn ? "text-white" : "text-black"
                             }`}
                           >
-                            {/* Sender Image */}
-                            <img
-                              src={
-                                msg.senderImage ||
-                                `https://ui-avatars.com/api/?name=${msg.senderName}`
+                            {msg.senderName}
+                          </div>
+
+                          {/* Dots button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (type) {
+                                setMessageMenuId(null);
+                              } else {
+                                setMessageMenuId(isOpen ? null : msg.messageId);
                               }
-                              alt={msg.senderName}
-                              className=" w-6 h-6 rounded-full object-cover mt-1"
-                            />
-                            {/* Message Bubble */}
+                            }}
+                            className={`absolute bottom-0 w-8 h-8 rounded-full hover:bg-gray-200 hidden group-hover:flex items-center justify-center z-10
+                            ${
+                              isOwn
+                                ? "-left-8 bg-customPurple/20 text-black"
+                                : "-right-8 bg-customPurple/20 text-black"
+                            }`}
+                          >
+                            <span className="text-xs">●●●</span>
+                          </button>
+
+                          {/* Dropdown */}
+                          {isOpen && (
                             <div
-                              className={`
-                                ${
-                                  isOwn
-                                    ? "bg-customPurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
-                                    : "bg-customPurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
-                                }
-                                p-2 relative group w-full ${
-                                  isPreviewable ? "cursor-pointer" : ""
-                                }
-                              `}
-                              onClick={() => {
-                                if (isPreviewable) {
-                                  handleMessageClick(imageUrl);
-                                }
-                              }}
+                              ref={dropdownRef}
+                              className={`absolute bottom-0 z-20 bg-white rounded shadow-lg w-48 p-2 text-black ${
+                                isOwn ? "-left-48" : "-right-48"
+                              }`}
                             >
-                              {/* Sender name (for group chat) */}
-                              <div
-                                className={`text-xs font-semibold mb-1 ${
-                                  isOwn ? "text-white" : "text-black"
-                                }`}
-                              >
-                                {msg.senderName}
-                              </div>
-                              {/* Dots button */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (type) {
-                                    setMessageMenuId(null);
-                                  } else {
-                                    setMessageMenuId(isOpen ? null : msg.messageId);
-                                  }
-                                }}
-                                className={`absolute bottom-0 w-8 h-8 rounded-full hover:bg-gray-200 hidden group-hover:flex items-center justify-center z-10
-                                ${
-                                  isOwn
-                                    ? "-left-8 bg-customPurple/20 text-black"
-                                    : "-right-8 bg-customPurple/20 text-black"
-                                }`}
-                              >
-                                <span className="text-xs">●●●</span>
-                              </button>
-                              {/* Dropdown */}
-                              {isOpen && (
-                                <div
-                                  ref={dropdownRef}
-                                  className={`absolute bottom-0 z-20 bg-white rounded shadow-lg w-48 p-2 text-black ${
-                                    isOwn ? "-left-48" : "-right-48"
-                                  }`}
-                                >
-                                  {isOwn ? (
-                                    <>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setMessageMenuId(null);
-                                          setReplyMessage(msg);
-                                        }}
+                              {isOwn ? (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setMessageMenuId(null);
+                                      setReplyMessage(msg);
+                                      inputRef.current?.focus();
+                                    }}
                                     className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                   >
                                         Reply
                                   </button>
-                                      <button
-                                        onClick={(e) => {
-                        e.stopPropagation();
-                                          setMessageMenuId(null);
-                                          setForwardMessage(msg);
-                      }}
-                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                    >
-                                        Forward
-                    </button>
-                  <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setMessageMenuId({
-                                            id: msg.messageId,
-                                            type: "remove",
-                                          });
-                            }}
-                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                      >
-                                        Remove
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setMessageMenuId({
-                                            id: msg.messageId,
-                                            type: "unsent",
-                                          });
-              }}
-                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                      >
-                                        Undo
-                                      </button>
-                                    </>
-      ) : (
-                                    <>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setMessageMenuId(null);
-                                          setReplyMessage(msg);
-                                        }}
-                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                      >
-                                        Reply
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setMessageMenuId(null);
-                                          setForwardMessage(msg);
-                                        }}
-                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                      >
-                                        Forward
-                                      </button>
-                                    </>
-      )}
-    </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setMessageMenuId(null);
+                                      setForwardMessage(msg);
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Forward
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setMessageMenuId({
+                                        id: msg.messageId,
+                                        type: "remove",
+                                      });
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Remove
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setMessageMenuId({
+                                        id: msg.messageId,
+                                        type: "unsent",
+                                      });
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Undo
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setMessageMenuId(null);
+                                      setReplyMessage(msg);
+                                      inputRef.current?.focus();
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Reply
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+
+                                      setMessageMenuId(null);
+                                      setForwardMessage(msg);
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Forward
+                                  </button>
+                                </>
                               )}
+                            </div>
+                          )}
 
                               {/* Message text/image */}
                               {renderMessage(msg, isOwn)}

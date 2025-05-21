@@ -21,7 +21,6 @@ export const initializeI18n = async (locale: string = "vi") => {
       },
       interpolation: { escapeValue: false },
     };
-    console.log("[i18n] Initialized:", i18nInstance);
     await i18nInstance.use(initReactI18next).init(options);
   }
 };

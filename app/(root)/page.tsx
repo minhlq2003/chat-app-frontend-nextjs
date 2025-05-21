@@ -44,6 +44,7 @@ import { toast } from "sonner";
 import LeaveGroupConfirmationModel from "@/components/LeaveGroupConfirmationModel";
 import ConfirmationModel from "@/components/ConfirmationModel";
 import ChangeGroupNameModal from "@/components/ChangeGroupNameModal";
+import ForwardMessageModal from "@/components/ForwardMessageModal";
 import ChangeGroupImageModal from "@/components/ChangeGroupImageModal";
 function Home() {
   const { t } = useTranslation("common");
@@ -91,6 +92,7 @@ function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const searchRef = useRef<HTMLDivElement | null>(null);
+  const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const [searchResult, setSearchResult] = useState<Message[]>([]);
   const handleFileSelect = () => {
     // Trigger the file input click event
@@ -329,7 +331,6 @@ function Home() {
   };
 
   const playNotificationSound = () => {
-    console.log("Attempting to play notification sound");
     if (notificationSoundRef.current) {
       notificationSoundRef.current.volume = 0.15; // Set volume to 50%
       notificationSoundRef.current.currentTime = 0; // Reset to start
@@ -337,7 +338,6 @@ function Home() {
         console.error("Error playing notification sound:", err);
       });
     } else {
-      console.log("Audio reference is not available");
     }
   };
 
@@ -357,10 +357,6 @@ function Home() {
       setChatList((prev) =>
         prev.map((chat) => {
           if (chat.chatId === selectedChatInfo.ChatID && chat.unread > 0) {
-            console.log(
-              "Resetting unread count for chat:",
-              selectedChatInfo.ChatID
-            );
             return { ...chat, unread: 0 };
           }
           return chat;
@@ -400,11 +396,7 @@ function Home() {
     const container = messageContainerRef.current;
 
     const handleScroll = () => {
-      console.log("scroll");
-
       if (container && container.scrollTop === 30) {
-        console.log("scroll to top");
-
         loadMoreMessages();
       }
     };
@@ -425,10 +417,6 @@ function Home() {
 
     // Close existing connection if it exists
     if (wsRef.current) {
-      console.log(
-        "Closing existing WebSocket connection before creating a new one"
-      );
-
       // Clear the ping interval
       if (pingIntervalRef.current) {
         clearInterval(pingIntervalRef.current);
@@ -450,14 +438,11 @@ function Home() {
       process.env.NEXT_PUBLIC_API_BASE_URL?.replace("http://", "") ||
       "localhost:3000"
     }/ws`;
-    console.log(`Initializing WebSocket connection to ${wsUrl}`);
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log("WebSocket connection established");
-
       // Send join message
       ws.send(
         JSON.stringify({
@@ -478,7 +463,6 @@ function Home() {
               type: "ping",
             })
           );
-          console.log("Ping sent to keep connection alive");
         }
       }, 30000); // Send ping every 30 seconds instead of 5 seconds
     };
@@ -487,12 +471,10 @@ function Home() {
     const messageHandler = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
-        console.log("WebSocket message received:", data);
 
         // Handle different message types
         switch (data.type) {
           case "ok":
-            console.log(`Operation ${data.originalType} successful`);
             break;
 
           case "error":
@@ -502,9 +484,7 @@ function Home() {
             break;
 
           case "receiveChat":
-            console.log("Received chat message:", data);
             if (!selectedChatInfo) {
-              console.log("No selected chat yet, updating unread counts");
               setChatList((prev) =>
                 prev.map((chat) => {
                   if (chat.chatId === data.chatId) {
@@ -1115,8 +1095,7 @@ function Home() {
               console.log(`Operation ${data.originalType} successful`);
               switch (data.originalType) {
                 case "sendChat": {
-                  //console.log(data.messagePayload)
-                  if (data.messagePayload) {
+                  if (data.messagePayload && !data.messagePayload.isForward) {
                     setMessages((prev) => {
                       const updatedMessages = [...prev, data.messagePayload];
                       // Schedule scroll to bottom after state update
@@ -1184,8 +1163,6 @@ function Home() {
 
                   return newMessages;
                 });
-
-                // Update chat list without changing unread count for current chat
                 setChatList((prev) =>
                   prev.map((chat) => {
                     if (chat.chatId === data.chatId) {
@@ -1198,7 +1175,6 @@ function Home() {
                           hour: "2-digit",
                           minute: "2-digit",
                         }),
-                        // Don't change unread count for current chat
                       };
                     }
                     return chat;
@@ -1353,6 +1329,11 @@ function Home() {
           className={`${
             isOwn ? "bg-blue-500" : "bg-gray-400"
           } p-2 rounded-sm border-l-[5px] border-[#4e4e4e] mb-2`}
+          onClick={(e) => {
+            e.stopPropagation();
+            scrollToMessage(msg.replyTo?.messageId || 0);
+            console.log("Clicked on replyTo message:", msg.replyTo);
+          }}
         >
           <p className="text-sm font-medium">{msg.replyTo.senderName}</p>
           <p className="text-[13px] opacity-80">{msg.replyTo.content}</p>
@@ -1530,6 +1511,17 @@ function Home() {
     };
   }, []);
 
+  const scrollToMessage = (messageId: number) => {
+    const element = messageRefs.current[messageId];
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.classList.add("bg-gray-200");
+      setTimeout(() => {
+        element.classList.remove("bg-gray-200");
+      }, 1500);
+    }
+  };
+
   const searchPeople = async (searhTerm: string, userId: string) => {
     const apiBaseUrl =
       process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
@@ -1689,6 +1681,7 @@ function Home() {
             setReplyMessage={setReplyMessage}
             setForwardMessage={setForwardMessage}
             forwardMessage={forwardMessage}
+            messageRefs={messageRefs}
           />
         ) : (
           <GroupChat
@@ -1721,9 +1714,9 @@ function Home() {
             setReplyMessage={setReplyMessage}
             setForwardMessage={setForwardMessage}
             forwardMessage={forwardMessage}
+            messageRefs={messageRefs}
           />
         )}
-        {/*        */}
       </div>
       <div className="col-span-2 w-full h-screen ">
         {selectedChatInfo && (
@@ -1867,6 +1860,18 @@ function Home() {
           </div>
         )}
       </div>
+      {forwardMessage && user && (
+        <ForwardMessageModal
+          wsRef={wsRef}
+          onClose={() => setForwardMessage(null)}
+          message={forwardMessage}
+          sender={{
+            id: user.id,
+            name: user.name,
+            image: user.image || "https://ui-avatars.com/api/?name=User",
+          }}
+        />
+      )}
       {isModalOpen && (
         <AddGroupModal
           selectedUser={userInfo?.id.toString()}

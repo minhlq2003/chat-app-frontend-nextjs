@@ -11,8 +11,7 @@ interface FriendSuggestion {
   type: "recent" | "suggested";
 }
 
-const suggestions: FriendSuggestion[] = [
-];
+const suggestions: FriendSuggestion[] = [];
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
@@ -41,14 +40,14 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
     const delayDebounce = setTimeout(() => {
       if (phone.trim()) {
         fetch(`${apiBaseUrl}/contact/find?phone=${phone}&userId=${userId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setSearchResults(data.data || []);
-        })
-        .catch((err) => {
-          console.error("Error fetching contact:", err);
-          setSearchResults([]); // fallback to empty list on error
-        });
+          .then((res) => res.json())
+          .then((data) => {
+            setSearchResults(data.data || []);
+          })
+          .catch((err) => {
+            console.error("Error fetching contact:", err);
+            setSearchResults([]); // fallback to empty list on error
+          });
       } else {
         setSearchResults([]); // when input is cleared
       }
@@ -84,7 +83,6 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
       const result = await addContact(userId, contactId);
       if (result.success) {
         setSentUsers((prev) => [...prev, contactId]);
-        console.log("Friend request sent!");
       }
     } catch (error) {
       console.error("Error sending request:", error);
@@ -124,10 +122,11 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
         <div className="p-4 flex flex-col gap-3">
           <p className="text-sm  text-black">Results</p>
           <div className="max-h-[170px] overflow-y-auto">
-
             {phone.trim().length === 0 || searchResults.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-sm text-gray-500 p-4">
-                <p>No friends found. Perhaps you should try a different number?</p>
+                <p>
+                  No friends found. Perhaps you should try a different number?
+                </p>
               </div>
             ) : (
               searchResults.map((user) => (
@@ -137,7 +136,10 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
                 >
                   <div className="flex items-center gap-3">
                     <img
-                      src={user.imageUrl || `https://ui-avatars.com/api/?name=${user.name}`}
+                      src={
+                        user.imageUrl ||
+                        `https://ui-avatars.com/api/?name=${user.name}`
+                      }
                       className="w-10 h-10 rounded-full object-cover"
                       alt={user.name}
                     />
@@ -174,7 +176,7 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
                             onClick={() => {
                               if (userId) handleAddContact(userId, user.userId);
                               else console.error("User ID is null");
-                              toast.success("Friend request sent!")
+                              toast.success("Friend request sent!");
                             }}
                             className="min-w-[90px] text-sm border border-blue-500 text-blue-500 px-3 py-1 rounded hover:bg-blue-500 hover:text-white transition"
                           >
@@ -190,26 +192,28 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Suggested friends */}
-          <p className="text-sm text-black mt-4">Friends you might interested</p>
+          <p className="text-sm text-black mt-4">
+            Friends you might interested
+          </p>
           {suggestions
-          .filter((s) => s.type === "suggested")
-          .map((user) => (
-            <div key={user.id} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img
-                  src={user.avatar}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div>
-                  <p className="font-medium">{user.name}</p>
-                  <p className="text-xs text-white/50">Từ gợi ý kết bạn</p>
+            .filter((s) => s.type === "suggested")
+            .map((user) => (
+              <div key={user.id} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={user.avatar}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-medium">{user.name}</p>
+                    <p className="text-xs text-white/50">Từ gợi ý kết bạn</p>
+                  </div>
                 </div>
+                <button className="text-sm border border-blue-500 text-blue-500 px-3 py-1 rounded hover:bg-blue-500 hover:text-white transition">
+                  Kết bạn
+                </button>
               </div>
-              <button className="text-sm border border-blue-500 text-blue-500 px-3 py-1 rounded hover:bg-blue-500 hover:text-white transition">
-                Kết bạn
-              </button>
-            </div>
-          ))}
+            ))}
 
           {/*<p className="text-sm text-blue-400 text-center mt-2 cursor-pointer hover:underline">
             Xem thêm
@@ -220,7 +224,8 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
         <div className="flex justify-end gap-3 p-4 border-t border-white/10">
           <button
             onClick={onClose}
-            className="text-black bg-gray-400 px-4 py-1 hover:bg-gray-500 rounded">
+            className="text-black bg-gray-400 px-4 py-1 hover:bg-gray-500 rounded"
+          >
             Cancel
           </button>
           {/*<button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded">

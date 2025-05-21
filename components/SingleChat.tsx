@@ -53,6 +53,7 @@ const SingleChat = ({
   setReplyMessage,
   setForwardMessage,
   forwardMessage,
+  messageRefs,
 }: {
   selectedChatInfo: any;
   chatList: any;
@@ -85,6 +86,7 @@ const SingleChat = ({
   setReplyMessage: React.Dispatch<React.SetStateAction<Message | null>>;
   setForwardMessage: React.Dispatch<React.SetStateAction<Message | null>>;
   forwardMessage: Message | null;
+  messageRefs: React.RefObject<{ [key: number]: HTMLDivElement | null }>;
 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -92,12 +94,12 @@ const SingleChat = ({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
-  const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const searchRef = useRef<HTMLDivElement | null>(null);
 
   // Group messages by date
   const groupedMessages = groupMessagesByDate(messages);
 
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const searchChat = async (chatId: string, search: string, userId: string) => {
     if (!search.trim()) return;
     try {
@@ -159,9 +161,17 @@ const SingleChat = ({
     }
   }, [highlightedIndex, result]);
 
-  useEffect(() => {
-    console.log("Messages updated:", messages);
-  }, [messages]);
+  const scrollToMessage = (messageId: number) => {
+    const element = messageRefs.current[messageId];
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Optional: highlight hoặc hiệu ứng nháy
+      element.classList.add("ring-2", "ring-blue-400");
+      setTimeout(() => {
+        element.classList.remove("ring-2", "ring-blue-400");
+      }, 1500);
+    }
+  };
 
   return (
     <div>
@@ -347,9 +357,10 @@ const SingleChat = ({
                                       onClick={(e) => {
                                         console.log("Reply to", msg.messageId);
                                     e.stopPropagation();
-                                        setReplyMessage(msg);
-                                        setMessageMenuId(null);
-                                      }}
+                                    setReplyMessage(msg);
+                                    setMessageMenuId(null);
+                                    inputRef.current?.focus();
+                                  }}
                                   className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                 >
                                       Reply
@@ -358,16 +369,16 @@ const SingleChat = ({
                                       onClick={(e) => {
                                         console.log("Forward", msg.messageId);
                                     e.stopPropagation();
-                                        setForwardMessage(msg);
+                                    setForwardMessage(msg);
                                     setMessageMenuId(null);
                                   }}
                                   className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                 >
-                                      Forward
+                                  Forward
                                 </button>
                                 <button
                                   onClick={(e) => {
-                                        console.log("Remove", msg.messageId);
+                                    console.log("Remove", msg.messageId);
                                     e.stopPropagation();
                                         setMessageMenuId({
                                           id: msg.messageId,
@@ -400,6 +411,7 @@ const SingleChat = ({
                                         e.stopPropagation();
                                         setReplyMessage(msg);
                                         setMessageMenuId(null);
+                                        inputRef.current?.focus();
                                       }}
                                       className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                     >
@@ -465,8 +477,8 @@ const SingleChat = ({
                     >
                       ✕
                     </button>
-        </div>
-    </div>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -516,7 +528,7 @@ const SingleChat = ({
                             alt="Attachment preview"
                             className="rounded-md object-cover h-[100px]"
                           />
-  );
+                        );
                       } else {
                         // File preview
                         const fileName = fileUrl.split("/").pop() || "File";
@@ -578,6 +590,7 @@ const SingleChat = ({
               </div>
             )}
             <Input
+              ref={inputRef}
               placeholder={
                 attachmentPreview ? "Add a caption..." : "Type messages"
               }

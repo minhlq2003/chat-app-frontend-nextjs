@@ -174,6 +174,8 @@ export default function Page() {
             selectedChatInfo={selectedChat}
             selectedUser={userId}
             onClose={() => setisConfirmation(false)}
+            getChatFunc={fetchGroupList}
+            requestObject={null}
           />
         )}
       </div>
