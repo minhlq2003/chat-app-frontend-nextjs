@@ -22,11 +22,18 @@ import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { extractLists, getFileIcon } from "@/constant/help";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faBirthdayCake,
+  faBriefcase,
   faDownload,
   faEdit,
   faFile,
   faFileWord,
+  faLocationDot,
+  faPhone,
+  faPlus,
   faRightFromBracket,
+  faSearch,
+  faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import RenderMedia from "@/components/RenderMedia";
 import SingleChat from "@/components/SingleChat";
@@ -163,17 +170,22 @@ function Home() {
     }
   };
 
-  const handleGroupImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGroupImageChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
         const formData = new FormData();
         formData.append("file", file);
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`, {
-          method: "POST",
-          body: formData,
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -197,17 +209,21 @@ function Home() {
         return;
       }
 
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
-      const response = await fetch(`${apiBaseUrl}/group/${selectedChatInfo.ChatID}/updateimage`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: userId,
-          image: imageUrl,
-        }),
-      });
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
+      const response = await fetch(
+        `${apiBaseUrl}/group/${selectedChatInfo.ChatID}/updateimage`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: userId,
+            image: imageUrl,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -266,7 +282,9 @@ function Home() {
     return () => chatRef.current?.removeEventListener("scroll", onScroll);
   }, [page, allMessages]);
 
-  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) {
       toast.error("No file selected.");
@@ -350,7 +368,8 @@ function Home() {
 
     // Check if scrolled to bottom (with a small threshold)
     const isAtBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight < 20;
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      20;
 
     if (isAtBottom) {
       // Reset unread count for this chat
@@ -434,9 +453,13 @@ function Home() {
       wsRef.current = null;
     }
 
-    const wsUrl = `ws${(process.env.NEXT_PUBLIC_API_BASE_URL?.includes("https")) ? `s`: ''}://${
-      process.env.NEXT_PUBLIC_API_BASE_URL?.replaceAll("http://", "").replaceAll("https://", "") ||
-      "localhost:3000"
+    const wsUrl = `ws${
+      process.env.NEXT_PUBLIC_API_BASE_URL?.includes("https") ? `s` : ""
+    }://${
+      process.env.NEXT_PUBLIC_API_BASE_URL?.replaceAll(
+        "http://",
+        ""
+      ).replaceAll("https://", "") || "localhost:3000"
     }/ws`;
 
     const ws = new WebSocket(wsUrl);
@@ -585,46 +608,53 @@ function Home() {
 
       if (data.success) {
         // Use the functional form of setChatList to access the most current state
-        setChatList(prevChatList => {
+        setChatList((prevChatList) => {
           // Transform API data to match our component's expected format
           const formattedChatList = data.data
-          .filter(function (chat: ChatItemProps) {
-            return chat.Status !== "disbanded";
-          })
-          .map((chat: any) => {
-            // Find existing chat to preserve unread count
-            // Note: Use chatId consistently (not ChatID)
-            const existingChat = prevChatList.find(c => c.chatId === chat.ChatID);
-            return {
-              id: parseInt(chat.otherUserId) || Math.floor(Math.random() * 1000),
-              image: chat.imageUrl || noUserImage,
-              name: chat.chatName || "Chat",
-              message: chat.lastMessage
-                ? chat.lastMessage.content === ""
-                  ? chat.lastMessage.type
-                    ? `Sent a ${chat.lastMessage.type}`
-                    : "Click to view messages"
-                  : chat.lastMessage?.content
-                : chat.lastMessage?.content ||
-                "No messages yet" ||
-                "Click to view messages",
-              time:
-                chat.lastMessage && chat.lastMessage.timestamp
-                  ? new Date(chat.lastMessage.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                  : new Date(chat.CreatedDate).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }),
-              // Preserve the unread count from existing chat if available
-              unread: existingChat ? existingChat.unread : 0,
-              pin: false,
-              type: chat.Type || "private",
-              chatId: chat.ChatID,
-            };
-          });
+            .filter(function (chat: ChatItemProps) {
+              return chat.Status !== "disbanded";
+            })
+            .map((chat: any) => {
+              // Find existing chat to preserve unread count
+              // Note: Use chatId consistently (not ChatID)
+              const existingChat = prevChatList.find(
+                (c) => c.chatId === chat.ChatID
+              );
+              return {
+                id:
+                  parseInt(chat.otherUserId) ||
+                  Math.floor(Math.random() * 1000),
+                image: chat.imageUrl || noUserImage,
+                name: chat.chatName || "Chat",
+                message: chat.lastMessage
+                  ? chat.lastMessage.content === ""
+                    ? chat.lastMessage.type
+                      ? `Sent a ${chat.lastMessage.type}`
+                      : "Click to view messages"
+                    : chat.lastMessage?.content
+                  : chat.lastMessage?.content ||
+                    "No messages yet" ||
+                    "Click to view messages",
+                time:
+                  chat.lastMessage && chat.lastMessage.timestamp
+                    ? new Date(chat.lastMessage.timestamp).toLocaleTimeString(
+                        [],
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )
+                    : new Date(chat.CreatedDate).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }),
+                // Preserve the unread count from existing chat if available
+                unread: existingChat ? existingChat.unread : 0,
+                pin: false,
+                type: chat.Type || "private",
+                chatId: chat.ChatID,
+              };
+            });
 
           return formattedChatList;
         });
@@ -1570,7 +1600,7 @@ function Home() {
               placeholder="Search message, people"
               type="text"
               startContent={
-                <Image src={SearchIcon} width={24} height={24} alt="Search" />
+                <FontAwesomeIcon icon={faSearch} className="size-4" />
               }
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -1780,14 +1810,16 @@ function Home() {
                             />
                             <p className={``}>Change group name</p>
                           </div>
-                          <UserInfoItem
-                            icon={PlusIcon}
-                            text="Add new member"
-                            altText="Add new member"
-                            className="cursor-pointer hover:text-blue-600 transition-colors"
+                          <div
+                            className={`cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-2`}
                             onClick={() => setIsNewMemberModalOpen(true)}
-                          />
-
+                          >
+                            <FontAwesomeIcon
+                              icon={faPlus}
+                              className="w-5 h-5 pl-1"
+                            />
+                            <p className={``}>Add new member</p>
+                          </div>
                           {memberRole !== "owner" && (
                             <div
                               className={`cursor-pointer text-base text-red-600 flex items-center gap-2`}
@@ -1801,52 +1833,68 @@ function Home() {
                             </div>
                           )}
                           {memberRole === "owner" && (
-                            <UserInfoItem
-                              icon={BlockIcon}
-                              text="Disband group"
-                              altText="Disband group"
-                              textStyle="text-base text-red-600"
-                              className="cursor-pointer hover:text-blue-600 transition-colors"
+                            <div
+                              className={`cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-2`}
                               onClick={() => setisDisbandConfirmation(true)}
-                            />
+                            >
+                              <FontAwesomeIcon
+                                icon={faXmarkCircle}
+                                className="w-5 h-5 pl-1 text-red-500"
+                              />
+                              <p className={`text-red-500`}>Disband group</p>
+                            </div>
                           )}
                         </div>
                       </>
                     ) : (
                       <div className="px-4 py-8 flex flex-col gap-3">
-                        <UserInfoItem
-                          icon={WorkIcon}
-                          text={userInfo.work || "Not available"}
-                          altText="Work"
-                        />
-                        <UserInfoItem
-                          icon={CallIcon}
-                          text={userInfo.phone || "Not available"}
-                          altText="Phone"
-                        />
-                        <UserInfoItem
-                          icon={CalendarIcon}
-                          text={userInfo.birthday || "Not available"}
-                          altText="Birthday"
-                        />
-                        <UserInfoItem
-                          icon={LocationIcon}
-                          text={userInfo.location || "Not available"}
-                          altText="Location"
-                        />
-                        <UserInfoItem
-                          icon={PlusIcon}
-                          text="Create group"
-                          altText="Create group"
-                          className="cursor-pointer hover:text-blue-600 transition-colors"
+                        <div className={`flex items-center gap-2`}>
+                          <FontAwesomeIcon
+                            icon={faBriefcase}
+                            className="w-5 h-5 pl-1 "
+                          />
+                          <p className={``}>{userInfo.work}</p>
+                        </div>
+                        <div className={`flex items-center gap-2`}>
+                          <FontAwesomeIcon
+                            icon={faPhone}
+                            className="w-5 h-5 pl-1 "
+                          />
+                          <p className={``}>{userInfo.phone}</p>
+                        </div>
+                        <div className={`flex items-center gap-2`}>
+                          <FontAwesomeIcon
+                            icon={faBirthdayCake}
+                            className="w-5 h-5 pl-1 "
+                          />
+                          <p className={``}>{userInfo.birthday}</p>
+                        </div>
+                        <div className={`flex items-center gap-2`}>
+                          <FontAwesomeIcon
+                            icon={faLocationDot}
+                            className="w-5 h-5 pl-1 "
+                          />
+                          <p className={``}>{userInfo.location}</p>
+                        </div>
+                        <div
+                          className={`cursor-pointer hover:text-blue-600 transition-colors text-base flex items-center gap-2`}
                           onClick={() => setIsModalOpen(true)}
-                        />
-                        <UserInfoItem
-                          icon={BlockIcon}
-                          text="Block"
-                          altText="Block"
-                          textStyle="text-base text-red-600"
-                        />
+                        >
+                          <FontAwesomeIcon
+                            icon={faPlus}
+                            className="w-5 h-5 pl-1"
+                          />
+                          <p className={``}>Create group</p>
+                        </div>
+                        <div
+                          className={`cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-2`}
+                        >
+                          <FontAwesomeIcon
+                            icon={faXmarkCircle}
+                            className="w-5 h-5 pl-1 text-red-500"
+                          />
+                          <p className={`text-red-500`}>Block</p>
+                        </div>
                       </div>
                     )}
                   </>

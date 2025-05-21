@@ -1,7 +1,7 @@
 import PhoneIcon from "@/public/icon/phone.svg";
 import KeyIcon from "@/public/icon/key.svg";
-import GoogleIcon from "@/public/icon/googlelogo.svg";
-import FacebookIcon from "@/public/icon/facebooklogo.svg";
+import googleIcon from "@/public/image/googlelogo.png";
+import facebookIcon from "@/public/image/facebooklogo.png";
 import UserIcon from "@/public/icon/user.svg";
 import LogoIcon from "@/public/icon/logo.svg";
 import ChatIcon from "@/public/icon/chat.svg";
@@ -39,8 +39,8 @@ import imgTest from "@/public/image/banner-form.webp";
 export {
   PhoneIcon,
   KeyIcon,
-  GoogleIcon,
-  FacebookIcon,
+  googleIcon,
+  facebookIcon,
   UserIcon,
   LogoIcon,
   ContactIcon,

@@ -12,7 +12,7 @@ import { FormSuccessErrors, TemporaryUserProps } from "@/constant/type";
 import Image from "next/image";
 import React, { Suspense, use, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { faVenusMars } from "@fortawesome/free-solid-svg-icons";
+import { faCalendar, faLocation, faLocationDot, faPhone, faUser, faVenusMars } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
 
 const Page = () => {
@@ -113,7 +113,7 @@ const Page = () => {
           <h1 className="text-3xl font-bold text-center">{user?.name}</h1>
           <div className="flex flex-col gap-5 w-[1000px] mx-auto">
             <InputField
-              image={BlackUser}
+              icon={faUser}
               type="text"
               value={user?.name || ""}
               textClassname="text-black"
@@ -129,7 +129,7 @@ const Page = () => {
               isEditable={true}
             />
             <InputField
-              image={WhitePhone}
+              icon={faPhone}
               type="text"
               value={user?.phone || ""}
               textClassname="text-black"
@@ -147,7 +147,7 @@ const Page = () => {
             />
 
             <InputField
-              image={CalendarIcon}
+              icon={faCalendar}
               type="date"
               value={formatDateToInputValue(user?.birthday || "")}
               placeholder={t("Enter your birthday")}
@@ -180,7 +180,7 @@ const Page = () => {
             />
 
             <InputField
-              image={LocationIcon}
+              icon={faLocationDot}
               type="text"
               placeholder={t("Enter your address")}
               textClassname="text-black"

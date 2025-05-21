@@ -13,7 +13,14 @@ import {
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { logout } from "@/lib/actions/auth";
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faAddressBook,
+  faComment,
+  faGear,
+  faIdBadge,
+  faMessage,
+} from "@fortawesome/free-solid-svg-icons";
 const Sidebar = () => {
   const { t, i18n } = useTranslation("common");
   const pathname = usePathname();
@@ -38,42 +45,68 @@ const Sidebar = () => {
     localStorage.setItem("lang", currentLang);
     i18n.changeLanguage(currentLang);
   }, [currentLang]);
-
+  const SidebarIconData = [
+    {
+      icon: faMessage,
+      iconName: "Chat",
+      iconWidth: 24,
+      iconHeigh: 24,
+      href: "/",
+    },
+    {
+      icon: faAddressBook,
+      iconName: "Contact",
+      iconWidth: 24,
+      iconHeigh: 24,
+      href: "/contact",
+    },
+    {
+      icon: faIdBadge,
+      iconName: "Profile",
+      iconWidth: 24,
+      iconHeigh: 24,
+      href: "/profile",
+    },
+  ];
   return (
     <div className="flex flex-col items-center justify-between py-5 h-screen bg-white rounded-xl">
-      <Link href="/">
-        <IconButton
-          icon={LogoIcon}
-          iconName="Logo"
-          iconWidth={60}
-          iconHeight={60}
+      <Link
+        href="/"
+        className="w-[120px] h-[120px] flex items-center justify-center rounded-full bg-customPurple/10"
+      >
+        <FontAwesomeIcon
+          icon={faMessage}
+          width={60}
+          height={60}
+          className="size-10 text-customPurple"
         />
       </Link>
       <div className="flex flex-col gap-3">
-        {SidebarIconData.map((item) => (
-          <Link href={item.href} key={item.iconName}>
-            <IconButton
+        {SidebarIconData.map((item, index) => (
+          <Link
+            href={item.href}
+            key={index}
+            className={`w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50 ${
+              pathname === item.href ? "bg-customPurple/50" : ""
+            }`}
+          >
+            <FontAwesomeIcon
               icon={item.icon}
-              iconName={item.iconName}
-              iconHeight={item.iconHeigh}
-              iconWidth={item.iconWidth}
-              href={item.href}
-              className={`w-[46px] h-[46px] hover:bg-customPurple/50 ${
-                pathname === item.href ? "bg-customPurple/50" : ""
-              }`}
+              width={24}
+              height={24}
+              className="size-5"
             />
           </Link>
         ))}
       </div>
       <Dropdown placement="bottom-end">
         <DropdownTrigger>
-          <div>
-            <IconButton
-              icon={SettingIcon}
-              iconName="Setting"
-              iconHeight={24}
-              iconWidth={24}
-              className="w-[46px] h-[46px] hover:bg-customPurple/50"
+          <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
+            <FontAwesomeIcon
+              icon={faGear}
+              width={24}
+              height={24}
+              className="size-5"
             />
           </div>
         </DropdownTrigger>
