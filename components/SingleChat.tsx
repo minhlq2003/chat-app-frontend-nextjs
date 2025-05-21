@@ -22,6 +22,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { Message } from "@/constant/type";
+import { groupMessagesByDate } from "@/constant/dateUtils";
 
 const SingleChat = ({
   selectedChatInfo,
@@ -93,6 +94,10 @@ const SingleChat = ({
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
   const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const searchRef = useRef<HTMLDivElement | null>(null);
+
+  // Group messages by date
+  const groupedMessages = groupMessagesByDate(messages);
+
   const searchChat = async (chatId: string, search: string, userId: string) => {
     if (!search.trim()) return;
     try {
@@ -230,7 +235,7 @@ const SingleChat = ({
                     <button
                       onClick={() => {
                         setHighlightedIndex((prev) =>
-                          prev <= 0 ? result.length - 1 : prev - 1
+                          prev >= result.length - 1 ? 0 : prev + 1
                         );
                       }}
                       className="px-2 py-0.5 bg-gray-300 rounded"
@@ -244,7 +249,8 @@ const SingleChat = ({
                     <button
                       onClick={() => {
                         setHighlightedIndex((prev) =>
-                          prev >= result.length - 1 ? 0 : prev + 1
+                          prev <= 0 ? result.length - 1 : prev - 1
+
                         );
                       }}
                       className="px-2 py-0.5 bg-gray-300 rounded"
@@ -264,161 +270,174 @@ const SingleChat = ({
               className="space-y-4 pt-10 px-2 max-h-[calc(100vh-200px)] overflow-y-auto"
               style={{ height: "calc(100vh - 200px)" }}
             >
-              {messages.length > 0 ? (
-                messages.map((msg) => {
-                  const isOwn = msg.senderId === userId;
-                  const type = msg.deleteReason === "unsent";
-                  const imageUrl = msg.attachmentUrl;
-
-                  const isOpen = messageMenuId === msg.messageId;
-                  return (
-                    <div
-                      key={msg.messageId}
-                      ref={(el) => {
-                        messageRefs.current[msg.messageId] = el;
-                      }}
-                      className={`flex ${
-                        isOwn ? "justify-end" : "justify-start"
-                      } ${
-                        result[highlightedIndex]?.messageId === msg.messageId
-                          ? " bg-customPurple/20"
-                          : ""
-                      }`}
-                    >
-                      {/* Message */}
-                      <div
-                        className={`${
-                          isOwn
-                            ? "bg-customPurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
-                            : "bg-customPurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
-                        } p-2 max-w-[70%] relative group`}
-                        onClick={() => {
-                          setSelectedImage(imageUrl);
-                          console.log(imageUrl);
-                        }}
-                      >
-                        {/* Dots button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent parent click
-                            if (type) {
-                              setMessageMenuId(null);
-                            } else {
-                              setMessageMenuId(isOpen ? null : msg.messageId);
-                            }
-                          }}
-                          className={`absolute bottom-0 w-8 h-8 rounded-full hover:bg-gray-200 hidden group-hover:flex items-center justify-center z-10
-                                      ${
-                                        isOwn
-                                          ? "-left-8 bg-customPurple/20 text-black"
-                                          : "-right-8 bg-customPurple/20 text-black"
-                                      }`}
-                        >
-                          <span className="text-xs">●●●</span>
-                        </button>
-                        {/* Dropdown */}
-                        {isOpen && (
-                          <div
-                            ref={dropdownRef}
-                            className={`absolute bottom-0 z-20 bg-white rounded shadow-lg w-48 p-2 text-black ${
-                              isOwn ? "-left-48" : "-right-48"
-                            }`}
-                          >
-                            {isOwn ? (
-                              <>
-                                <button
-                                  onClick={(e) => {
-                                    console.log("Reply to", msg.messageId);
-                                    e.stopPropagation();
-                                    setReplyMessage(msg);
-                                    setMessageMenuId(null);
-                                  }}
-                                  className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                >
-                                  Reply
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    console.log("Forward", msg.messageId);
-                                    e.stopPropagation();
-                                    setForwardMessage(msg);
-                                    setMessageMenuId(null);
-                                  }}
-                                  className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                >
-                                  Forward
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    console.log("Remove", msg.messageId);
-                                    e.stopPropagation();
-                                    setMessageMenuId({
-                                      id: msg.messageId,
-                                      type: "remove",
-                                    });
-                                  }}
-                                  className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                >
-                                  Remove
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    console.log("Undo", msg.messageId);
-                                    e.stopPropagation();
-                                    setMessageMenuId({
-                                      id: msg.messageId,
-                                      type: "unsent",
-                                    });
-                                  }}
-                                  className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                >
-                                  Undo
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={(e) => {
-                                    console.log("Reply to", msg.messageId);
-                                    e.stopPropagation();
-                                    setReplyMessage(msg);
-                                    setMessageMenuId(null);
-                                  }}
-                                  className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                >
-                                  Reply
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    console.log("Forward", msg.messageId);
-                                    e.stopPropagation();
-                                    setForwardMessage(msg);
-                                    setMessageMenuId(null);
-                                  }}
-                                  className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                >
-                                  Forward
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )}
-                        {renderMessage(msg, isOwn)}
-                        <span
-                          className={`
-                                ${
-                                  msg.senderId === userId
-                                    ? "text-white/80 justify-end"
-                                    : "text-black/50"
-                                }
-                                text-sm flex`}
-                        >
-                          {msg.timestamp}
-                        </span>
+              {groupedMessages.length > 0 ? (
+                groupedMessages.map((group, groupIndex) => (
+                  <div key={`group-${group.date}`} className="mb-4">
+                    {/* Date separator */}
+                    <div className="flex items-center justify-center my-4">
+                      <div className="h-[1px] bg-gray-300 flex-grow"></div>
+                      <div className="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-500 mx-2">
+                        {group.displayDate}
                       </div>
+                      <div className="h-[1px] bg-gray-300 flex-grow"></div>
                     </div>
-                  );
-                })
+                    {/* Messages for this date */}
+                    {group.messages.map((msg) => {
+                      const isOwn = msg.senderId === userId;
+                      const type = msg.deleteReason === "unsent";
+                      const imageUrl = msg.attachmentUrl;
+
+                      const isOpen = messageMenuId === msg.messageId;
+                      return (
+                        <div
+                          key={msg.messageId}
+                          ref={(el) => {
+                            messageRefs.current[msg.messageId] = el;
+                          }}
+                          className={`flex ${
+                            isOwn ? "justify-end" : "justify-start"
+                          } ${
+                            result[highlightedIndex]?.messageId === msg.messageId
+                              ? " bg-customPurple/20"
+                              : ""
+                          } mb-4`}
+                        >
+                          {/* Message */}
+                          <div
+                            className={`${
+                              isOwn
+                                ? "bg-customPurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
+                                : "bg-customPurple/20 text-black rounded-tl-lg rounded-tr-lg rounded-br-lg"
+                            } p-2 max-w-[70%] relative group`}
+                            onClick={() => {
+                              setSelectedImage(imageUrl);
+                              console.log(imageUrl);
+                            }}
+                          >
+                            {/* Dots button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent parent click
+                                if (type) {
+                                  setMessageMenuId(null);
+                                } else {
+                                  setMessageMenuId(isOpen ? null : msg.messageId);
+                                }
+                              }}
+                              className={`absolute bottom-0 w-8 h-8 rounded-full hover:bg-gray-200 hidden group-hover:flex items-center justify-center z-10
+                                          ${
+                                            isOwn
+                                              ? "-left-8 bg-customPurple/20 text-black"
+                                              : "-right-8 bg-customPurple/20 text-black"
+                                          }`}
+                            >
+                              <span className="text-xs">●●●</span>
+                            </button>
+                            {/* Dropdown */}
+                            {isOpen && (
+                              <div
+                                ref={dropdownRef}
+                                className={`absolute bottom-0 z-20 bg-white rounded shadow-lg w-48 p-2 text-black ${
+                                  isOwn ? "-left-48" : "-right-48"
+                                }`}
+                              >
+                                {isOwn ? (
+                                  <>
+                                    <button
+                                      onClick={(e) => {
+                                        console.log("Reply to", msg.messageId);
+                                    e.stopPropagation();
+                                        setReplyMessage(msg);
+                                        setMessageMenuId(null);
+                                      }}
+                                  className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                >
+                                      Reply
+                                </button>
+                                    <button
+                                      onClick={(e) => {
+                                        console.log("Forward", msg.messageId);
+                                    e.stopPropagation();
+                                        setForwardMessage(msg);
+                                    setMessageMenuId(null);
+                                  }}
+                                  className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                >
+                                      Forward
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                        console.log("Remove", msg.messageId);
+                                    e.stopPropagation();
+                                        setMessageMenuId({
+                                          id: msg.messageId,
+                                          type: "remove",
+                                        });
+                                      }}
+                                      className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                    >
+                                      Remove
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        console.log("Undo", msg.messageId);
+                                        e.stopPropagation();
+                                        setMessageMenuId({
+                                          id: msg.messageId,
+                                          type: "unsent",
+                                        });
+                                      }}
+                                      className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                    >
+                                      Undo
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={(e) => {
+                                        console.log("Reply to", msg.messageId);
+                                        e.stopPropagation();
+                                        setReplyMessage(msg);
+                                        setMessageMenuId(null);
+                                      }}
+                                      className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                    >
+                                      Reply
+                                    </button>
+                    <button
+                                      onClick={(e) => {
+                                        console.log("Forward", msg.messageId);
+                                        e.stopPropagation();
+                                        setForwardMessage(msg);
+                                        setMessageMenuId(null);
+              }}
+                                      className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                    >
+                                      Forward
+                                    </button>
+                                  </>
+                    )}
+                  </div>
+                            )}
+                            {renderMessage(msg, isOwn)}
+                            <span
+                              className={`
+                                    ${
+                                      msg.senderId === userId
+                                        ? "text-white/80 justify-end"
+                                        : "text-black/50"
+                                    }
+                                    text-sm flex`}
+                            >
+                              {msg.timestamp}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))
               ) : (
                 <p className="text-center text-gray-500">
                   No messages yet. Start a conversation!
@@ -446,8 +465,8 @@ const SingleChat = ({
                     >
                       ✕
                     </button>
-                  </div>
-                </div>
+        </div>
+    </div>
               )}
             </div>
           </div>
@@ -497,7 +516,7 @@ const SingleChat = ({
                             alt="Attachment preview"
                             className="rounded-md object-cover h-[100px]"
                           />
-                        );
+  );
                       } else {
                         // File preview
                         const fileName = fileUrl.split("/").pop() || "File";

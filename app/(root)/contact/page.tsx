@@ -13,6 +13,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import UnfriendConfirmationModal from "@/components/UnfriendConfirmationModal";
 
 const groupFriendsByLetter = (friends: Friend[]) => {
   const sorted = [...friends].sort((a, b) => a.name.localeCompare(b.name));
@@ -30,6 +32,8 @@ export default function ContactPage() {
   const { t } = useTranslation("common");
   const [search, setSearch] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
+  const [showUnfriendModal, setShowUnfriendModal] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
 
   const filteredFriends = friendsList.filter(
     (friend) =>
@@ -70,6 +74,11 @@ export default function ContactPage() {
     }
   };
 
+  const handleUnfriendClick = (friend: Friend) => {
+    setSelectedFriend(friend);
+    setShowUnfriendModal(true);
+  };
+
   const fetchFriendsList = async (userId: string) => {
     try {
       const apiBaseUrl =
@@ -88,6 +97,7 @@ export default function ContactPage() {
       console.error("Error fetching chat list:", error);
     }
   };
+
   useEffect(() => {
     const userStr = localStorage.getItem("user");
 
@@ -102,6 +112,7 @@ export default function ContactPage() {
 
     fetchFriendsList(userId || "");
   }, [router]);
+
   return (
     <>
       <h1 className="font-bold text-[32px]">{t("Friends List")}</h1>
@@ -165,7 +176,11 @@ export default function ContactPage() {
                     <Button size="sm" variant="ghost">
                       <FontAwesomeIcon icon={faPhone} />
                     </Button>
-                    <Button size="sm" variant="ghost">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleUnfriendClick(friend)}
+                    >
                       <FontAwesomeIcon icon={faTrash} />
                     </Button>
                   </div>
@@ -175,6 +190,17 @@ export default function ContactPage() {
           ))
         )}
       </div>
+
+      {/* Unfriend Confirmation Modal */}
+      {showUnfriendModal && selectedFriend && (
+        <UnfriendConfirmationModal
+          onClose={() => setShowUnfriendModal(false)}
+          friendName={selectedFriend.name}
+          userId={userId}
+          contactId={selectedFriend.contactId}
+          onSuccess={() => fetchFriendsList(userId || "")}
+        />
+      )}
     </>
   );
 }

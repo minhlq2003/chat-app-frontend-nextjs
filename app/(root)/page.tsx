@@ -44,6 +44,7 @@ import { toast } from "sonner";
 import LeaveGroupConfirmationModel from "@/components/LeaveGroupConfirmationModel";
 import ConfirmationModel from "@/components/ConfirmationModel";
 import ChangeGroupNameModal from "@/components/ChangeGroupNameModal";
+import ChangeGroupImageModal from "@/components/ChangeGroupImageModal";
 function Home() {
   const { t } = useTranslation("common");
   const [type, setType] = useState("all");
@@ -99,6 +100,9 @@ function Home() {
   };
   const [replyMessage, setReplyMessage] = useState<Message | null>(null);
   const [forwardMessage, setForwardMessage] = useState<Message | null>(null);
+  const [isGroupImageModalOpen, setIsGroupImageModalOpen] = useState(false);
+  const [newGroupImageUrl, setNewGroupImageUrl] = useState("");
+  const groupImageFileInputRef = useRef<HTMLInputElement | null>(null);
   const handleChangeGroupName = async (newName: string) => {
     try {
       if (!selectedChatInfo || !userId) {
@@ -151,6 +155,75 @@ function Home() {
     }
   };
 
+  const handleGroupImageClick = () => {
+    if (selectedChatInfo?.Type === "group") {
+      groupImageFileInputRef.current?.click();
+    }
+  };
+
+  const handleGroupImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setNewGroupImageUrl(data.imageUrl);
+          setIsGroupImageModalOpen(true);
+        } else {
+          console.error("Image upload failed:", await response.json());
+          toast.error("Failed to upload image. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error during image upload:", error);
+        toast.error("An error occurred while uploading the image.");
+      }
+    }
+  };
+
+  const handleUpdateGroupImage = async (imageUrl: string) => {
+    try {
+      if (!selectedChatInfo || !userId) {
+        toast.error("Missing chat information or user ID");
+        return;
+      }
+
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
+      const response = await fetch(`${apiBaseUrl}/group/${selectedChatInfo.ChatID}/updateimage`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: userId,
+          image: imageUrl,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Group image updated successfully");
+        // Refresh chat info to get the updated image
+        fetchChatInfo(selectedChatInfo.ChatID);
+      } else {
+        toast.error(data.message || "Failed to update group image");
+      }
+    } catch (error) {
+      console.error("Error updating group image:", error);
+      toast.error("An error occurred while updating the group image");
+    } finally {
+      setIsGroupImageModalOpen(false);
+    }
+  };
+
   const loadMoreMessages = () => {
     if (!chatRef.current) return;
 
@@ -191,9 +264,7 @@ function Home() {
     return () => chatRef.current?.removeEventListener("scroll", onScroll);
   }, [page, allMessages]);
 
-  const handleFileInputChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
       toast.error("No file selected.");
@@ -269,16 +340,17 @@ function Home() {
       console.log("Audio reference is not available");
     }
   };
-  // Add this function to your component
-  // Fix the handleChatScroll function to properly reset unread counts
-  const handleChatScroll = () => {
+
+  const handleChatScroll = (event: Event) => {
+    // Only process if this is a user-initiated scroll event
+    if (!event.isTrusted) return;
+
     const container = messageContainerRef.current;
     if (!container || !selectedChatInfo) return;
 
     // Check if scrolled to bottom (with a small threshold)
     const isAtBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight <
-      20;
+      container.scrollHeight - container.scrollTop - container.clientHeight < 20;
 
     if (isAtBottom) {
       // Reset unread count for this chat
@@ -302,7 +374,6 @@ function Home() {
     setUser(temUser);
   }, []);
 
-  // Add this useEffect to set up the scroll listener
   useEffect(() => {
     const container = messageContainerRef.current;
     if (container) {
@@ -314,17 +385,17 @@ function Home() {
     }
   }, [selectedChatInfo]); // Depend on selectedChatInfo to re-add listener when chat changes
 
-  // Add this useEffect to set up the scroll listener
-  useEffect(() => {
-    const container = messageContainerRef.current;
-    if (container) {
-      container.addEventListener("scroll", handleChatScroll);
+  const resetUnreadCount = (chatId: string) => {
+    setChatList((prev) =>
+      prev.map((chat) => {
+        if (chat.chatId === chatId && chat.unread > 0) {
+          return { ...chat, unread: 0 };
+        }
+        return chat;
+      })
+    );
+  };
 
-      return () => {
-        container.removeEventListener("scroll", handleChatScroll);
-      };
-    }
-  }, [selectedChatInfo]); // Depend on selectedChatInfo to re-add listener when chat changes
   useEffect(() => {
     const container = messageContainerRef.current;
 
@@ -533,41 +604,50 @@ function Home() {
       const data = await response.json();
 
       if (data.success) {
-        // Transform API data to match our component's expected format
-        const formattedChatList = data.data
+        // Use the functional form of setChatList to access the most current state
+        setChatList(prevChatList => {
+          // Transform API data to match our component's expected format
+          const formattedChatList = data.data
           .filter(function (chat: ChatItemProps) {
             return chat.Status !== "disbanded";
           })
-          .map((chat: any) => ({
-            id: parseInt(chat.otherUserId) || Math.floor(Math.random() * 1000),
-            image: chat.imageUrl || noUserImage, // Provide a default image path
-            name: chat.chatName || "Chat",
-            message: chat.lastMessage
-              ? chat.lastMessage.content === ""
-                ? chat.lastMessage.type
-                  ? `Sent a ${chat.lastMessage.type}`
-                  : "Click to view messages"
-                : chat.lastMessage?.content
-              : chat.lastMessage?.content ||
+          .map((chat: any) => {
+            // Find existing chat to preserve unread count
+            // Note: Use chatId consistently (not ChatID)
+            const existingChat = prevChatList.find(c => c.chatId === chat.ChatID);
+            return {
+              id: parseInt(chat.otherUserId) || Math.floor(Math.random() * 1000),
+              image: chat.imageUrl || noUserImage,
+              name: chat.chatName || "Chat",
+              message: chat.lastMessage
+                ? chat.lastMessage.content === ""
+                  ? chat.lastMessage.type
+                    ? `Sent a ${chat.lastMessage.type}`
+                    : "Click to view messages"
+                  : chat.lastMessage?.content
+                : chat.lastMessage?.content ||
                 "No messages yet" ||
-                "Click to view messages", // Placeholder message
-            time:
-              chat.lastMessage && chat.lastMessage.timestamp
-                ? new Date(chat.lastMessage.timestamp).toLocaleTimeString([], {
+                "Click to view messages",
+              time:
+                chat.lastMessage && chat.lastMessage.timestamp
+                  ? new Date(chat.lastMessage.timestamp).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                   })
-                : new Date(chat.CreatedDate).toLocaleTimeString([], {
+                  : new Date(chat.CreatedDate).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                   }),
-            unread: 0,
-            pin: false,
-            type: chat.Type || "private",
-            chatId: chat.ChatID,
-          }));
+              // Preserve the unread count from existing chat if available
+              unread: existingChat ? existingChat.unread : 0,
+              pin: false,
+              type: chat.Type || "private",
+              chatId: chat.ChatID,
+            };
+          });
 
-        setChatList(formattedChatList);
+          return formattedChatList;
+        });
       } else {
         console.error("Failed to fetch chat list");
       }
@@ -666,6 +746,7 @@ function Home() {
               messageId: msg.messageId,
               senderId: msg.userId, // Note: backend uses userId instead of senderId
               content: msg.content,
+              originalTimeStamp: msg.timestamp,
               timestamp: new Date(msg.timestamp).toLocaleTimeString(),
               type:
                 (msg.deleteReason === "unsent" ? "text" : msg.type) || "text",
@@ -707,6 +788,7 @@ function Home() {
     console.log("Selected user:", id, "chatId:", chatId);
     if (chatId) {
       fetchChatInfo(chatId);
+      resetUnreadCount(chatId);
     }
   };
 
@@ -792,6 +874,7 @@ function Home() {
               messageId: Date.now(),
               senderId: userId,
               content: pendingMessage,
+              originalTimeStamp: new Date().toISOString(),
               timestamp: new Date().toLocaleTimeString(),
               type: "text",
               replyTo: replyMessage || undefined,
@@ -1073,6 +1156,7 @@ function Home() {
                   messageId: data.message.messageId || Date.now(),
                   senderId: data.message.userId || data.message.senderId,
                   content: data.message.content,
+                  originalTimeStamp: data.message.timestamp,
                   timestamp: new Date(
                     data.message.timestamp || Date.now()
                   ).toLocaleTimeString(),
@@ -1100,6 +1184,8 @@ function Home() {
 
                   return newMessages;
                 });
+
+                // Update chat list without changing unread count for current chat
                 setChatList((prev) =>
                   prev.map((chat) => {
                     if (chat.chatId === data.chatId) {
@@ -1112,6 +1198,7 @@ function Home() {
                           hour: "2-digit",
                           minute: "2-digit",
                         }),
+                        // Don't change unread count for current chat
                       };
                     }
                     return chat;
@@ -1644,13 +1731,38 @@ function Home() {
             <div className="px-2">
               <Card className="h-[413px] w-full bg-white rounded-xl p-2 mb-2">
                 <div className="flex flex-col items-center gap-3 justify-center mt-4">
-                  <Image
-                    src={selectedChatInfo.imageUrl || noUserImage}
-                    width={64}
-                    height={64}
-                    alt="Participant"
-                    className="w-[64px] h-[64px] rounded-full"
-                  />
+                  {selectedChatInfo?.Type === "group" ? (
+                    <div
+                      onClick={handleGroupImageClick}
+                      className="cursor-pointer relative w-[64px] h-[64px] hover:opacity-80 transition-opacity"
+                    >
+                      <Image
+                        src={selectedChatInfo.imageUrl || noUserImage}
+                        width={64}
+                        height={64}
+                        alt="Group"
+                        className="w-[64px] h-[64px] rounded-full"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full opacity-0 hover:opacity-100 transition-opacity">
+                        <span className="text-white text-xs">Change</span>
+                      </div>
+                      <input
+                        ref={groupImageFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleGroupImageChange}
+                      />
+                    </div>
+                  ) : (
+                    <Image
+                      src={selectedChatInfo.imageUrl || noUserImage}
+                      width={64}
+                      height={64}
+                      alt="Participant"
+                      className="w-[64px] h-[64px] rounded-full"
+                    />
+                  )}
                   <h1 className="text-2xl">
                     {selectedChatInfo.chatName || "Chat"}
                   </h1>
@@ -1795,6 +1907,12 @@ function Home() {
         open={isOpenModalChangeGroupName}
         onClose={() => setIsOpenModalChangeGroupName(false)}
         onSubmit={handleChangeGroupName}
+      />
+      <ChangeGroupImageModal
+        open={isGroupImageModalOpen}
+        onClose={() => setIsGroupImageModalOpen(false)}
+        onSubmit={handleUpdateGroupImage}
+        imageUrl={newGroupImageUrl}
       />
     </div>
   );
