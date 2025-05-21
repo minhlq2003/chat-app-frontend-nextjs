@@ -367,7 +367,7 @@ const GroupChat = ({
                       <div
                         className={`flex items-end gap-2 max-w-[70%] ${
                           isOwn ? "flex-row-reverse" : "justify-start"
-                        }`}
+                        } mb-4`}
                       >
                         <img
                           src={
