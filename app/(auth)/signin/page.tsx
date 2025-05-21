@@ -1,6 +1,6 @@
 "use client";
 import React, {useEffect, useState} from "react";
-import { GoogleIcon, FacebookIcon, KeyIcon, PhoneIcon } from "@/constant/image";
+import { googleIcon, facebookIcon } from "@/constant/image";
 import Image from "next/image";
 import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
@@ -10,6 +10,8 @@ import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import {FormLoginData} from "@/constant/type";
 import { toast } from "sonner";
+import { faKey, faPhone } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const Page = () => {
   const { t } = useTranslation("common");
   const router = useRouter();
@@ -68,15 +70,17 @@ const Page = () => {
           <div className="flex flex-col px-28 pt-20 gap-10 ">
             <InputField
               type="text"
-              image={PhoneIcon}
+              icon={faPhone}
               placeholder={t("Enter your phone number")}
               onChange={(e) => handleChange("phone", e.target.value)}
+              iconClassName="text-white"
             />
             <InputField
               type="password"
-              image={KeyIcon}
+              icon={faKey}
               placeholder={t("Enter your password")}
               onChange={(e) => handleChange("password", e.target.value)}
+              iconClassName="text-white"
               password
             />
           </div>
@@ -106,11 +110,11 @@ const Page = () => {
           </div>
           <Button className="text-3xl w-[550px] h-[70px] ml-52 mt-10 bg-[#1877F2]">
             <Image
-              src={FacebookIcon}
+              src={facebookIcon}
               alt="Facebook Icon"
-              width={50}
-              height={50}
-              className="mr-5"
+              width={200}
+              height={200}
+              className="mr-5 size-[50px]"
             />
             <p className="mr-32 text-white">{t("Continue with Facebook")}</p>
           </Button>
@@ -119,11 +123,11 @@ const Page = () => {
             onPress={() => loginWithGoogle()}
           >
             <Image
-              src={GoogleIcon}
+              src={googleIcon}
               alt="Google Icon"
-              width={50}
-              height={50}
-              className="mr-5"
+              width={200}
+              height={200}
+              className="mr-5 size-[50px]"
             />
             <p className="mr-40">{t("Continue with Google")}</p>
           </Button>

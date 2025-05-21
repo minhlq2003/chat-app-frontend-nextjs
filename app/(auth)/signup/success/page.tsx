@@ -18,6 +18,7 @@ import { getSessionUser } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { faCalendar, faLocationDot, faPhone, faUser } from "@fortawesome/free-solid-svg-icons";
 
 function formatDateToInputValue(date: string | Date | undefined): string {
   if (!date) return "";
@@ -248,7 +249,7 @@ const Page = () => {
           </h1>
           <div className="flex flex-col gap-5 w-[1000px] mx-auto">
             <InputField
-              image={BlackUser}
+              icon={faUser}
               type="text"
               value={temporaryUser?.name || ""}
               textClassname="text-black"
@@ -262,7 +263,7 @@ const Page = () => {
               }
             />
             <InputField
-              image={WhitePhone}
+              icon={faPhone}
               type="text"
               value={temporaryUser?.phone || ""}
               textClassname="text-black"
@@ -295,7 +296,7 @@ const Page = () => {
               />
             )}*/}
             <InputField
-              image={CalendarIcon}
+              icon={faCalendar}
               type="date"
               placeholder={t("Enter your birthday")}
               value={formatDateToInputValue(temporaryUser?.birthday || "")}
@@ -310,7 +311,7 @@ const Page = () => {
               }
             />
             <InputField
-              image={LocationIcon}
+              icon={faLocationDot}
               type="text"
               placeholder={t("Enter your address")}
               value={temporaryUser?.location || ""}

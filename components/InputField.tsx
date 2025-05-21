@@ -6,6 +6,7 @@ import { useState } from "react";
 import { EyeIcon, EyeSlash, pencil } from "@/constant/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons/faCheck";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 
 export default function InputField({
   isEditable,
@@ -20,6 +21,7 @@ export default function InputField({
   onFocus,
   storageKey,
   onChange,
+  iconClassName
 }: InputFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isEditing, setIsEditing] = useState(true);
@@ -53,7 +55,7 @@ export default function InputField({
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-5 relative">
         {icon ? (
-          <FontAwesomeIcon className="size-9" icon={icon} />
+          <FontAwesomeIcon className={twMerge("size-9", iconClassName)} icon={icon} />
         ) : (
           <Image src={image || ""} className="size-9" alt="icon" />
         )}
@@ -79,21 +81,9 @@ export default function InputField({
             onClick={() => setShowPassword(!showPassword)}
           >
             {showPassword ? (
-              <Image
-                src={EyeSlash}
-                alt="Eye Slash"
-                width={100}
-                height={100}
-                className="w-6 h-6 "
-              />
+              <FontAwesomeIcon icon={faEye} className="size-5 text-white"/>
             ) : (
-              <Image
-                src={EyeIcon}
-                alt="Eye"
-                width={100}
-                height={100}
-                className="w-6 h-6 "
-              />
+              <FontAwesomeIcon icon={faEyeSlash} className="size-5 text-white"/>
             )}
           </button>
         )}

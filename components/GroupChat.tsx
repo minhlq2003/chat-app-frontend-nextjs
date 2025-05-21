@@ -15,6 +15,9 @@ import {
   faArrowRight,
   faFile,
   faFileWord,
+  faLocationPin,
+  faPhone,
+  faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Input } from "@nextui-org/react";
@@ -239,31 +242,31 @@ const GroupChat = ({
                 </h1>
               </div>
               <div className="flex items-center justify-center gap-5">
-                <IconButton
-                  icon={CallIcon}
-                  iconWidth={25}
-                  iconHeight={25}
-                  iconName="Call"
-                  className={`w-[46px] h-[46px] hover:bg-customPurple/50 `}
-                />
-                <IconButton
-                  icon={PinIcon}
-                  iconWidth={25}
-                  iconHeight={25}
-                  iconName="Pin"
-                  className={`w-[46px] h-[46px] hover:bg-customPurple/50 ${
-                    chatList.find((chat: any) => chat.id === selectedUser)?.pin
-                      ? "bg-customPurple/50"
-                      : ""
-                  }`}
-                />
-                <div onClick={() => setShowSearch(!showSearch)}>
-                  <IconButton
-                    icon={SearchIcon}
-                    iconWidth={25}
-                    iconHeight={25}
-                    iconName="Search"
-                    className={`w-[46px] h-[46px] hover:bg-customPurple/50`}
+                <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
+                  <FontAwesomeIcon
+                    icon={faPhone}
+                    width={24}
+                    height={24}
+                    className="size-5"
+                  />
+                </div>
+                <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
+                  <FontAwesomeIcon
+                    icon={faLocationPin}
+                    width={24}
+                    height={24}
+                    className="size-5"
+                  />
+                </div>
+                <div
+                  onClick={() => setShowSearch(!showSearch)}
+                  className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50"
+                >
+                  <FontAwesomeIcon
+                    icon={faSearch}
+                    width={24}
+                    height={24}
+                    className="size-5"
                   />
                 </div>
               </div>
@@ -342,13 +345,13 @@ const GroupChat = ({
                       const imageUrl = msg.attachmentUrl;
                       const isOpen = messageMenuId === msg.messageId;
 
-                  // Check if the message has a previewable attachment
-                  const fileExtension = imageUrl
-                    ? getFileExtension(imageUrl)
-                    : "";
-                  const isPreviewable =
-                    IMAGE_EXTENSIONS.includes(fileExtension) ||
-                    VIDEO_EXTENSIONS.includes(fileExtension);
+                      // Check if the message has a previewable attachment
+                      const fileExtension = imageUrl
+                        ? getFileExtension(imageUrl)
+                        : "";
+                      const isPreviewable =
+                        IMAGE_EXTENSIONS.includes(fileExtension) ||
+                        VIDEO_EXTENSIONS.includes(fileExtension);
 
                   return (
                     <div
@@ -388,137 +391,139 @@ const GroupChat = ({
                               isPreviewable ? "cursor-pointer" : ""
                             }
                           `}
-                          onClick={() => {
-                            if (isPreviewable) {
-                              handleMessageClick(imageUrl);
-                            }
-                          }}
-                        >
-                          {/* Sender name (for group chat) */}
-                          <div
-                            className={`text-xs font-semibold mb-1 ${
-                              isOwn ? "text-white" : "text-black"
-                            }`}
-                          >
-                            {msg.senderName}
-                          </div>
+                              onClick={() => {
+                                if (isPreviewable) {
+                                  handleMessageClick(imageUrl);
+                                }
+                              }}
+                            >
+                              {/* Sender name (for group chat) */}
+                              <div
+                                className={`text-xs font-semibold mb-1 ${
+                                  isOwn ? "text-white" : "text-black"
+                                }`}
+                              >
+                                {msg.senderName}
+                              </div>
 
-                          {/* Dots button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (type) {
-                                setMessageMenuId(null);
-                              } else {
-                                setMessageMenuId(isOpen ? null : msg.messageId);
-                              }
-                            }}
-                            className={`absolute bottom-0 w-8 h-8 rounded-full hover:bg-gray-200 hidden group-hover:flex items-center justify-center z-10
+                              {/* Dots button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (type) {
+                                    setMessageMenuId(null);
+                                  } else {
+                                    setMessageMenuId(
+                                      isOpen ? null : msg.messageId
+                                    );
+                                  }
+                                }}
+                                className={`absolute bottom-0 w-8 h-8 rounded-full hover:bg-gray-200 hidden group-hover:flex items-center justify-center z-10
                             ${
                               isOwn
                                 ? "-left-8 bg-customPurple/20 text-black"
                                 : "-right-8 bg-customPurple/20 text-black"
                             }`}
-                          >
-                            <span className="text-xs">●●●</span>
-                          </button>
+                              >
+                                <span className="text-xs">●●●</span>
+                              </button>
 
-                          {/* Dropdown */}
-                          {isOpen && (
-                            <div
-                              ref={dropdownRef}
-                              className={`absolute bottom-0 z-20 bg-white rounded shadow-lg w-48 p-2 text-black ${
-                                isOwn ? "-left-48" : "-right-48"
-                              }`}
-                            >
-                              {isOwn ? (
-                                <>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setMessageMenuId(null);
-                                      setReplyMessage(msg);
-                                      inputRef.current?.focus();
-                                    }}
-                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                  >
+                              {/* Dropdown */}
+                              {isOpen && (
+                                <div
+                                  ref={dropdownRef}
+                                  className={`absolute bottom-0 z-20 bg-white rounded shadow-lg w-48 p-2 text-black ${
+                                    isOwn ? "-left-48" : "-right-48"
+                                  }`}
+                                >
+                                  {isOwn ? (
+                                    <>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMessageMenuId(null);
+                                          setReplyMessage(msg);
+                                          inputRef.current?.focus();
+                                        }}
+                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                      >
                                         Reply
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setMessageMenuId(null);
-                                      setForwardMessage(msg);
-                                    }}
-                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                  >
-                                    Forward
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setMessageMenuId({
-                                        id: msg.messageId,
-                                        type: "remove",
-                                      });
-                                    }}
-                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                  >
-                                    Remove
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setMessageMenuId({
-                                        id: msg.messageId,
-                                        type: "unsent",
-                                      });
-                                    }}
-                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                  >
-                                    Undo
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setMessageMenuId(null);
-                                      setReplyMessage(msg);
-                                      inputRef.current?.focus();
-                                    }}
-                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                  >
-                                    Reply
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMessageMenuId(null);
+                                          setForwardMessage(msg);
+                                        }}
+                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                      >
+                                        Forward
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMessageMenuId({
+                                            id: msg.messageId,
+                                            type: "remove",
+                                          });
+                                        }}
+                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                      >
+                                        Remove
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMessageMenuId({
+                                            id: msg.messageId,
+                                            type: "unsent",
+                                          });
+                                        }}
+                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                      >
+                                        Undo
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMessageMenuId(null);
+                                          setReplyMessage(msg);
+                                          inputRef.current?.focus();
+                                        }}
+                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                      >
+                                        Reply
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
 
-                                      setMessageMenuId(null);
-                                      setForwardMessage(msg);
-                                    }}
-                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                  >
-                                    Forward
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setMessageMenuId({
-                                        id: msg.messageId,
-                                        type: "delete_for_me",
-                                      });
-                                    }}
-                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                  >
-                                    Remove
-                                  </button>
-                                </>
+                                          setMessageMenuId(null);
+                                          setForwardMessage(msg);
+                                        }}
+                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                      >
+                                        Forward
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMessageMenuId({
+                                            id: msg.messageId,
+                                            type: "delete_for_me",
+                                          });
+                                        }}
+                                        className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                      >
+                                        Remove
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
                               )}
-                            </div>
-                          )}
 
                               {/* Message text/image */}
                               {renderMessage(msg, isOwn)}
@@ -536,7 +541,7 @@ const GroupChat = ({
                             </div>
                           </div>
                         </div>
-  );
+                      );
                     })}
                   </div>
                 ))

@@ -15,6 +15,7 @@ export interface InputFieldProps {
   textClassname?: string;
   onFocus?: () => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  iconClassName?:string
 }
 
 export interface FormLoginData {
