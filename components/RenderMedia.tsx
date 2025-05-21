@@ -11,6 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Accordion, AccordionItem } from "@nextui-org/react";
 import { MembersGroupChat } from "@/constant/type";
+import { Image } from "antd";
 
 const roleLabel = {
   owner: "Trưởng nhóm",
@@ -110,7 +111,9 @@ export default function RenderMedia({
               >
                 <div className="flex items-center gap-3">
                   <img
-                    src={member.imageUrl}
+                    width={40}
+                    height={40}
+                    src={member.imageUrl || ""}
                     alt={member.name}
                     className="w-10 h-10 rounded-full object-cover border border-white"
                   />
@@ -213,7 +216,7 @@ export default function RenderMedia({
       <AccordionItem key="2" aria-label="Image" title="Image">
         <div className="grid grid-cols-3 gap-2">
           {imageList.map((img: any, index: number) => (
-            <img
+            <Image
               key={index}
               src={img.attachmentUrl}
               alt={`image-${index}`}

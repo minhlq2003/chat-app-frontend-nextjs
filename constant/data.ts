@@ -130,37 +130,3 @@ export const friendRequests = {
     { id: 13, name: "Pp", commonGroups: 2 },
   ],
 };
-
-export const mockGroupChats: GroupChat[] = [
-  {
-    chatId: "2222-3333",
-    chatName: "Crypto Bros",
-    imageUrl:
-      "https://lh3.googleusercontent.com/a/ACg8ocIt6ove5b6bNgzql-drDMnDdtL2uDl1-GrpcAkr3aikq1I_7Q=s96-c",
-    members: [
-      {
-        userId: 2222,
-        name: "Hiếu Phạm",
-        imageUrl:
-          "https://lh3.googleusercontent.com/a/ACg8ocIt6ove5b6bNgzql-drDMnDdtL2uDl1-GrpcAkr3aikq1I_7Q=s96-c",
-        phone: "0965745264",
-        email: "alohabolala@gmail.com",
-        location: "A",
-      },
-      {
-        userId: 3333,
-        name: "Quốc Minh Lý",
-        imageUrl:
-          "https://lh3.googleusercontent.com/a/ACg8ocISreFW-ojcZJ1-vNQ8M3hHwmVG-sN4VUIzoj6w3R3LC8usw=s96-c",
-        phone: "0902373085",
-        email: "quocminhly87@gmail.com",
-        location: "34 NKD",
-      },
-    ],
-    latestMessage: {
-      content: "https://frontend-api-v3.pump.fun/coins/...",
-      timestamp: "2025-04-15T18:18:16.000Z",
-      senderName: "Hiếu Phạm",
-    },
-  },
-];

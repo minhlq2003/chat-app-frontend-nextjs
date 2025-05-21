@@ -503,6 +503,18 @@ const GroupChat = ({
                                   >
                                     Forward
                                   </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setMessageMenuId({
+                                        id: msg.messageId,
+                                        type: "delete_for_me",
+                                      });
+                                    }}
+                                    className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                  >
+                                    Remove
+                                  </button>
                                 </>
                               )}
                             </div>
@@ -690,6 +702,7 @@ const GroupChat = ({
               </div>
             )}
             <Input
+              ref={inputRef}
               placeholder={
                 attachmentPreview ? "Add a caption..." : "Type messages"
               }
