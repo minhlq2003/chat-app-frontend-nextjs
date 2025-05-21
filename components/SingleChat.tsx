@@ -188,7 +188,7 @@ const SingleChat = ({
                   width={64}
                   height={64}
                   alt="Participant"
-                  className="rounded-full max-h-16 max-w-16"
+                  className="w-[64px] h-[64px] max-h-16 max-w-16 rounded-full"
                 />
                 <h1 className="text-2xl text-black">
                   {selectedChatInfo.chatName || "Chat"}
@@ -263,7 +263,7 @@ const SingleChat = ({
 
                         );
                       }}
-                      className="px-2 py-0.5 bg-gray-300 rounded"
+                      className="px-2 py-1 bg-gray-300 rounded"
                     >
                       <FontAwesomeIcon
                         icon={faArrowRight}
