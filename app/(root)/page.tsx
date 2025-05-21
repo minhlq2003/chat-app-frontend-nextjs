@@ -987,15 +987,20 @@ function Home() {
         type: string;
       };
       console.log(messageMenuId);
-      if (type === "remove" || type === "unsent") {
-        const deleteType = type === "remove" ? "remove" : "unsent";
+      if (type === "remove" || type === "unsent" || type === "delete_for_me") {
+        const deleteType =
+          type === "remove"
+            ? "remove"
+            : type === "unsent"
+            ? "unsent"
+            : "delete_for_me";
         const apiBaseUrl =
           process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
 
         // @ts-ignore
         if (messageMenuId.inBrowser) {
           console.log("in browser true");
-          if (deleteType === "remove") {
+          if (deleteType === "remove" || deleteType === "delete_for_me") {
             // Remove the message from the array completely
             setMessages((prevMessages) =>
               prevMessages.filter((msg) => msg.messageId !== id)
@@ -1019,7 +1024,7 @@ function Home() {
           setMessageMenuId(null);
         } else {
           fetch(
-            `${apiBaseUrl}/chat/deleteMsg?messageId=${id}&deleteType=${deleteType}`,
+            `${apiBaseUrl}/chat/deleteMsg?messageId=${id}&deleteType=${deleteType}&userId=${userId}`,
             {
               method: "POST",
               headers: {
@@ -1036,7 +1041,7 @@ function Home() {
                   } successfully:`,
                   data.message
                 );
-                if (deleteType === "remove") {
+                if (deleteType === "remove" || deleteType === "delete_for_me") {
                   // Remove the message from the array completely
                   setMessages((prevMessages) =>
                     prevMessages.filter((msg) => msg.messageId !== id)

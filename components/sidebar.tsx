@@ -21,7 +21,7 @@ const Sidebar = () => {
   const router = useRouter();
   const currentLang =
     searchParams.get("lang") || localStorage.getItem("lang") || "en";
-/*  console.log("i18n language:", i18n.language);
+  /*  console.log("i18n language:", i18n.language);
   console.log("i18n namespace:", i18n.options.ns);
   console.log("i18n resources:", i18n.options.resources);*/
 
@@ -90,14 +90,19 @@ const Sidebar = () => {
             key="change_account"
             className="text-red-600"
             color="danger"
-            onPress={()=>router.push('/password/changepassword')}
+            onPress={() => router.push("/password/changepassword")}
           >
             {t("Change Password")}
           </DropdownItem>
-            <DropdownItem key="logout" className="text-red-600" color="danger" onPress={() => {
-                localStorage.removeItem("user");
-                logout()
-            }}>
+          <DropdownItem
+            key="logout"
+            className="text-red-600"
+            color="danger"
+            onPress={() => {
+              localStorage.removeItem("user");
+              logout();
+            }}
+          >
             {t("Logout")}
           </DropdownItem>
         </DropdownMenu>
