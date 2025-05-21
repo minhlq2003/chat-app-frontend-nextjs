@@ -20,6 +20,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { Message } from "@/constant/type";
+import { groupMessagesByDate } from "@/constant/dateUtils";
 
 // Define file type constants
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp"];
@@ -94,6 +95,9 @@ const GroupChat = ({
   forwardMessage: Message | null;
   messageRefs: React.RefObject<Record<string, HTMLDivElement | null>>;
 }) => {
+  // Group messages by date
+  const groupedMessages = groupMessagesByDate(messages);
+
   // State to track the type of the selected media
   const [selectedMediaType, setSelectedMediaType] = useState<
     "image" | "video" | null
@@ -106,7 +110,7 @@ const GroupChat = ({
   // Set volume for videos when they load
   const setVideoVolume = (videoElement: HTMLVideoElement | null) => {
     if (videoElement) {
-      videoElement.volume = 0.11; // Set volume to 50%
+      videoElement.volume = 0.11; // Set volume to 11%
     }
   };
 
@@ -285,7 +289,7 @@ const GroupChat = ({
                     <button
                       onClick={() => {
                         setHighlightedIndex((prev) =>
-                          prev <= 0 ? result.length - 1 : prev - 1
+                          prev >= result.length - 1 ? 0 : prev + 1
                         );
                       }}
                       className="px-2 py-0.5 bg-gray-300 rounded"
@@ -299,7 +303,7 @@ const GroupChat = ({
                     <button
                       onClick={() => {
                         setHighlightedIndex((prev) =>
-                          prev >= result.length - 1 ? 0 : prev + 1
+                          prev <= 0 ? result.length - 1 : prev - 1
                         );
                       }}
                       className="px-2 py-1 bg-gray-300 rounded"
@@ -319,12 +323,24 @@ const GroupChat = ({
               className="space-y-4 pt-10 px-2 max-h-[calc(100vh-200px)] overflow-y-auto"
               style={{ height: "calc(100vh - 200px)" }}
             >
-              {messages.length > 0 ? (
-                messages.map((msg) => {
-                  const isOwn = msg.senderId === userId;
-                  const type = msg.deleteReason === "unsent";
-                  const imageUrl = msg.attachmentUrl;
-                  const isOpen = messageMenuId === msg.messageId;
+              {groupedMessages.length > 0 ? (
+                groupedMessages.map((group, groupIndex) => (
+                  <div key={`group-${group.date}`} className="mb-4">
+                    {/* Date separator */}
+                    <div className="flex items-center justify-center my-4">
+                      <div className="h-[1px] bg-gray-300 flex-grow"></div>
+                      <div className="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-500 mx-2">
+                        {group.displayDate}
+                      </div>
+                      <div className="h-[1px] bg-gray-300 flex-grow"></div>
+                    </div>
+
+                    {/* Messages for this date */}
+                    {group.messages.map((msg) => {
+                      const isOwn = msg.senderId === userId;
+                      const type = msg.deleteReason === "unsent";
+                      const imageUrl = msg.attachmentUrl;
+                      const isOpen = messageMenuId === msg.messageId;
 
                   // Check if the message has a previewable attachment
                   const fileExtension = imageUrl
@@ -426,7 +442,7 @@ const GroupChat = ({
                                     }}
                                     className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                   >
-                                    Reply
+                                        Reply
                                   </button>
                                   <button
                                     onClick={(e) => {
@@ -492,21 +508,26 @@ const GroupChat = ({
                             </div>
                           )}
 
-                          {renderMessage(msg, isOwn)}
-                          <span
-                            className={`text-sm ${
-                              isOwn
-                                ? "text-white/80 justify-end"
-                                : "text-black/50"
-                            } flex`}
-                          >
-                            {msg.timestamp}
-                          </span>
+                              {/* Message text/image */}
+                              {renderMessage(msg, isOwn)}
+
+                              {/* Timestamp */}
+                              <span
+                                className={`text-sm ${
+                                  isOwn
+                                    ? "text-white/80 justify-end"
+                                    : "text-black/50"
+                                } flex`}
+                              >
+                                {msg.timestamp}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  );
-                })
+  );
+                    })}
+                  </div>
+                ))
               ) : (
                 <p className="text-center text-gray-500">
                   No messages yet. Start a conversation!
@@ -539,7 +560,7 @@ const GroupChat = ({
                         controls
                         autoPlay
                         onLoadedMetadata={(e) => {
-                          e.currentTarget.volume = 0.11; // Set volume to 50%
+                          e.currentTarget.volume = 0.11; // Set volume to 11%
                         }}
                         className="rounded-lg max-h-[80vh]"
                         style={{ maxWidth: "90vw" }}
@@ -605,7 +626,7 @@ const GroupChat = ({
                             width={150}
                             height={100}
                             onLoadedMetadata={(e) => {
-                              e.currentTarget.volume = 0.11; // Set volume to 50%
+                              e.currentTarget.volume = 0.11;
                             }}
                             className="rounded-md h-[100px]"
                           />
