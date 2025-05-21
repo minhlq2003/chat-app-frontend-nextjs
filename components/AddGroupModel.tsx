@@ -54,18 +54,26 @@ export default function AddGroupModal({
   const [temporaryGroup, setTemporaryGroup] = useState<temporaryGroupProps>({
     name: "",
     image: null,
-    members: (selectedUser) ? [selectedUser]:  [],
+    members: selectedUser ? [selectedUser] : [],
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // For notifications
   const [api, contextHolder] = notification.useNotification();
 
-  const showNotification = (message: string, type: 'success' | 'error' | 'info' | 'warning') => {
+  const showNotification = (
+    message: string,
+    type: "success" | "error" | "info" | "warning"
+  ) => {
     api[type]({
-      message: type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Notification',
+      message:
+        type === "success"
+          ? "Success"
+          : type === "error"
+          ? "Error"
+          : "Notification",
       description: message,
-      placement: 'topRight',
+      placement: "topRight",
       duration: 3,
     });
   };
@@ -78,11 +86,11 @@ export default function AddGroupModal({
   }, []);
 
   useEffect(() => {
-    setTemporaryGroup({...temporaryGroup, members: selectedUsers})
+    setTemporaryGroup({ ...temporaryGroup, members: selectedUsers });
   }, [selectedUsers]);
 
   useEffect(() => {
-    console.log(temporaryGroup)
+    console.log(temporaryGroup);
   }, [temporaryGroup]);
 
   useEffect(() => {
@@ -93,7 +101,6 @@ export default function AddGroupModal({
       .then((data) => {
         setContacts(data.data || []);
         setSearchResults(data.data || []);
-
       })
       .catch(() => setContacts([]));
   }, [userId]);
@@ -109,9 +116,9 @@ export default function AddGroupModal({
             setSearchResults(data.data || []);
           })
           .catch(() => setSearchResults([]));
-        } else {
+      } else {
         setSearchResults(contacts);
-        }
+      }
     }, 500);
 
     return () => clearTimeout(delayDebounce);
@@ -142,15 +149,15 @@ export default function AddGroupModal({
         name: temporaryGroup.name,
         image: temporaryGroup.image || "",
         ownerId: userId,
-        initialMembers: temporaryGroup.members
-  };
+        initialMembers: temporaryGroup.members,
+      };
 
       const response = await fetch(`${apiBaseUrl}/group/create`, {
         method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -159,7 +166,9 @@ export default function AddGroupModal({
         toast.success("Group created successfully!");
         onClose(); // Close the modal on success
       } else {
-        toast.error(`Failed to create group: ${data.message || "Unknown error"}`);
+        toast.error(
+          `Failed to create group: ${data.message || "Unknown error"}`
+        );
       }
     } catch (error) {
       console.error("Error creating group:", error);
@@ -174,10 +183,13 @@ export default function AddGroupModal({
         const formData = new FormData();
         formData.append("file", file);
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`, {
-          method: "POST",
-          body: formData,
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -185,7 +197,7 @@ export default function AddGroupModal({
           setTemporaryGroup({
             ...temporaryGroup,
             image: imageUrl,
-          })
+          });
         } else {
           console.error("Image upload failed:", await response.json());
           toast.error("Failed to upload image. Please try again.");
@@ -200,7 +212,7 @@ export default function AddGroupModal({
   const toggleSelectUser = (id: string) => {
     setSelectedUsers((prev) =>
       prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
-  );
+    );
   };
 
   const isSelected = (id: string) => selectedUsers.includes(id);
@@ -210,12 +222,10 @@ export default function AddGroupModal({
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
       onClick={onClose}
     >
-
       <div
         className="bg-white text-black w-[500px] h-[75vh] rounded-lg shadow-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <h2 className="font-semibold">Create Group</h2>
           <button onClick={onClose} className="text-black text-xl">
@@ -223,7 +233,6 @@ export default function AddGroupModal({
           </button>
         </div>
 
-        {/* Group Avatar Upload */}
         <div className="relative flex items-center justify-center p-4">
           <div onClick={handleImageClick}>
             <Image
@@ -243,39 +252,38 @@ export default function AddGroupModal({
           />
         </div>
 
-        {/* Group Name Input */}
         <div className="flex items-center justify-between w-full p-4 border-b border-white/10">
           <input
             type="text"
-            onChange={(e) =>{setTemporaryGroup({...temporaryGroup, name: e.target.value})}}
+            onChange={(e) => {
+              setTemporaryGroup({ ...temporaryGroup, name: e.target.value });
+            }}
             placeholder="Enter group name"
             className="bg-transparent border p-2 rounded-md outline-none flex-1 text-sm placeholder-black/40"
           />
         </div>
 
-        {/* Selected Avatars */}
         {selectedUsers.length > 0 ? (
           <div className="flex gap-2 px-4 overflow-x-auto min-h-[45px]">
-          {contacts
-            .filter((c) => selectedUsers.includes(c.contactId))
-            .map((user) => (
-              <img
-                key={user.contactId}
-                src={
-                  user.imageUrl ||
-                  `https://ui-avatars.com/api/?name=${user.name}`
-}
-                alt={user.name}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ))}
-        </div>
+            {contacts
+              .filter((c) => selectedUsers.includes(c.contactId))
+              .map((user) => (
+                <img
+                  key={user.contactId}
+                  src={
+                    user.imageUrl ||
+                    `https://ui-avatars.com/api/?name=${user.name}`
+                  }
+                  alt={user.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ))}
+          </div>
         ) : (
           <div className="flex items-center justify-center min-h-[45px] text-sm text-black/50">
             Please select at least 2 friends
           </div>
         )}
-        {/* Phone input */}
         <div className="flex items-center gap-2 p-4 border-b border-black/10">
           <div className="bg-black/10 px-2 py-2 rounded text-sm">VN (+84)</div>
           <input
@@ -287,7 +295,6 @@ export default function AddGroupModal({
           />
         </div>
 
-        {/* Friends List with Checkboxes */}
         <div className="p-4 flex flex-col gap-3">
           <p className="text-sm text-black mt-4">Friends Lists</p>
           <div className="max-h-[160px] overflow-y-auto">
@@ -314,14 +321,15 @@ export default function AddGroupModal({
                 </div>
                 <Checkbox
                   checked={isSelected(user.userId || user.contactId)}
-                  onChange={() => toggleSelectUser(user.userId || user.contactId)}
+                  onChange={() =>
+                    toggleSelectUser(user.userId || user.contactId)
+                  }
                 />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex justify-end gap-3 p-4 border-t border-white/10">
           <button
             onClick={onClose}
