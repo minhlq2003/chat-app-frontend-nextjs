@@ -434,8 +434,8 @@ function Home() {
       wsRef.current = null;
     }
 
-    const wsUrl = `ws://${
-      process.env.NEXT_PUBLIC_API_BASE_URL?.replace("http://", "") ||
+    const wsUrl = `ws${(process.env.NEXT_PUBLIC_API_BASE_URL?.includes("https")) ? `s`: ''}://${
+      process.env.NEXT_PUBLIC_API_BASE_URL?.replaceAll("http://", "").replaceAll("https://", "") ||
       "localhost:3000"
     }/ws`;
 
