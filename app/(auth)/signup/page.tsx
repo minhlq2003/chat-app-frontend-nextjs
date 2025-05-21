@@ -1,8 +1,8 @@
 "use client";
 import React, { Suspense, useState } from "react";
 import {
-  GoogleIcon,
-  FacebookIcon,
+  googleIcon,
+  facebookIcon,
   KeyIcon,
   PhoneIcon,
   UserIcon,
@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { loginWithGoogle } from "@/lib/actions/auth";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { faKey, faPhone, faUser } from "@fortawesome/free-solid-svg-icons";
 const Page = () => {
   const { t } = useTranslation("common");
   const [formData, setFormData] = useState<FormSignUpData>({
@@ -135,22 +136,24 @@ const Page = () => {
           <div className="flex flex-col px-28 pt-20 gap-8 ">
             <InputField
               type="text"
-              image={UserIcon}
+              icon={faUser}
               placeholder={t("Enter your name")}
               error={errors.name}
               onChange={(e) => handleChange("name", e.target.value)}
+              iconClassName="text-white"
             />
             <InputField
               type="text"
-              image={PhoneIcon}
+              icon={faPhone}
               placeholder={t("Enter your phone number")}
               error={errors.phone}
               onFocus={() => setErrors((prev) => ({ ...prev, phone: "" }))}
               onChange={(e) => handleChange("phone", e.target.value)}
+              iconClassName="text-white"
             />
             <InputField
               type="password"
-              image={KeyIcon}
+              icon={faKey}
               placeholder={t("Enter your password")}
               password
               error={errors.password}
@@ -158,10 +161,11 @@ const Page = () => {
                   setErrors((prev) => ({ ...prev, password: "" }))
               }
               onChange={(e) => handleChange("password", e.target.value)}
+              iconClassName="text-white"
             />
             <InputField
               type="password"
-              image={KeyIcon}
+              icon={faKey}
               placeholder={t("Confirm your password")}
               password
               error={errors.confirmPassword}
@@ -169,6 +173,7 @@ const Page = () => {
                 setErrors((prev) => ({ ...prev, confirmPassword: "" }))
               }
               onChange={(e) => handleChange("confirmPassword", e.target.value)}
+              iconClassName="text-white"
             />
           </div>
           <p className="text-xl text-right text-white mr-28 mt-2">
@@ -193,7 +198,7 @@ const Page = () => {
           <div className="flex items-center justify-center gap-10 mt-5">
             <Button className="h-20 bg-[#1877F2]">
               <Image
-                src={FacebookIcon}
+                src={facebookIcon}
                 alt="Facebook Icon"
                 width={40}
                 height={40}
@@ -201,7 +206,7 @@ const Page = () => {
             </Button>
             <Button className="h-20 bg-white" onPress={()=>loginWithGoogle()}>
               <Image
-                src={GoogleIcon}
+                src={googleIcon}
                 alt="Google Icon"
                 width={40}
                 height={50}

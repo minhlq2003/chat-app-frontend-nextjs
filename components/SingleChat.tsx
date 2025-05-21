@@ -17,6 +17,9 @@ import {
   faArrowRight,
   faFile,
   faFileWord,
+  faLocationPin,
+  faPhone,
+  faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Input } from "@nextui-org/react";
@@ -195,31 +198,28 @@ const SingleChat = ({
                 </h1>
               </div>
               <div className="flex items-center justify-center gap-5">
-                <IconButton
-                  icon={CallIcon}
-                  iconWidth={25}
-                  iconHeight={25}
-                  iconName="Call"
-                  className={`w-[46px] h-[46px] hover:bg-customPurple/50 `}
-                />
-                <IconButton
-                  icon={PinIcon}
-                  iconWidth={25}
-                  iconHeight={25}
-                  iconName="Pin"
-                  className={`w-[46px] h-[46px] hover:bg-customPurple/50 ${
-                    chatList.find((chat: any) => chat.id === selectedUser)?.pin
-                      ? "bg-customPurple/50"
-                      : ""
-                  }`}
-                />
-                <div onClick={() => setShowSearch(!showSearch)}>
-                  <IconButton
-                    icon={SearchIcon}
-                    iconWidth={25}
-                    iconHeight={25}
-                    iconName="Search"
-                    className={`w-[46px] h-[46px] hover:bg-customPurple/50`}
+                <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
+                  <FontAwesomeIcon
+                    icon={faPhone}
+                    width={24}
+                    height={24}
+                    className="size-5"
+                  />
+                </div>
+                <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
+                  <FontAwesomeIcon
+                    icon={faLocationPin}
+                    width={24}
+                    height={24}
+                    className="size-5"
+                  />
+                </div>
+                <div onClick={() => setShowSearch(!showSearch)} className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
+                  <FontAwesomeIcon
+                    icon={faSearch}
+                    width={24}
+                    height={24}
+                    className="size-5"
                   />
                 </div>
               </div>
@@ -260,7 +260,6 @@ const SingleChat = ({
                       onClick={() => {
                         setHighlightedIndex((prev) =>
                           prev <= 0 ? result.length - 1 : prev - 1
-
                         );
                       }}
                       className="px-2 py-1 bg-gray-300 rounded"
@@ -307,7 +306,8 @@ const SingleChat = ({
                           className={`flex ${
                             isOwn ? "justify-end" : "justify-start"
                           } ${
-                            result[highlightedIndex]?.messageId === msg.messageId
+                            result[highlightedIndex]?.messageId ===
+                            msg.messageId
                               ? " bg-customPurple/20"
                               : ""
                           } mb-4`}
@@ -331,7 +331,9 @@ const SingleChat = ({
                                 if (type) {
                                   setMessageMenuId(null);
                                 } else {
-                                  setMessageMenuId(isOpen ? null : msg.messageId);
+                                  setMessageMenuId(
+                                    isOpen ? null : msg.messageId
+                                  );
                                 }
                               }}
                               className={`absolute bottom-0 w-8 h-8 rounded-full hover:bg-gray-200 hidden group-hover:flex items-center justify-center z-10
@@ -356,30 +358,30 @@ const SingleChat = ({
                                     <button
                                       onClick={(e) => {
                                         console.log("Reply to", msg.messageId);
-                                    e.stopPropagation();
-                                    setReplyMessage(msg);
-                                    setMessageMenuId(null);
-                                    inputRef.current?.focus();
-                                  }}
-                                  className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                >
+                                        e.stopPropagation();
+                                        setReplyMessage(msg);
+                                        setMessageMenuId(null);
+                                        inputRef.current?.focus();
+                                      }}
+                                      className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                    >
                                       Reply
-                                </button>
+                                    </button>
                                     <button
                                       onClick={(e) => {
                                         console.log("Forward", msg.messageId);
-                                    e.stopPropagation();
-                                    setForwardMessage(msg);
-                                    setMessageMenuId(null);
-                                  }}
-                                  className="block w-full text-left hover:bg-gray-100 px-4 py-2"
-                                >
-                                  Forward
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    console.log("Remove", msg.messageId);
-                                    e.stopPropagation();
+                                        e.stopPropagation();
+                                        setForwardMessage(msg);
+                                        setMessageMenuId(null);
+                                      }}
+                                      className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                    >
+                                      Forward
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        console.log("Remove", msg.messageId);
+                                        e.stopPropagation();
                                         setMessageMenuId({
                                           id: msg.messageId,
                                           type: "remove",
@@ -417,20 +419,20 @@ const SingleChat = ({
                                     >
                                       Reply
                                     </button>
-                    <button
+                                    <button
                                       onClick={(e) => {
                                         console.log("Forward", msg.messageId);
                                         e.stopPropagation();
                                         setForwardMessage(msg);
                                         setMessageMenuId(null);
-              }}
+                                      }}
                                       className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                     >
                                       Forward
                                     </button>
                                   </>
-                    )}
-                  </div>
+                                )}
+                              </div>
                             )}
                             {renderMessage(msg, isOwn)}
                             <span

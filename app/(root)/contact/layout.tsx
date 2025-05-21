@@ -4,6 +4,7 @@
 import {
   faAddressBook,
   faBell,
+  faSearch,
   faUserFriends,
   faUserGroup,
   faUserPlus,
@@ -41,7 +42,7 @@ export default function ContactLayout({
               placeholder="Search message, people"
               type="text"
               startContent={
-                <Image src={SearchIcon} width={24} height={24} alt="Search" />
+                <FontAwesomeIcon icon={faSearch} className="size-4" />
               }
             />
             <Button
