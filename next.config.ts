@@ -8,6 +8,16 @@ const nextConfig: NextConfig = {
   },
   images: {
     dangerouslyAllowSVG: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
+      },
+    ],
     domains: [
       "shared.fastly.steamstatic.com",
       "lh3.googleusercontent.com",
@@ -18,29 +28,9 @@ const nextConfig: NextConfig = {
   },
   webpack(config) {
     config.module.rules.push({
-      test: /\.svg$/,
-      use: [
-        {
-          loader: '@svgr/webpack',
-          options: {
-            svgoConfig: {
-               plugins: [
-                  {
-                      name: 'preset-default',
-                      params: {
-                        overrides: {
-                           removeViewBox: false // keep viewBox
-                         }
-                      }
-                   },
-               ]
-            },
-            
-          },
-        },
-      ],
+      test: /.svg$/,
+      use: ["@svgr/webpack"],
     });
-
     return config;
   },
 };
