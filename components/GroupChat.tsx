@@ -1,21 +1,15 @@
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import IconButton from "./IconButton";
-import {
-  CallIcon,
-  EmojiIcon,
-  FileSendIcon,
-  MicroIcon,
-  PinIcon,
-  SearchIcon,
-  SendIcon,
-} from "@/constant/image";
 import {
   faArrowLeft,
   faArrowRight,
+  faFaceSmile,
   faFile,
   faFileWord,
   faLocationPin,
+  faMicrophone,
+  faPaperclip,
+  faPaperPlane,
   faPhone,
   faSearch,
 } from "@fortawesome/free-solid-svg-icons";
@@ -724,49 +718,30 @@ const GroupChat = ({
               endContent={
                 <div className="flex items-center gap-3 pr-5">
                   <div className="relative flex-none w-[25px] h-[25px]">
-                    <Image
-                      src={EmojiIcon}
-                      width={20}
-                      height={20}
-                      alt="Emoji"
-                      className="cursor-pointer w-[25px] h-[25px]"
-                      onClick={() => setShowEmojiPicker((prev) => !prev)}
-                    />
+                    <div className="flex items-center" onClick={() => setShowEmojiPicker((prev) => !prev)}>
+                      <FontAwesomeIcon icon={faFaceSmile} width={20} height={20} className="cursor-pointer size-6"/>
+                    </div>
                     {showEmojiPicker && (
                       <div className="absolute bottom-10 left-0 z-50">
                         <EmojiPicker onEmojiClick={handleEmojiClick} />
                       </div>
                     )}
                   </div>
-                  <Image
-                    src={FileSendIcon}
-                    width={20}
-                    height={20}
-                    alt="File"
-                    className="cursor-pointer"
-                    onClick={handleFileSelect}
-                  />
+                  <div className="flex items-center" onClick={handleFileSelect}>
+                    <FontAwesomeIcon icon={faPaperclip} width={20} height={20} className="cursor-pointer size-6"/>
+                  </div>
                   <input
                     type="file"
                     ref={fileInputRef}
                     className="hidden"
                     onChange={handleFileInputChange}
                   />
-                  <Image
-                    src={MicroIcon}
-                    width={20}
-                    height={20}
-                    alt="Micro"
-                    className="cursor-pointer"
-                  />
-                  <Image
-                    src={SendIcon}
-                    width={20}
-                    height={20}
-                    alt="Send"
-                    className="cursor-pointer"
-                    onClick={handleSendMessage}
-                  />
+                  <div className="flex items-center">
+                    <FontAwesomeIcon icon={faMicrophone} width={20} height={20} className="cursor-pointer size-6"/>
+                  </div>
+                  <div className="flex items-center">
+                    <FontAwesomeIcon icon={faPaperPlane} width={20} height={20} className="cursor-pointer size-6"/>
+                  </div>
                 </div>
               }
             />
