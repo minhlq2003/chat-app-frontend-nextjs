@@ -568,8 +568,6 @@ function Home() {
             console.log("Reconnecting WebSocket...");
             initializeWebSocket(userId);
           } else {
-            console.log("Page is not visible, delaying reconnection");
-
             // Add event listener for when page becomes visible again
             const handleVisibilityChange = () => {
               if (document.visibilityState !== "hidden") {
