@@ -112,7 +112,7 @@ const GroupChat = ({
       selectedChatInfo.ChatID,
       selectedChatInfo.chatName,
       selectedChatInfo.imageUrl || `https://ui-avatars.com/api/?name=${selectedChatInfo.chatName}`,
-      callType
+      callType,
     );
   };
 

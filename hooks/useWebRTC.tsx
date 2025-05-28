@@ -165,9 +165,6 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
       receiverName: string,
       receiverImage: string,
       callType: "audio" | "video",
-      callerId: string,
-      callerName: string,
-      callerImage: string,
     ) => {
       try {
         if (!userId || !socketRef.current) {

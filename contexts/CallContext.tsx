@@ -9,10 +9,7 @@ interface CallContextType {
     receiverId: string,
     receiverName: string,
     receiverImage: string,
-    callType: "audio" | "video",
-    callerId: string,
-    callerName: string,
-    callerImage: string,
+    callType: "audio" | "video"
   ) => Promise<string | null>;
   acceptCall: () => Promise<void>;
   rejectCall: () => void;
@@ -83,11 +80,8 @@ export const CallProvider: React.FC<CallProviderProps> = ({
     receiverName: string,
     receiverImage: string,
     callType: "audio" | "video",
-    callerId: string,
-    callerName: string,
-    callerImage: string,
   ) => {
-    return initiateCall(receiverId, receiverName, receiverImage, callType, callerId, callerName, callerImage);
+    return initiateCall(receiverId, receiverName, receiverImage, callType);
   };
   console.log(callState)
   return (

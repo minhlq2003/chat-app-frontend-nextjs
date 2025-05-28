@@ -593,10 +593,12 @@ function Home() {
     return ws;
   };
 
-  function getOtherUserId(members: string[], myId: string) {
+  function getOtherUserId(members: any[], myId: string | null) {
     for (const member of members) {
-      if (member.userId !== myId) {
+      if (typeof member === 'object' && member.userId !== myId) {
         return member.userId;
+      } else if (typeof member === 'string' && member !== myId) {
+        return member;
       }
     }
     return null;

@@ -107,9 +107,6 @@ const SingleChat = ({
       selectedChatInfo.chatName,
       selectedChatInfo.imageUrl || `https://www.gravatar.com/avatar/EMAIL_MD5?d=https://ui-avatars.com/api/?name=${selectedChatInfo.chatName}`,
       callType,
-      userInfo.id,
-      userInfo.name,
-      userInfo.image
     );
   };
 
