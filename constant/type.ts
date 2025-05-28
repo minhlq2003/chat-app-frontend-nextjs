@@ -41,6 +41,7 @@ export interface FormSuccessErrors {
   phone: string;
   password: string;
   birthday: string;
+  email?:string
 }
 
 export interface IconButtonProps {
