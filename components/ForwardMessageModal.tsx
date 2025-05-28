@@ -54,7 +54,7 @@ export default function ForwardMessageModal({
             name: chat.chatName || "Chat",
             imageUrl:
               chat.imageUrl ||
-              `https://ui-avatars.com/api/?name=${chat.chatName}`,
+              `https://www.gravatar.com/avatar/EMAIL_MD5?d=https://ui-avatars.com/api/?name=${chat.chatName}`,
             type: chat.Type || "private",
           }));
 
