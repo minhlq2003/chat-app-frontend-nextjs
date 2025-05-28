@@ -35,6 +35,7 @@ import {
   faSearch,
   faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
+import { CallProvider } from "@/contexts/CallContext";
 import RenderMedia from "@/components/RenderMedia";
 import SingleChat from "@/components/SingleChat";
 import GroupChat from "@/components/GroupChat";
@@ -592,6 +593,17 @@ function Home() {
     return ws;
   };
 
+  function getOtherUserId(members: any[], myId: string | null) {
+    for (const member of members) {
+      if (typeof member === 'object' && member.userId !== myId) {
+        return member.userId;
+      } else if (typeof member === 'string' && member !== myId) {
+        return member;
+      }
+    }
+    return null;
+  }
+
   const scrollToBottom = () => {
     console.log("Scrolling to bottom");
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -673,7 +685,14 @@ function Home() {
       const data = await response.json();
 
       if (data.success) {
-        setSelectedChatInfo(data.data);
+        let preProcessData = data.data;
+        if (preProcessData.members.length === 2) {
+          const otherUserId = getOtherUserId(preProcessData.members, userId);
+          preProcessData.otherUserId = otherUserId;
+        }
+          setSelectedChatInfo(preProcessData);
+
+
 
         // Join chat room via WebSocket
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -1685,6 +1704,7 @@ function Home() {
       <div className="col-span-5 h-screen bg-white rounded-xl">
         {selectedChatInfo && selectedChatInfo.Type === "private" ? (
           <SingleChat
+            userInfo={user}
             selectedChatInfo={selectedChatInfo}
             chatList={chatList}
             messageContainerRef={chatRef}
