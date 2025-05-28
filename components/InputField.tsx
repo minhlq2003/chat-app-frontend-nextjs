@@ -52,7 +52,7 @@ export default function InputField({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="w-full flex flex-col gap-2">
       <div className="flex items-center gap-5 relative">
         {icon ? (
           <FontAwesomeIcon className={twMerge("size-9", iconClassName)} icon={icon} />
