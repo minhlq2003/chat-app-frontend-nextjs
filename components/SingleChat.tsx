@@ -20,8 +20,11 @@ import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { Message } from "@/constant/type";
 import { groupMessagesByDate } from "@/constant/dateUtils";
+import { useCall } from "@/contexts/CallContext";
+import CallButton from "./CallButton";
 
 const SingleChat = ({
+  userInfo,
   selectedChatInfo,
   chatList,
   messageContainerRef,
@@ -52,6 +55,7 @@ const SingleChat = ({
   forwardMessage,
   messageRefs,
 }: {
+  userInfo: any;
   selectedChatInfo: any;
   chatList: any;
   messageContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -85,6 +89,7 @@ const SingleChat = ({
   forwardMessage: Message | null;
   messageRefs: React.RefObject<{ [key: number]: HTMLDivElement | null }>;
 }) => {
+  const { initiateCall } = useCall();
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [result, setResult] = useState<Message[]>([]);
@@ -92,6 +97,21 @@ const SingleChat = ({
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
   const searchRef = useRef<HTMLDivElement | null>(null);
+
+  const handleCallInitiate = (callType: "audio" | "video") => {
+    if (!selectedChatInfo || !userId) return;
+
+    console.log(userInfo)
+    initiateCall(
+      selectedChatInfo.otherUserId || selectedChatInfo.id,
+      selectedChatInfo.chatName,
+      selectedChatInfo.imageUrl || `https://www.gravatar.com/avatar/EMAIL_MD5?d=https://ui-avatars.com/api/?name=${selectedChatInfo.chatName}`,
+      callType,
+      userInfo.id,
+      userInfo.name,
+      userInfo.image
+    );
+  };
 
   // Group messages by date
   const groupedMessages = groupMessagesByDate(messages);
@@ -193,11 +213,9 @@ const SingleChat = ({
               </div>
               <div className="flex items-center justify-center gap-5">
                 <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
-                  <FontAwesomeIcon
-                    icon={faPhone}
-                    width={24}
-                    height={24}
-                    className="size-5"
+                  <CallButton
+                    onCallInitiated={handleCallInitiate}
+                    className="w-[46px] h-[46px] hover:bg-customPurple/50 flex items-center justify-center w-[100px] h-[100px] rounded-full flex items-center justify-center bg-customPurple/10"
                   />
                 </div>
                 <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
