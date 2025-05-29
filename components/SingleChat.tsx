@@ -24,6 +24,7 @@ import { groupMessagesByDate } from "@/constant/dateUtils";
 import { useTranslation } from "react-i18next";
 import { useCall } from "@/contexts/CallContext";
 import CallButton from "./CallButton";
+import { PushpinFilled, PushpinOutlined } from "@ant-design/icons";
 
 const SingleChat = ({
   userInfo,
@@ -104,12 +105,13 @@ const SingleChat = ({
   const handleCallInitiate = (callType: "audio" | "video") => {
     if (!selectedChatInfo || !userId) return;
 
-    console.log(userInfo)
+    console.log(userInfo);
     initiateCall(
       selectedChatInfo.otherUserId || selectedChatInfo.id,
       selectedChatInfo.chatName,
-      selectedChatInfo.imageUrl || `https://www.gravatar.com/avatar/EMAIL_MD5?d=https://ui-avatars.com/api/?name=${selectedChatInfo.chatName}`,
-      callType,
+      selectedChatInfo.imageUrl ||
+        `https://www.gravatar.com/avatar/EMAIL_MD5?d=https://ui-avatars.com/api/?name=${selectedChatInfo.chatName}`,
+      callType
     );
   };
 
@@ -219,12 +221,7 @@ const SingleChat = ({
                   />
                 </div>
                 <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
-                  <FontAwesomeIcon
-                    icon={faLocationPin}
-                    width={24}
-                    height={24}
-                    className="size-5"
-                  />
+                  <PushpinFilled className="text-[20px]" />
                 </div>
                 <div
                   onClick={() => setShowSearch(!showSearch)}
@@ -339,10 +336,9 @@ const SingleChat = ({
                               console.log(imageUrl);
                             }}
                           >
-                            {/* Dots button */}
                             <button
                               onClick={(e) => {
-                                e.stopPropagation(); // Prevent parent click
+                                e.stopPropagation();
                                 if (type) {
                                   setMessageMenuId(null);
                                 } else {
@@ -444,6 +440,18 @@ const SingleChat = ({
                                       className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                                     >
                                       Forward
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMessageMenuId({
+                                          id: msg.messageId,
+                                          type: "delete_for_me",
+                                        });
+                                      }}
+                                      className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                    >
+                                      Remove
                                     </button>
                                   </>
                                 )}
