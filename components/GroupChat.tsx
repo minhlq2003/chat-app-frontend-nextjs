@@ -18,7 +18,10 @@ import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { Message } from "@/constant/type";
 import { groupMessagesByDate } from "@/constant/dateUtils";
+
 import { useTranslation } from "react-i18next";
+import { useCall } from "@/contexts/CallContext";
+import CallButton from "./CallButton";
 
 // Define file type constants
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp"];
@@ -93,6 +96,7 @@ const GroupChat = ({
   forwardMessage: Message | null;
   messageRefs: React.RefObject<Record<string, HTMLDivElement | null>>;
 }) => {
+  const { initiateCall } = useCall();
   // Group messages by date
   const groupedMessages = groupMessagesByDate(messages);
 
@@ -100,6 +104,19 @@ const GroupChat = ({
   const [selectedMediaType, setSelectedMediaType] = useState<
     "image" | "video" | null
   >(null);
+
+  const handleCallInitiate = (callType: "audio" | "video") => {
+    if (!selectedChatInfo || !userId) return;
+
+    // For group calls, you might want to handle this differently
+    // This is a simplified version that just calls the group
+    initiateCall(
+      selectedChatInfo.ChatID,
+      selectedChatInfo.chatName,
+      selectedChatInfo.imageUrl || `https://ui-avatars.com/api/?name=${selectedChatInfo.chatName}`,
+      callType,
+    );
+  };
 
   // Refs for video elements
   const modalVideoRef = useRef<HTMLVideoElement>(null);
@@ -238,11 +255,9 @@ const GroupChat = ({
               </div>
               <div className="flex items-center justify-center gap-5">
                 <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
-                  <FontAwesomeIcon
-                    icon={faPhone}
-                    width={24}
-                    height={24}
-                    className="size-5"
+                  <CallButton
+                    onCallInitiated={handleCallInitiate}
+                    className="w-[46px] h-[46px] hover:bg-customPurple/50 flex items-center justify-center w-[100px] h-[100px] rounded-full flex items-center justify-center bg-customPurple/10"
                   />
                 </div>
                 <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
