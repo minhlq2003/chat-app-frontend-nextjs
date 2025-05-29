@@ -20,6 +20,7 @@ import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { Message } from "@/constant/type";
 import { groupMessagesByDate } from "@/constant/dateUtils";
+import { useTranslation } from "react-i18next";
 
 const SingleChat = ({
   selectedChatInfo,
@@ -85,6 +86,7 @@ const SingleChat = ({
   forwardMessage: Message | null;
   messageRefs: React.RefObject<{ [key: number]: HTMLDivElement | null }>;
 }) => {
+  const { t } = useTranslation("common");
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [result, setResult] = useState<Message[]>([]);
@@ -451,7 +453,7 @@ const SingleChat = ({
                 ))
               ) : (
                 <p className="text-center text-gray-500">
-                  No messages yet. Start a conversation!
+                  {t("No messages yet. Start a conversation!")}
                 </p>
               )}
               <div ref={messagesEndRef} />
@@ -518,7 +520,6 @@ const SingleChat = ({
                       ];
 
                       if (imageExtensions.includes(fileExtension as string)) {
-                        // Image preview
                         return (
                           <Image
                             src={attachmentPreview}
@@ -529,10 +530,7 @@ const SingleChat = ({
                           />
                         );
                       } else {
-                        // File preview
                         const fileName = fileUrl.split("/").pop() || "File";
-
-                        // Determine file icon based on extension
                         let fileIcon = faFile;
                         let bgColor = "bg-blue-100";
                         let iconColor = "text-blue-500";
@@ -591,7 +589,7 @@ const SingleChat = ({
             <Input
               ref={inputRef}
               placeholder={
-                attachmentPreview ? "Add a caption..." : "Type messages"
+                attachmentPreview ? "Add a caption..." : (t("Type messages"))
               }
               type="text"
               className="flex-1"

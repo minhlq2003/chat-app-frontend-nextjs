@@ -18,6 +18,7 @@ import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { Message } from "@/constant/type";
 import { groupMessagesByDate } from "@/constant/dateUtils";
+import { useTranslation } from "react-i18next";
 
 // Define file type constants
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp"];
@@ -146,7 +147,7 @@ const GroupChat = ({
     }
     // Do nothing for other file types
   };
-
+  const { t } = useTranslation("common");
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [result, setResult] = useState<Message[]>([]);
@@ -541,7 +542,7 @@ const GroupChat = ({
                 ))
               ) : (
                 <p className="text-center text-gray-500">
-                  No messages yet. Start a conversation!
+                  {t("No messages yet. Start a conversation!")}
                 </p>
               )}
 
@@ -703,7 +704,7 @@ const GroupChat = ({
             <Input
               ref={inputRef}
               placeholder={
-                attachmentPreview ? "Add a caption..." : "Type messages"
+                attachmentPreview ? "Add a caption..." : (t("Type messages"))
               }
               type="text"
               className="flex-1"

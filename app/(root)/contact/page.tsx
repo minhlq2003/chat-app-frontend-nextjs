@@ -13,7 +13,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import UnfriendConfirmationModal from "@/components/UnfriendConfirmationModal";
 
 const groupFriendsByLetter = (friends: Friend[]) => {
@@ -64,7 +63,6 @@ export default function ContactPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Navigate to the chat with the returned chatId
         router.push(`/?chatId=${data.data.chatId}`);
       } else {
         console.error("Failed to get or create private chat");
@@ -118,7 +116,7 @@ export default function ContactPage() {
       <h1 className="font-bold text-[32px]">{t("Friends List")}</h1>
       <div className="flex items-center mb-4 mt-2 gap-2">
         <Input
-          placeholder="Search username, phone,..."
+          placeholder={t("Search username, phone,...")}
           className="flex-1"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -155,7 +153,6 @@ export default function ContactPage() {
                     />
                     <div>
                       <p className="font-semibold">{friend.name}</p>
-                      {/*//temporary set this as the location, since the status is not the profile bio*/}
                       <p className="text-sm text-gray-500">
                         {friend.location ?? "No location set"}
                       </p>
@@ -191,7 +188,6 @@ export default function ContactPage() {
         )}
       </div>
 
-      {/* Unfriend Confirmation Modal */}
       {showUnfriendModal && selectedFriend && (
         <UnfriendConfirmationModal
           onClose={() => setShowUnfriendModal(false)}

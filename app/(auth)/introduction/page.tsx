@@ -10,19 +10,21 @@ import { Intro1, Intro2, Intro3 } from "@/constant/image";
 import { Navigation, Pagination } from "swiper/modules";
 import "../../../styles/swiper.css";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 const Page = () => {
+  const {t} = useTranslation("common") 
   const router = useRouter();
   const slides = [
     {
       image: Intro1,
-      title: "Group Chatting",
+      title: (t("Group Chatting")),
       description:
-        "Collaborate effortlessly with multiple people in a single conversation, sharing messages, files, and media.",
+        (t("Collaborate effortlessly with multiple people in a single conversation, sharing messages, files, and media.")),
     },
     {
       image: Intro2,
-      title: "Video Call",
+      title: (t("Video Call")),
       description:
         "Collaborate effortlessly with multiple people in a single conversation, sharing messages, files, and media.",
     },
@@ -74,7 +76,7 @@ const Page = () => {
       </Swiper>
       <div className="relative mt-10 w-full flex items-center justify-center">
         <button className="bg-blue-600 text-white px-6 py-3 rounded-lg">
-          <a href="/signup">Get Started</a>
+          <a href="/signup">{t("Get Started")}</a>
         </button>
       </div>
     </div>

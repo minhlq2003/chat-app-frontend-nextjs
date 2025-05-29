@@ -12,6 +12,7 @@ import {
 import { Accordion, AccordionItem } from "@nextui-org/react";
 import { MembersGroupChat } from "@/constant/type";
 import { Image } from "antd";
+import { useTranslation } from "react-i18next";
 
 const roleLabel = {
   owner: "Trưởng nhóm",
@@ -50,7 +51,7 @@ export default function RenderMedia({
   requestObject: Dispatch<any>;
 }) {
   const { imageList, linkList, fileList } = data;
-
+  const { t } = useTranslation("common");
   const [memberAction, setMemberAction] = useState<number | null>(null);
   const yourRole = members.find((m) => m.userId === currentUserId)?.role;
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -102,7 +103,7 @@ export default function RenderMedia({
       }}
     >
       {currentChat.Type === "group" ? (
-        <AccordionItem key="1" aria-label="Members" title="Members">
+        <AccordionItem key="1" aria-label="Members" title={t("Members")}>
           <ul className="flex flex-col gap-3 max-h-[270px] ">
             {members.map((member) => (
               <li
@@ -158,7 +159,7 @@ export default function RenderMedia({
                           }}
                           className="block w-full text-left text-red-600 hover:bg-gray-100 px-4 py-2"
                         >
-                          Leave Group
+                          {t("Leave Group")}
                         </button>
                       ) : (
                         <>
@@ -180,7 +181,7 @@ export default function RenderMedia({
                               }}
                               className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                             >
-                              Promote to Admin
+                              {t("Promote to Admin")}
                             </button>
                           )}
                           {member.role !== "owner" && (
@@ -200,7 +201,7 @@ export default function RenderMedia({
                               }}
                               className="block w-full text-left text-red-600 hover:bg-gray-100 px-4 py-2"
                             >
-                              Remove From Group
+                              {t("Remove From Group")}
                             </button>
                           )}
                         </>
@@ -213,7 +214,7 @@ export default function RenderMedia({
           </ul>
         </AccordionItem>
       ) : null}
-      <AccordionItem key="2" aria-label="Image" title="Image">
+      <AccordionItem key="2" aria-label="Image" title={t("Image")}>
         <div className="grid grid-cols-3 gap-2">
           {imageList.map((img: any, index: number) => (
             <Image
@@ -226,7 +227,7 @@ export default function RenderMedia({
         </div>
       </AccordionItem>
 
-      <AccordionItem key="3" aria-label="Link" title="Link">
+      <AccordionItem key="3" aria-label="Link" title={t("Link")}>
         <div className="space-y-4">
           {listLink.map((item: any) => (
             <div key={item.id} className="flex items-center justify-between">
@@ -246,7 +247,7 @@ export default function RenderMedia({
         </div>
       </AccordionItem>
 
-      <AccordionItem key="4" aria-label="File" title="File">
+      <AccordionItem key="4" aria-label="File" title={t("File")}>
         <div className="flex flex-col gap-2">
           {files.map((file: any, idx: any) => {
             const { icon, color } = getFileIcon(file.type);

@@ -1,18 +1,14 @@
 "use client";
 import InputField from "@/components/InputField";
 import {
-  BlackUser,
-  CalendarIcon,
-  LocationIcon,
   noUserImage,
   pencil,
-  WhitePhone,
 } from "@/constant/image";
 import { FormSuccessErrors, TemporaryUserProps } from "@/constant/type";
 import Image from "next/image";
-import React, { Suspense, use, useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { faCalendar, faLocation, faLocationDot, faPhone, faUser, faVenusMars } from "@fortawesome/free-solid-svg-icons";
+import { faCalendar, faLocationDot, faPhone, faUser, faVenusMars } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
 
 const Page = () => {
