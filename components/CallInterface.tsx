@@ -70,7 +70,10 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
 
   // Update call status based on connection state
   useEffect(() => {
+    console.log("Connection state changed to:", connectionState);
+
     if (connectionState === "connected") {
+      console.log("Call connected successfully!");
       setCallStatus("Connected");
       // Start call timer
       const interval = setInterval(() => {
@@ -78,8 +81,10 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
       }, 1000);
       setTimerInterval(interval);
     } else if (connectionState === "connecting") {
+      console.log("Call is connecting...");
       setCallStatus("Connecting...");
     } else if (connectionState === "disconnected" || connectionState === "failed") {
+      console.log("Call ended or failed:", connectionState);
       setCallStatus("Call ended");
       if (timerInterval) {
         clearInterval(timerInterval);

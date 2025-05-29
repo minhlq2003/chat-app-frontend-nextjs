@@ -119,4 +119,3 @@ export const CallProvider: React.FC<CallProviderProps> = ({
     </CallContext.Provider>
   );
 };
-
