@@ -3,6 +3,7 @@
 import Image from "next/image";
 import React from "react";
 import { Button } from "@nextui-org/react";
+import { useTranslation } from "react-i18next";
 
 interface ChangeGroupImageModalProps {
   open: boolean;
@@ -17,6 +18,7 @@ export default function ChangeGroupImageModal({
   onSubmit,
   imageUrl,
 }: ChangeGroupImageModalProps) {
+  const {t} = useTranslation("common")
   if (!open) return null;
 
   return (
@@ -29,7 +31,7 @@ export default function ChangeGroupImageModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="font-semibold">Update Group Image</h2>
+          <h2 className="font-semibold">{t("Update Group Image")}</h2>
           <button onClick={onClose} className="text-black text-xl">
             &times;
           </button>
@@ -37,7 +39,7 @@ export default function ChangeGroupImageModal({
 
         <div className="p-4 flex flex-col items-center">
           <p className="text-center mb-4">
-            Do you want to update the group image?
+            {t("Do you want to update the group image?")}
           </p>
           <div className="relative w-[200px] h-[200px] mb-4">
             <Image
@@ -54,14 +56,14 @@ export default function ChangeGroupImageModal({
               onClick={onClose}
               className="px-4"
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               color="primary"
               onClick={() => onSubmit(imageUrl)}
               className="px-4"
             >
-              Update Image
+              {t("Update Image")}
             </Button>
           </div>
         </div>

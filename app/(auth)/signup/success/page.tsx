@@ -4,13 +4,8 @@ import { FormSuccessErrors, TemporaryUserProps } from "@/constant/type";
 import Image from "next/image";
 import { useSearchParams } from 'next/navigation'
 import {
-  BlackKey,
-  BlackUser,
-  CalendarIcon,
-  LocationIcon,
   noUserImage,
   pencil,
-  WhitePhone,
 } from "@/constant/image";
 import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
@@ -97,11 +92,11 @@ const Page = () => {
         .split(" ")
         .every((word) => word.length > 0 && word[0] === word[0].toUpperCase())
     ) {
-      newErrors.name = "Each word must start with a capital letter.";
+      newErrors.name = (t("Each word must start with a capital letter."));
     }
 
     if (!temporaryUser?.phone) {
-      newErrors.phone = "Phone number is required.";
+      newErrors.phone = (t("Phone number is required."));
     } else {
       const digitsOnly = temporaryUser.phone.replace(/\D/g, "");
       if (digitsOnly.length < 10 || !digitsOnly.startsWith("0")) {
@@ -111,22 +106,10 @@ const Page = () => {
     }
 
     if (!temporaryUser?.birthday) {
-      newErrors.birthday = "Birthday is required.";
+      newErrors.birthday = (t("Birthday is required."));
     }
 
-/*    if (temporaryUser?.password !== undefined) {
-      const password = temporaryUser.password || "";
-      const passwordRegex =
-        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?])(?!.*\s).{9,}$/;
-
-      if (!passwordRegex.test(password.trim())) {
-        newErrors.password =
-          "Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character.";
-      }
-    }*/
-
     setErrors(newErrors);
-
     return Object.values(newErrors).every((err) => err === "");
   };
 

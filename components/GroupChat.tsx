@@ -18,8 +18,11 @@ import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { Message } from "@/constant/type";
 import { groupMessagesByDate } from "@/constant/dateUtils";
+
+import { useTranslation } from "react-i18next";
 import { useCall } from "@/contexts/CallContext";
 import CallButton from "./CallButton";
+import { PushpinFilled } from "@ant-design/icons";
 
 // Define file type constants
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp"];
@@ -111,8 +114,9 @@ const GroupChat = ({
     initiateCall(
       selectedChatInfo.ChatID,
       selectedChatInfo.chatName,
-      selectedChatInfo.imageUrl || `https://ui-avatars.com/api/?name=${selectedChatInfo.chatName}`,
-      callType,
+      selectedChatInfo.imageUrl ||
+        `https://ui-avatars.com/api/?name=${selectedChatInfo.chatName}`,
+      callType
     );
   };
 
@@ -162,7 +166,7 @@ const GroupChat = ({
     }
     // Do nothing for other file types
   };
-
+  const { t } = useTranslation("common");
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [result, setResult] = useState<Message[]>([]);
@@ -259,12 +263,7 @@ const GroupChat = ({
                   />
                 </div>
                 <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
-                  <FontAwesomeIcon
-                    icon={faLocationPin}
-                    width={24}
-                    height={24}
-                    className="size-5"
-                  />
+                  <PushpinFilled className="text-[20px]" />
                 </div>
                 <div
                   onClick={() => setShowSearch(!showSearch)}
@@ -361,35 +360,36 @@ const GroupChat = ({
                         IMAGE_EXTENSIONS.includes(fileExtension) ||
                         VIDEO_EXTENSIONS.includes(fileExtension);
 
-                  return (
-                    <div
-                      key={msg.messageId}
-                      ref={(el) => {
-                        messageRefs.current[msg.messageId] = el;
-                      }}
-                      className={`flex ${
-                        isOwn ? "justify-end" : "justify-start"
-                      } ${
-                        result[highlightedIndex]?.messageId === msg.messageId
-                          ? " bg-customPurple/20"
-                          : ""
-                      }`}
-                    >
-                      <div
-                        className={`flex items-end gap-2 max-w-[70%] ${
-                          isOwn ? "flex-row-reverse" : "justify-start"
-                        } mb-4`}
-                      >
-                        <img
-                          src={
-                            msg.senderImage ||
-                            `https://ui-avatars.com/api/?name=${msg.senderName}`
-                          }
-                          alt={msg.senderName}
-                          className=" w-6 h-6 rounded-full object-cover mt-1"
-                        />
+                      return (
                         <div
-                          className={`
+                          key={msg.messageId}
+                          ref={(el) => {
+                            messageRefs.current[msg.messageId] = el;
+                          }}
+                          className={`flex ${
+                            isOwn ? "justify-end" : "justify-start"
+                          } ${
+                            result[highlightedIndex]?.messageId ===
+                            msg.messageId
+                              ? " bg-customPurple/20"
+                              : ""
+                          }`}
+                        >
+                          <div
+                            className={`flex items-end gap-2 max-w-[70%] ${
+                              isOwn ? "flex-row-reverse" : "justify-start"
+                            } mb-4`}
+                          >
+                            <img
+                              src={
+                                msg.senderImage ||
+                                `https://ui-avatars.com/api/?name=${msg.senderName}`
+                              }
+                              alt={msg.senderName}
+                              className=" w-6 h-6 rounded-full object-cover mt-1"
+                            />
+                            <div
+                              className={`
                             ${
                               isOwn
                                 ? "bg-customPurple text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg"
@@ -555,7 +555,7 @@ const GroupChat = ({
                 ))
               ) : (
                 <p className="text-center text-gray-500">
-                  No messages yet. Start a conversation!
+                  {t("No messages yet. Start a conversation!")}
                 </p>
               )}
 
@@ -717,7 +717,7 @@ const GroupChat = ({
             <Input
               ref={inputRef}
               placeholder={
-                attachmentPreview ? "Add a caption..." : "Type messages"
+                attachmentPreview ? "Add a caption..." : (t("Type messages"))
               }
               type="text"
               className="flex-1"
@@ -732,8 +732,16 @@ const GroupChat = ({
               endContent={
                 <div className="flex items-center gap-3 pr-5">
                   <div className="relative flex-none w-[25px] h-[25px]">
-                    <div className="flex items-center" onClick={() => setShowEmojiPicker((prev) => !prev)}>
-                      <FontAwesomeIcon icon={faFaceSmile} width={20} height={20} className="cursor-pointer size-6"/>
+                    <div
+                      className="flex items-center"
+                      onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    >
+                      <FontAwesomeIcon
+                        icon={faFaceSmile}
+                        width={20}
+                        height={20}
+                        className="cursor-pointer size-6"
+                      />
                     </div>
                     {showEmojiPicker && (
                       <div className="absolute bottom-10 left-0 z-50">
@@ -742,7 +750,12 @@ const GroupChat = ({
                     )}
                   </div>
                   <div className="flex items-center" onClick={handleFileSelect}>
-                    <FontAwesomeIcon icon={faPaperclip} width={20} height={20} className="cursor-pointer size-6"/>
+                    <FontAwesomeIcon
+                      icon={faPaperclip}
+                      width={20}
+                      height={20}
+                      className="cursor-pointer size-6"
+                    />
                   </div>
                   <input
                     type="file"
@@ -751,10 +764,20 @@ const GroupChat = ({
                     onChange={handleFileInputChange}
                   />
                   <div className="flex items-center">
-                    <FontAwesomeIcon icon={faMicrophone} width={20} height={20} className="cursor-pointer size-6"/>
+                    <FontAwesomeIcon
+                      icon={faMicrophone}
+                      width={20}
+                      height={20}
+                      className="cursor-pointer size-6"
+                    />
                   </div>
                   <div className="flex items-center">
-                    <FontAwesomeIcon icon={faPaperPlane} width={20} height={20} className="cursor-pointer size-6"/>
+                    <FontAwesomeIcon
+                      icon={faPaperPlane}
+                      width={20}
+                      height={20}
+                      className="cursor-pointer size-6"
+                    />
                   </div>
                 </div>
               }

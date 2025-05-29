@@ -20,8 +20,11 @@ import { Input } from "@nextui-org/react";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import { Message } from "@/constant/type";
 import { groupMessagesByDate } from "@/constant/dateUtils";
+
+import { useTranslation } from "react-i18next";
 import { useCall } from "@/contexts/CallContext";
 import CallButton from "./CallButton";
+import { PushpinFilled, PushpinOutlined } from "@ant-design/icons";
 
 const SingleChat = ({
   userInfo,
@@ -89,6 +92,7 @@ const SingleChat = ({
   forwardMessage: Message | null;
   messageRefs: React.RefObject<{ [key: number]: HTMLDivElement | null }>;
 }) => {
+  const { t } = useTranslation("common");
   const { initiateCall } = useCall();
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -101,12 +105,13 @@ const SingleChat = ({
   const handleCallInitiate = (callType: "audio" | "video") => {
     if (!selectedChatInfo || !userId) return;
 
-    console.log(userInfo)
+    console.log(userInfo);
     initiateCall(
       selectedChatInfo.otherUserId || selectedChatInfo.id,
       selectedChatInfo.chatName,
-      selectedChatInfo.imageUrl || `https://www.gravatar.com/avatar/EMAIL_MD5?d=https://ui-avatars.com/api/?name=${selectedChatInfo.chatName}`,
-      callType,
+      selectedChatInfo.imageUrl ||
+        `https://www.gravatar.com/avatar/EMAIL_MD5?d=https://ui-avatars.com/api/?name=${selectedChatInfo.chatName}`,
+      callType
     );
   };
 
@@ -216,12 +221,7 @@ const SingleChat = ({
                   />
                 </div>
                 <div className="w-[46px] h-[46px] flex items-center justify-center rounded-full bg-customPurple/10 hover:bg-customPurple/50">
-                  <FontAwesomeIcon
-                    icon={faLocationPin}
-                    width={24}
-                    height={24}
-                    className="size-5"
-                  />
+                  <PushpinFilled className="text-[20px]" />
                 </div>
                 <div
                   onClick={() => setShowSearch(!showSearch)}
@@ -336,10 +336,9 @@ const SingleChat = ({
                               console.log(imageUrl);
                             }}
                           >
-                            {/* Dots button */}
                             <button
                               onClick={(e) => {
-                                e.stopPropagation(); // Prevent parent click
+                                e.stopPropagation();
                                 if (type) {
                                   setMessageMenuId(null);
                                 } else {
@@ -442,6 +441,18 @@ const SingleChat = ({
                                     >
                                       Forward
                                     </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setMessageMenuId({
+                                          id: msg.messageId,
+                                          type: "delete_for_me",
+                                        });
+                                      }}
+                                      className="block w-full text-left hover:bg-gray-100 px-4 py-2"
+                                    >
+                                      Remove
+                                    </button>
                                   </>
                                 )}
                               </div>
@@ -466,7 +477,7 @@ const SingleChat = ({
                 ))
               ) : (
                 <p className="text-center text-gray-500">
-                  No messages yet. Start a conversation!
+                  {t("No messages yet. Start a conversation!")}
                 </p>
               )}
               <div ref={messagesEndRef} />
@@ -533,7 +544,6 @@ const SingleChat = ({
                       ];
 
                       if (imageExtensions.includes(fileExtension as string)) {
-                        // Image preview
                         return (
                           <Image
                             src={attachmentPreview}
@@ -544,10 +554,7 @@ const SingleChat = ({
                           />
                         );
                       } else {
-                        // File preview
                         const fileName = fileUrl.split("/").pop() || "File";
-
-                        // Determine file icon based on extension
                         let fileIcon = faFile;
                         let bgColor = "bg-blue-100";
                         let iconColor = "text-blue-500";
@@ -606,7 +613,7 @@ const SingleChat = ({
             <Input
               ref={inputRef}
               placeholder={
-                attachmentPreview ? "Add a caption..." : "Type messages"
+                attachmentPreview ? "Add a caption..." : (t("Type messages"))
               }
               type="text"
               className="flex-1"

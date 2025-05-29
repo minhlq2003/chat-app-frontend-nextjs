@@ -1,6 +1,8 @@
+"use client"
 import React from "react";
 import ChatItem from "./ChatItem";
 import { ChatListProps } from "../constant/type";
+import { useTranslation } from "react-i18next";
 
 export default function ChatList({
   chatList,
@@ -8,8 +10,9 @@ export default function ChatList({
   pin,
   onSelectUser,
 }: ChatListProps & { onSelectUser: (id: number, chatId: string) => void }) {
+  const {t} = useTranslation("common")
   if (!chatList || chatList.length === 0) {
-    return <div className="px-4">No chats available</div>;
+    return <div className="px-4">{t("No chats available")}</div>;
   }
 
   const filteredList = chatList

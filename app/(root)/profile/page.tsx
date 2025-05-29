@@ -12,7 +12,7 @@ import { FormSuccessErrors, TemporaryUserProps } from "@/constant/type";
 import Image from "next/image";
 import React, { Suspense, use, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { faCalendar, faLocation, faLocationDot, faPhone, faUser, faVenusMars } from "@fortawesome/free-solid-svg-icons";
+import { faEnvelope, faVenusMars } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
 
 const Page = () => {
@@ -113,7 +113,7 @@ const Page = () => {
           <h1 className="text-3xl font-bold text-center">{user?.name}</h1>
           <div className="flex flex-col gap-5 w-[1000px] mx-auto">
             <InputField
-              icon={faUser}
+              image={BlackUser}
               type="text"
               value={user?.name || ""}
               textClassname="text-black"
@@ -129,7 +129,7 @@ const Page = () => {
               isEditable={true}
             />
             <InputField
-              icon={faPhone}
+              image={WhitePhone}
               type="text"
               value={user?.phone || ""}
               textClassname="text-black"
@@ -147,7 +147,25 @@ const Page = () => {
             />
 
             <InputField
-              icon={faCalendar}
+              icon={faEnvelope}
+              type="email"
+              value={user?.email || ""}
+              textClassname="text-black"
+              error={errors.email}
+              errorClassname="text-red-600"
+              placeholder={t("Enter your email")}
+              onChange={(e) =>
+                setUser({
+                  ...user,
+                  email: e.target.value,
+                } as TemporaryUserProps)
+              }
+              isEditable={true}
+              storageKey="email"
+            />
+
+            <InputField
+              image={CalendarIcon}
               type="date"
               value={formatDateToInputValue(user?.birthday || "")}
               placeholder={t("Enter your birthday")}
@@ -163,24 +181,9 @@ const Page = () => {
               isEditable={true}
               storageKey="birthday"
             />
-            <InputField
-              icon={faVenusMars}
-              type="text"
-              placeholder={t("Gender")}
-              textClassname="text-black"
-              value={user?.gender}
-              onChange={(e) =>
-                setUser({
-                  ...user,
-                  gender: e.target.value,
-                } as TemporaryUserProps)
-              }
-              isEditable={true}
-              storageKey="gender"
-            />
 
             <InputField
-              icon={faLocationDot}
+              image={LocationIcon}
               type="text"
               placeholder={t("Enter your address")}
               textClassname="text-black"

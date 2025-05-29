@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { KeyIcon, PhoneIcon } from "@/constant/image";
 import { logout } from "@/lib/actions/auth";
 import InputField from "@/components/InputField";
 import { Button } from "@nextui-org/button";
@@ -13,6 +12,8 @@ const Page = () => {
   const { t } = useTranslation("common");
   const router = useRouter();
   const { type } = useParams();
+  console.log("type", type);
+
   const isForgot = type === "forgotpassword";
   const [user, setUser] = useState<TemporaryUserProps>();
   const [errors, setErrors] = useState<FormSuccessErrors>({
@@ -156,8 +157,8 @@ const Page = () => {
   const handleSubmit = async () => {
     if (isForgot) {
       if (validateForm()) {
-        if(form.newPassword !== form.oldPassword ){
-          toast.error("Confirm password does not match new password")
+        if (form.newPassword !== form.oldPassword) {
+          toast.error("Confirm password does not match new password");
           return;
         }
         const newUser = {
@@ -167,53 +168,67 @@ const Page = () => {
         };
         let data = await getUserInfo("phone", newUser.phone);
         if (data) {
-          const result = await resetPassword(data.id, form.newPassword)
-          toast.success("Password reset successfully")
+          const result = await resetPassword(data.id, form.newPassword);
+          toast.success("Password reset successfully");
         }
         router.push("/signin");
       }
     } else {
-      if (validateForm()) {
-        const newUser = {
-          ...user,
-          //phone: user.phone,
-          password: form.newPassword,
-        };
-        let data = await getUserInfo("phone", newUser.phone);
-        if (!data) {
-          toast.error("Phone number not found");
-          return;
-        }
-        if (data.password !== form.oldPassword) {
-          toast.error("Old password is incorrect");
-          return;
-        }
-        if (data.password === form.newPassword) {
-          toast.error("New password must be different from old password");
-          return;
-        }
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/changepass`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              phone: newUser.phone,
-              oldpassword: form.oldPassword,
-              newpassword: form.newPassword,
-            }),
-          }
-        );
-        if (!res.ok) {
-          toast.error("Failed to update password");
-          return;
-        }
-        toast.success("Password changed!");
-        localStorage.removeItem("user");
-        logout();
+      const newUser = {
+        ...user,
+        //phone: user.phone,
+        password: form.newPassword,
+      };
+      let data = await getUserInfo("phone", newUser.phone);
+      if (!data) {
+        toast.error(t("Phone number not found"));
+        return;
       }
+      if(!form.oldPassword){
+        toast.error(t("Password is required!"))
+      }
+      if (data.password !== form.oldPassword) {
+        toast.error("Old password is incorrect");
+        return;
+      }
+
+      if(!form.newPassword){
+        toast.error(t("New password is required!"))
+      }
+
+      if (data.password === form.newPassword) {
+        toast.error(t("New password must be different from old password"));
+        return;
+      }
+
+      const passwordRegex =
+        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])(?!.*\s).{9,}$/;
+
+      if(!passwordRegex.test(form.newPassword)){
+        toast.error(t("Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character."))
+        return;
+      }
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/changepass`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            phone: newUser.phone,
+            oldpassword: form.oldPassword,
+            newpassword: form.newPassword,
+          }),
+        }
+      );
+      if (!res.ok) {
+        toast.error("Failed to update password");
+        return;
+      }
+      toast.success(t("Password changed!"));
+      localStorage.removeItem("user");
+      logout();
     }
   };
   useEffect(() => {}, []);
@@ -264,7 +279,7 @@ const Page = () => {
                         onClick={handleVerifyOtp}
                         className="bg-white h-[60px] px-10 py-2 rounded-md text-xl"
                       >
-                        Verify
+                        {t("Verify")}
                       </button>
                     </>
                   )}
@@ -290,7 +305,6 @@ const Page = () => {
                     onChange={(e) =>
                       handleChange("newPassword", e.target.value)
                     }
-                    //error={}
                     password
                   />
                   <Button

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Dispatch, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 const apiBaseUrl =
@@ -19,6 +20,7 @@ export default function LeaveGroupConfirmationModel({
   listChatFunc: (userId: string | null | undefined) => Promise<void>;
   selectedChatInfo: any;
 }) {
+  const {t} = useTranslation("common")
   useEffect(() => {
     console.log(selectedChatInfo);
     console.log(selectedUser);
@@ -66,10 +68,9 @@ export default function LeaveGroupConfirmationModel({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col items-center justify-between h-full p-4">
-          <h2 className="text-xl font-bold mb-4 text-red-600">Warning</h2>
+          <h2 className="text-xl font-bold mb-4 text-red-600">{t("Warning")}</h2>
           <p className="mb-4 font-bold warn text-red-600">
-            Are you sure you want to disband this group? This action cannot be
-            undone.
+            {t("Are you sure you want to disband this group? This action cannot be undone.")}
           </p>
           <div className="flex items-center gap-10">
             <button
@@ -78,7 +79,7 @@ export default function LeaveGroupConfirmationModel({
                 handleSelection(false);
               }}
             >
-              No
+              {t("No")}
             </button>
             <button
               className={`px-4 py-1 rounded bg-white border border-red-600 text-red-600 hover:bg-red-600 hover:text-white`}
@@ -86,7 +87,7 @@ export default function LeaveGroupConfirmationModel({
                 handleSelection(true);
               }}
             >
-              Disband
+              {t("Disband")}
             </button>
           </div>
         </div>

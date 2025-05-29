@@ -11,8 +11,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button, Input } from "@nextui-org/react";
-import Image from "next/image";
-import { SearchIcon } from "@/constant/image";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import AddFriendModal from "@/components/AddFriendModel";
@@ -29,7 +27,6 @@ export default function ContactLayout({
 
   return (
     <div className="grid grid-cols-9 gap-2 h-screen">
-      {/* Sidebar */}
       <div className="col-span-2 p-4 border-1 bg-white rounded-xl max-h-screen overflow-y-auto scrollbar-hide">
         <div className="sticky top-0 z-10 bg-white">
           <div className="flex items-center space-x-2">
@@ -39,7 +36,7 @@ export default function ContactLayout({
           <div className="py-2 flex items-center">
             <Input
               labelPlacement="outside"
-              placeholder="Search message, people"
+              placeholder={t("Search message, people")}
               type="text"
               startContent={
                 <FontAwesomeIcon icon={faSearch} className="size-4" />
@@ -91,7 +88,6 @@ export default function ContactLayout({
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="col-span-7 p-4 bg-white rounded-xl">{children}</div>
 
       {isOpenModalAddFriend && (
