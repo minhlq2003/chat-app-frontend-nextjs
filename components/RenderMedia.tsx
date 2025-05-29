@@ -114,7 +114,7 @@ export default function RenderMedia({
                   <img
                     width={40}
                     height={40}
-                    src={member.imageUrl || ""}
+                    src={member.imageUrl || `https://gravatar.com/avatar/EMAIL_MD5?d=https%3A%2F%2Fui-avatars.com%2Fapi%2F/${encodeURIComponent(member.name)}/128`}
                     alt={member.name}
                     className="w-10 h-10 rounded-full object-cover border border-white"
                   />

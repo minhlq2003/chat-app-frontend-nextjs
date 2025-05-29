@@ -13,7 +13,7 @@ import { getSessionUser } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { faCalendar, faLocationDot, faPhone, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faCalendar, faLocationDot, faPhone, faUser, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 
 function formatDateToInputValue(date: string | Date | undefined): string {
   if (!date) return "";
@@ -35,6 +35,7 @@ const Page = () => {
     phone: "",
     password: "",
     birthday: "",
+    email: "",
   });
   const router = useRouter();
   useEffect(() => {
@@ -82,6 +83,7 @@ const Page = () => {
       phone: "",
       password: "",
       birthday: "",
+      email: "",
     };
 
     if (!temporaryUser?.name || !temporaryUser.name.trim()) {
@@ -260,6 +262,23 @@ const Page = () => {
                 } as TemporaryUserProps)
               }
             />
+            {!isGoogleLogin && (
+            <InputField
+              icon={faEnvelope}
+              type="text"
+              value={temporaryUser?.email || ""}
+              textClassname="text-black"
+              error={errors.email}
+              errorClassname="text-red-600"
+              placeholder={t("Enter your email (optional, use for password reset.)")}
+              onChange={(e) =>
+                setTemporaryUser({
+                  ...temporaryUser,
+                  email: e.target.value,
+                } as TemporaryUserProps)
+              }
+            />
+          )}
 {/*            {isGoogleLogin && (
               <InputField
                 type="password"
