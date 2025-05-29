@@ -3,7 +3,7 @@ import Image from "next/image";
 import { InputFieldProps } from "../constant/type";
 import { twMerge } from "tailwind-merge";
 import { useState } from "react";
-import { EyeIcon, EyeSlash, pencil } from "@/constant/image";
+import {  pencil } from "@/constant/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons/faCheck";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";

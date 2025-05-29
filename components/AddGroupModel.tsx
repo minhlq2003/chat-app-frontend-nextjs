@@ -3,8 +3,9 @@
 import { noUserImage } from "@/constant/image";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import { Checkbox, notification } from "antd";
+import { Checkbox } from "antd";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface FriendSuggestion {
   contactId: string;
@@ -44,6 +45,7 @@ export default function AddGroupModal({
   onClose: () => void;
   selectedUser?: string;
 }) {
+  const {t} = useTranslation("common")
   const [phone, setPhone] = useState("");
   const [searchResults, setSearchResults] = useState<FriendSuggestion[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -57,26 +59,6 @@ export default function AddGroupModal({
     members: selectedUser ? [selectedUser] : [],
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  // For notifications
-  const [api, contextHolder] = notification.useNotification();
-
-  const showNotification = (
-    message: string,
-    type: "success" | "error" | "info" | "warning"
-  ) => {
-    api[type]({
-      message:
-        type === "success"
-          ? "Success"
-          : type === "error"
-          ? "Error"
-          : "Notification",
-      description: message,
-      placement: "topRight",
-      duration: 3,
-    });
-  };
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -136,12 +118,12 @@ export default function AddGroupModal({
       }
 
       if (!temporaryGroup.name.trim()) {
-        toast.error("Please enter a group name");
+        toast.error(t("Please enter a group name"));
         return;
       }
 
       if (!temporaryGroup.members || temporaryGroup.members.length < 2) {
-        toast.error("Please select at least 2 members for the group");
+        toast.error(t("Please select at least 2 friends"));
         return;
       }
 
@@ -163,8 +145,8 @@ export default function AddGroupModal({
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Group created successfully!");
-        onClose(); // Close the modal on success
+        toast.success(t("Group created successfully!"));
+        onClose();
       } else {
         toast.error(
           `Failed to create group: ${data.message || "Unknown error"}`
@@ -172,7 +154,6 @@ export default function AddGroupModal({
       }
     } catch (error) {
       console.error("Error creating group:", error);
-      showNotification("An error occurred while creating the group", "error");
     }
   };
 
@@ -227,7 +208,7 @@ export default function AddGroupModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <h2 className="font-semibold">Create Group</h2>
+          <h2 className="font-semibold">{t("Create Group")}</h2>
           <button onClick={onClose} className="text-black text-xl">
             &times;
           </button>
@@ -258,7 +239,7 @@ export default function AddGroupModal({
             onChange={(e) => {
               setTemporaryGroup({ ...temporaryGroup, name: e.target.value });
             }}
-            placeholder="Enter group name"
+            placeholder={t("Enter group name")}
             className="bg-transparent border p-2 rounded-md outline-none flex-1 text-sm placeholder-black/40"
           />
         </div>
@@ -281,14 +262,14 @@ export default function AddGroupModal({
           </div>
         ) : (
           <div className="flex items-center justify-center min-h-[45px] text-sm text-black/50">
-            Please select at least 2 friends
+            {t("Please select at least 2 friends")}
           </div>
         )}
         <div className="flex items-center gap-2 p-4 border-b border-black/10">
           <div className="bg-black/10 px-2 py-2 rounded text-sm">VN (+84)</div>
           <input
             type="text"
-            placeholder="Phone number"
+            placeholder={t("Phone number")}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             className="bg-transparent border p-2 rounded-md outline-none flex-1 text-sm placeholder-black/40"
@@ -296,7 +277,7 @@ export default function AddGroupModal({
         </div>
 
         <div className="p-4 flex flex-col gap-3">
-          <p className="text-sm text-black mt-4">Friends Lists</p>
+          <p className="text-sm text-black mt-4">{t("Friends Lists")}</p>
           <div className="max-h-[160px] overflow-y-auto">
             {searchResults.map((user) => (
               <div
@@ -335,7 +316,7 @@ export default function AddGroupModal({
             onClick={onClose}
             className="text-black bg-gray-400 px-4 py-1 hover:bg-gray-500 rounded"
           >
-            Cancel
+            {t("Cancel")}
           </button>
           <button
             disabled={selectedUsers.length < 2}
@@ -346,7 +327,7 @@ export default function AddGroupModal({
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
           >
-            Create Group
+            {t("Create Group")}
           </button>
         </div>
       </div>

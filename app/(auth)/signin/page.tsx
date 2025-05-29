@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import {FormLoginData} from "@/constant/type";
 import { toast } from "sonner";
 import { faKey, faPhone } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const Page = () => {
   const { t } = useTranslation("common");
   const router = useRouter();
@@ -36,7 +35,7 @@ const Page = () => {
   const handleLogin = async () => {
     const { phone, password } = formData;
     if (!phone || !password) {
-      toast.error("Please fill in all fields.");
+      toast.error(t("Please fill in all fields."));
       return;
     }
     try {
@@ -56,7 +55,7 @@ const Page = () => {
         router.replace("/");
       } else {
         const data = await res.json();
-        toast.error("Error: "+data.message);
+        toast.error(t(data.message));
       }
     } catch (error) {
       console.error("Error logging in:", error);

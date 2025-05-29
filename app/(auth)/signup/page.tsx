@@ -3,9 +3,6 @@ import React, { Suspense, useState } from "react";
 import {
   googleIcon,
   facebookIcon,
-  KeyIcon,
-  PhoneIcon,
-  UserIcon,
 } from "@/constant/image";
 import Image from "next/image";
 import InputField from "@/components/InputField";
@@ -53,23 +50,23 @@ const Page = () => {
       confirmPassword: "",
     };
     if (!formData.name || !formData.name.trim()) {
-      newErrors.name = "Name is required.";
+      newErrors.name = (t("Name is required."));
     } else if (
       !formData.name
         .trim()
         .split(" ")
         .every((word) => word.length > 0 && word[0] === word[0].toUpperCase())
     ) {
-      newErrors.name = "Each word must start with a capital letter.";
+      newErrors.name = (t("Each word must start with a capital letter."));
     }
 
     if (!formData.phone) {
-      newErrors.phone = "Phone number is required.";
+      newErrors.phone = (t("Phone number is required."));
     } else {
       const digitsOnly = formData.phone.replace(/\D/g, "");
       if (digitsOnly.length < 10 || !digitsOnly.startsWith("0")) {
         newErrors.phone =
-          "Phone must start with 0 and have at least 10 digits.";
+          (t("Phone must start with 0 and have at least 10 digits."));
       }
     }
     if (formData.password !== undefined) {
@@ -78,11 +75,11 @@ const Page = () => {
         /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?])(?!.*\s).{9,}$/;
       if (!passwordRegex.test(password)) {
         newErrors.password =
-          "Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character.";
+          (t("Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character."));
       }
     }
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match.";
+      newErrors.confirmPassword = (t("Passwords do not match."));
     }
 
     setErrors(newErrors);

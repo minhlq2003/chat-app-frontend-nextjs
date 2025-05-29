@@ -6,11 +6,9 @@ import { Button, Input } from "@nextui-org/react";
 import { useTranslation } from "react-i18next";
 import { GroupChat } from "@/constant/type";
 import {
-  faArrowRightFromBracket,
   faMessage,
   faPhone,
   faRightFromBracket,
-  faTrash,
   faVideo,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -53,8 +51,6 @@ export default function Page() {
   const sortedLetters = Object.keys(groupedFriends).sort((a, b) =>
     sortAsc ? a.localeCompare(b) : b.localeCompare(a)
   );
-  //const groupedFriends = groupFriendsByLetter(groupChats);
-  //const sortedLetters = Object.keys(groupedFriends).sort();
   const [userId, setUserId] = React.useState<string | null>(null);
   const handleChatClick = async (friendId: string) => {
     if (!userId) return;
@@ -103,7 +99,7 @@ export default function Page() {
       <h1 className="font-bold text-[32px]">{t("Your Group")}</h1>
       <div className="flex items-center mb-4 mt-2 gap-2">
         <Input
-          placeholder="Search group name..."
+          placeholder={t("Search group name...")}
           className="flex-1"
           value={search}
           onChange={(e) => setSearch(e.target.value)}

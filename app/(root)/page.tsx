@@ -2,24 +2,14 @@
 "use client";
 
 import Link from "next/link";
-import {
-  BlockIcon,
-  CalendarIcon,
-  CallIcon,
-  LocationIcon,
-  PlusIcon,
-  SearchIcon,
-  WorkIcon,
-} from "@/constant/image";
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
 import { Button, Card, Input } from "@nextui-org/react";
 import ChatList from "@/components/ChatList";
 import React, { useEffect, useState, useRef } from "react";
-import UserInfoItem from "@/components/ProfileInfoItem";
 import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
-import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
-import { extractLists, getFileIcon } from "@/constant/help";
+import { EmojiClickData } from "emoji-picker-react";
+import { extractLists } from "@/constant/help";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBirthdayCake,
@@ -82,7 +72,6 @@ function Home() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [messageCount, setMessageCount] = useState(20);
   const messageContainerRef = useRef<HTMLDivElement>(null);
-  const firstMessageRef = useRef<HTMLDivElement | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNewMemberModalOpen, setIsNewMemberModalOpen] = useState(false);
   const [isConfirmation, setisConfirmation] = useState(false);
@@ -1522,7 +1511,7 @@ function Home() {
               <Link
                 className={`${
                   isOwn ? "text-white" : "text-blue-500"
-                } underline`}
+                } underline max-w-[70%]`}
                 href={text.content}
                 target="_blank"
                 key={`text-content-${idx}`}
@@ -1614,7 +1603,7 @@ function Home() {
           <div className="py-2 ">
             <Input
               labelPlacement="outside"
-              placeholder="Search message, people"
+              placeholder={t("Search message, people")}
               type="text"
               startContent={
                 <FontAwesomeIcon icon={faSearch} className="size-4" />
@@ -1826,7 +1815,7 @@ function Home() {
                               icon={faEdit}
                               className="w-5 h-5 pl-1"
                             />
-                            <p className={``}>Change group name</p>
+                            <p className={``}>{t("Change group name")}</p>
                           </div>
                           <div
                             className={`cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-2`}
@@ -1836,7 +1825,7 @@ function Home() {
                               icon={faPlus}
                               className="w-5 h-5 pl-1"
                             />
-                            <p className={``}>Add new member</p>
+                            <p className={``}>{t("Add new member")}</p>
                           </div>
                           {memberRole !== "owner" && (
                             <div
@@ -1847,7 +1836,7 @@ function Home() {
                                 icon={faRightFromBracket}
                                 className="w-5 h-5 pl-1"
                               />
-                              <p className={``}>Leave group</p>
+                              <p className={``}>{t("Leave group")}</p>
                             </div>
                           )}
                           {memberRole === "owner" && (
@@ -1859,7 +1848,7 @@ function Home() {
                                 icon={faXmarkCircle}
                                 className="w-5 h-5 pl-1 text-red-500"
                               />
-                              <p className={`text-red-500`}>Disband group</p>
+                              <p className={`text-red-500`}>{t("Disband group")}</p>
                             </div>
                           )}
                         </div>
@@ -1902,7 +1891,7 @@ function Home() {
                             icon={faPlus}
                             className="w-5 h-5 pl-1"
                           />
-                          <p className={``}>Create group</p>
+                          <p className={``}>{t("Create group")}</p>
                         </div>
                         <div
                           className={`cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-2`}
@@ -1911,7 +1900,7 @@ function Home() {
                             icon={faXmarkCircle}
                             className="w-5 h-5 pl-1 text-red-500"
                           />
-                          <p className={`text-red-500`}>Block</p>
+                          <p className={`text-red-500`}>{t("Block")}</p>
                         </div>
                       </div>
                     )}

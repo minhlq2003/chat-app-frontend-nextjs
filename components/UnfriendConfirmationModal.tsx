@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
@@ -18,6 +19,7 @@ export default function UnfriendConfirmationModal({
   contactId: string;
   onSuccess: () => void;
 }) {
+  const {t} = useTranslation("common")
   const handleUnfriend = async () => {
     try {
       if (!userId) {
@@ -37,8 +39,8 @@ export default function UnfriendConfirmationModal({
       const data = await response.json();
 
       if (data.success) {
-        toast.success(`Successfully unfriended ${friendName}`);
-        onSuccess(); // Refresh the friends list
+        toast.success(t(`Successfully unfriended `)+`${friendName}`);
+        onSuccess();
       } else {
         toast.error(`Failed to unfriend: ${data.message || "Unknown error"}`);
       }
@@ -60,20 +62,20 @@ export default function UnfriendConfirmationModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col items-center justify-between h-full p-4">
-          <h2 className="text-xl font-bold mb-4">Confirmation</h2>
-          <p className="mb-4">Are you sure you want to unfriend this contact?</p>
+          <h2 className="text-xl font-bold mb-4">{t("Confirmation")}</h2>
+          <p className="mb-4">{t("Are you sure you want to unfriend this contact?")}</p>
           <div className="flex items-center gap-10">
             <button
               className="text-black bg-gray-400 px-4 py-1 hover:bg-gray-500 rounded"
               onClick={onClose}
             >
-              No
+              {t("No")}
             </button>
             <button
               className="px-4 py-1 rounded bg-red-500 text-white hover:bg-red-600"
               onClick={handleUnfriend}
             >
-              Yes
+              {t("Yes")}
             </button>
           </div>
         </div>

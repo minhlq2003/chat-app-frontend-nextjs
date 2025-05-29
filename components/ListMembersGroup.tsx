@@ -1,6 +1,8 @@
+"use client"
 import { MembersGroupChat } from "@/constant/type";
 import { Accordion, AccordionItem } from "@nextui-org/react";
 import React, { Dispatch, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const roleLabel = {
   owner: "Trưởng nhóm",
@@ -23,6 +25,7 @@ const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
   currentChat,
   requestObject,
 }) => {
+  const {t} = useTranslation("common")
   const [memberAction, setMemberAction] = useState<number | null>(null);
   const yourRole = members.find(
     (member) => member.userId === currentUserId
@@ -111,7 +114,7 @@ const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
                           }}
                           className="block w-full text-left text-red-600 hover:bg-gray-100 px-4 py-2"
                         >
-                          Leave Group
+                          {t("Leave Group")}
                         </button>
                       </>
                     ) : (
@@ -134,7 +137,7 @@ const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
                             }}
                             className="block w-full text-left hover:bg-gray-100 px-4 py-2"
                           >
-                            Promote to Admin
+                            {t("Promote to Admin")}
                           </button>
                         )}
                         {member.role !== "owner" && (
@@ -154,7 +157,7 @@ const ListMembersGroupChat: React.FC<ListMembersGroupChatProps> = ({
                             }}
                             className="block w-full text-left text-red-600 hover:bg-gray-100 px-4 py-2"
                           >
-                            Remove From Group
+                            {t("Remove From Group")}
                           </button>
                         )}
                       </>

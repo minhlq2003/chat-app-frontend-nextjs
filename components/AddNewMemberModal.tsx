@@ -1,11 +1,9 @@
 "use client";
 
-import { noUserImage } from "@/constant/image";
-import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { Checkbox, notification } from "antd";
-import { log } from "node:console";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface FriendSuggestion {
   contactId: string;
@@ -49,6 +47,7 @@ export default function AddNewMemberModal({
   selectedChatInfo: any;
   getChatFunc: (chatId: string) => Promise<void> | null;
 }) {
+  const {t} = useTranslation("common")
   const [phone, setPhone] = useState("");
   const [searchResults, setSearchResults] = useState<FriendSuggestion[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -61,27 +60,7 @@ export default function AddNewMemberModal({
     image: null,
     members: selectedUser ? [selectedUser] : [],
   });
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const groupMemberIds = selectedChatInfo.members.map((m: any) => m.userId);
-  // For notifications
-  const [api, contextHolder] = notification.useNotification();
-
-  const showNotification = (
-    message: string,
-    type: "success" | "error" | "info" | "warning"
-  ) => {
-    api[type]({
-      message:
-        type === "success"
-          ? "Success"
-          : type === "error"
-          ? "Error"
-          : "Notification",
-      description: message,
-      placement: "topRight",
-      duration: 3,
-    });
-  };
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -131,7 +110,6 @@ export default function AddNewMemberModal({
         const filteredContacts = contacts.filter((contact: any) => {
           return !groupMemberIds.includes(Number(contact.contactId));
         });
-        console.log("Filtered Contacts:", filteredContacts);
         setSearchResults(filteredContacts);
       }
     }, 500);
@@ -143,13 +121,13 @@ export default function AddNewMemberModal({
   const handleAddNewMember = async () => {
     let isAlerted = false;
     if (!userId) {
-      toast.error("User ID not found. Please log in again.");
+      toast.error(t("User ID not found. Please log in again."));
       return;
     }
 
     if (!temporaryGroup.members || temporaryGroup.members.length < 1) {
       toast.error(
-        "Please select at least 1 members to add"
+        t("Please select at least 1 members to add")
       );
       return;
     }
@@ -175,14 +153,14 @@ export default function AddNewMemberModal({
       if (data.success) {
 
         if(!isAlerted) {
-          toast.success("Member added successfully!");
+          toast.success(t("Member added successfully!"));
           isAlerted = true;
         }
         getChatFunc(selectedChatInfo.ChatID)
         onClose();
       } else {
         toast.error(
-          `Failed to add member: ${data.message || "Unknown error"}`
+          (t(`Failed to add member: ${data.message}`))
         );
       }
     }
@@ -201,22 +179,16 @@ export default function AddNewMemberModal({
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
       onClick={onClose}
     >
-      {/* Include the notification context holder */}
-      {contextHolder}
-
       <div
         className="bg-white text-black w-[500px] h-[50vh] rounded-lg shadow-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <h2 className="font-semibold">Add new member</h2>
+          <h2 className="font-semibold">{t("Add new member")}</h2>
           <button onClick={onClose} className="text-black text-xl">
             &times;
           </button>
         </div>
-
-        {/* Selected Avatars */}
         {selectedUsers.length > 0 ? (
           <div className="flex gap-2 px-4 overflow-x-auto min-h-[45px]">
             {contacts
@@ -235,22 +207,19 @@ export default function AddNewMemberModal({
           </div>
         ) : (
           <div className="flex items-center justify-center min-h-[45px] text-sm text-black/50">
-            Please select at least 2 friends
+            {t("Please select at least 2 friends")}
           </div>
         )}
-        {/* Phone input */}
         <div className="flex items-center gap-2 p-4 border-b border-black/10">
           <div className="bg-black/10 px-2 py-2 rounded text-sm">VN (+84)</div>
           <input
             type="text"
-            placeholder="Phone number"
+            placeholder={t("Phone number")}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             className="bg-transparent border p-2 rounded-md outline-none flex-1 text-sm placeholder-black/40"
           />
         </div>
-
-        {/* Friends List with Checkboxes */}
         <div className="p-4 flex flex-col gap-3">
           <p className="text-sm text-black mt-4">Friends Lists</p>
           <div className="max-h-[160px] overflow-y-auto">
@@ -286,13 +255,12 @@ export default function AddNewMemberModal({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex justify-end gap-3 p-4 border-t border-white/10">
           <button
             onClick={onClose}
             className="text-black bg-gray-400 px-4 py-1 hover:bg-gray-500 rounded"
           >
-            Cancel
+            {t("Cancel")}
           </button>
           <button
             disabled={selectedUsers.length < 1}
@@ -303,7 +271,7 @@ export default function AddNewMemberModal({
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
           >
-            Add members
+            {t("Add members")}
           </button>
         </div>
       </div>
