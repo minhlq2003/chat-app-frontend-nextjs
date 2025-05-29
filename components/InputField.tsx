@@ -7,6 +7,7 @@ import {  pencil } from "@/constant/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons/faCheck";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import {toast} from "sonner";
 
 export default function InputField({
   isEditable,
@@ -30,14 +31,35 @@ export default function InputField({
 
   const inputType = isPassword && showPassword ? "text" : type;
 
-  const handleEditClick = () => {
+  const handleEditClick = async () => {
     if (isEditing) {
       // Bấm lần 2: lưu
       if (storageKey) {
         try {
           const userData = JSON.parse(localStorage.getItem("user") || "{}");
           userData[storageKey] = localValue;
-          localStorage.setItem("user", JSON.stringify(userData));
+          try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/update`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(userData),
+            });
+            if (response.ok) {
+              let responseData = await response.json();
+              localStorage.removeItem("temporaryuser");
+              localStorage.setItem("user", JSON.stringify(responseData));
+              toast.success("Update successfully!")
+            } else {
+              const errorData = await response.json();
+              console.error("Update failed:", errorData);
+              toast.error("Update failed: " + errorData.message);
+            }
+          } catch (error) {
+            console.error("Error during update:", error);
+            toast.error("An error occurred. Please try again.");
+          }
         } catch (err) {
           console.error("Lỗi lưu user:", err);
         }
