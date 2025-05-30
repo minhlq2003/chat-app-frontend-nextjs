@@ -14,7 +14,7 @@ import React, { Suspense, use, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { faEnvelope, faVenusMars } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
-
+import { toast } from "sonner";
 const Page = () => {
   const { t } = useTranslation("common");
   const [user, setUser] = useState<TemporaryUserProps>();
@@ -37,23 +37,71 @@ const Page = () => {
     fileInputRef.current?.click();
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleComplete = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(user),
+      });
+      if (response.ok) {
+        let responseData = await response.json();
+        localStorage.removeItem("temporaryuser");
+        localStorage.setItem("user", JSON.stringify(responseData));
+        toast.success("Update successfully!")
+      } else {
+        const errorData = await response.json();
+        console.error("Update failed:", errorData);
+        toast.error("Update failed: " + errorData.message);
+      }
+    } catch (error) {
+      console.error("Error during update:", error);
+      toast.error("An error occurred. Please try again.");
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setUser((prev) => ({
-        ...(prev || {
-          id: -1,
-          name: "",
-          password: "",
-          phone: "",
-          image: null,
-          location: null,
-          birthday: null,
-          email: "",
-        }),
-        image: imageUrl,
-      }));
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const imageUrl = data.imageUrl;
+          setUser((prev) => ({
+            ...(prev || {
+              id: -1,
+              name: "",
+              password: "",
+              phone: "",
+              image: null,
+              location: null,
+              birthday: null,
+              email: "",
+            }),
+            image: imageUrl,
+          }));
+          handleComplete();
+        } else {
+          console.error("Image upload failed:", await response.json());
+          toast.error("Failed to upload image. Please try again.");
+        }
+
+      } catch (error) {
+        console.error("Error during image upload:", error);
+        toast.error("An error occurred while uploading the image.");
+      }
     }
   };
 
