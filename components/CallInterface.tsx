@@ -48,6 +48,8 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
                                                      }) => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const callSoundRef = useRef<HTMLAudioElement>(null);
+  const disconnectSoundRef = useRef<HTMLAudioElement>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [callStatus, setCallStatus] = useState<string>(
@@ -68,13 +70,35 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
     }
   }, [localStream, remoteStream]);
 
-  // Update call status based on connection state
+  // Play ringtone when receiving a call
+  useEffect(() => {
+    if (isIncoming && callSoundRef.current) {
+      callSoundRef.current.volume = 0.1; // Set volume to 10%
+      callSoundRef.current.loop = true; // Loop the ringtone until answered/rejected
+      callSoundRef.current.play().catch(err => console.error("Failed to play call sound:", err));
+
+      // Stop ringtone when connection state changes or component unmounts
+      return () => {
+        callSoundRef.current?.pause();
+        callSoundRef.current?.load();
+      };
+    }
+  }, [isIncoming]);
+
+  // Update call status based on connection state and play disconnect sound
   useEffect(() => {
     console.log("Connection state changed to:", connectionState);
 
     if (connectionState === "connected") {
       console.log("Call connected successfully!");
       setCallStatus("Connected");
+
+      // Stop ringtone when call connects
+      if (callSoundRef.current) {
+        callSoundRef.current.pause();
+        callSoundRef.current.load();
+      }
+
       // Start call timer
       const interval = setInterval(() => {
         setCallDuration((prev) => prev + 1);
@@ -86,6 +110,13 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
     } else if (connectionState === "disconnected" || connectionState === "failed") {
       console.log("Call ended or failed:", connectionState);
       setCallStatus("Call ended");
+
+      // Play disconnect sound
+      if (disconnectSoundRef.current) {
+        disconnectSoundRef.current.volume = 0.1; // Set volume to 10%
+        disconnectSoundRef.current.play().catch(err => console.error("Failed to play disconnect sound:", err));
+      }
+
       if (timerInterval) {
         clearInterval(timerInterval);
       }
@@ -97,6 +128,18 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
       }
     };
   }, [connectionState]);
+
+  // Custom end call handler to play disconnect sound
+  const handleEndCall = () => {
+    if (disconnectSoundRef.current) {
+      disconnectSoundRef.current.volume = 0.1;
+      disconnectSoundRef.current.play().catch(err => console.error("Failed to play disconnect sound:", err));
+    }
+
+    if (onEnd) {
+      onEnd();
+    }
+  };
 
   // Format call duration
   const formatDuration = (seconds: number) => {
@@ -129,6 +172,10 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col items-center justify-center">
+      {/* Audio elements for sounds */}
+      <audio ref={callSoundRef} src="/call.mp3" preload="auto" />
+      <audio ref={disconnectSoundRef} src="/disconnect.mp3" preload="auto" />
+
       <div className="w-full h-full max-w-4xl flex flex-col">
         {/* Call header */}
         <div className="p-4 text-white text-center">
@@ -233,7 +280,14 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
                 />
               </button>
               <button
-                onClick={onAccept}
+                onClick={() => {
+                  // Stop ringtone when call is accepted
+                  if (callSoundRef.current) {
+                    callSoundRef.current.pause();
+                    callSoundRef.current.load();
+                  }
+                  if (onAccept) onAccept();
+                }}
                 className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center"
               >
                 <FontAwesomeIcon
@@ -272,7 +326,7 @@ const CallInterface: React.FC<CallInterfaceProps> = ({
               )}
 
               <button
-                onClick={onEnd}
+                onClick={handleEndCall}
                 className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center"
               >
                 <FontAwesomeIcon

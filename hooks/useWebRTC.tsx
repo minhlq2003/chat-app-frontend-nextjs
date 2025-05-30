@@ -50,33 +50,14 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
 
   const socketRef = useRef<Socket | null>(null);
   const peerRef = useRef<Peer.Instance | null>(null);
-  const peerConfig = {
-    iceServers: [
-      // Existing STUN servers
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
-      { urls: "stun:stun2.l.google.com:19302" },
-      { urls: "stun:stun3.l.google.com:19302" },
-      { urls: "stun:stun4.l.google.com:19302" },
-      // Add free TURN servers - try these options
-      {
-        urls: "turn:openrelay.metered.ca:80",
-        username: "openrelayproject",
-        credential: "openrelayproject"
-      },
-      {
-        urls: "turn:openrelay.metered.ca:443",
-        username: "openrelayproject",
-        credential: "openrelayproject"
-      },
-      {
-        urls: "turn:openrelay.metered.ca:443?transport=tcp",
-        username: "openrelayproject",
-        credential: "openrelayproject"
-      }
-    ],
-    iceCandidatePoolSize: 10
+
+  // Convert string ID to number safely
+  const toNumberId = (id: string | null): number | null => {
+    if (!id) return null;
+    const numId = Number(id);
+    return isNaN(numId) ? null : numId;
   };
+
   // Connect to signaling server
   useEffect(() => {
     if (!userId) return;
@@ -84,9 +65,15 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
     const apiBaseUrl = process.env.NEXT_PUBLIC_WEBRTC_BASE_URL || "http://localhost:3000";
     socketRef.current = io(apiBaseUrl);
 
-    // Register user with the signaling server
-    socketRef.current.emit("register", userId);
-    console.log(`Registered user ${userId} with signaling server`);
+    // Register user with the signaling server - convert userId to number
+    const userIdNum = toNumberId(userId);
+    if (userIdNum === null) {
+      console.error("Invalid userId for registration:", userId);
+      return;
+    }
+
+    socketRef.current.emit("register", userIdNum);
+    console.log(`Registered user ${userIdNum} with signaling server`);
 
     // Handle incoming call
     socketRef.current.on("incoming-call", (data) => {
@@ -96,7 +83,7 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
         ...prev,
         isReceivingCall: true,
         callType: data.callType,
-        callerId: data.callerId,
+        callerId: data.callerId?.toString() || null, // Convert number to string if needed
         callerName: data.callerName,
         callerImage: data.callerImage,
         callId: data.callId,
@@ -135,19 +122,12 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
       cleanupCall();
     });
 
-    // Update the ice-candidate listener in your useEffect hook
-    socketRef.current.on("ice-candidate", (data) => {
-      const { callId, candidate } = data;
-      console.log("Received ICE candidate:", candidate);
-
-      if (peerRef.current && candidate) {
-        try {
-          // Important: Signal with the correct type
-          peerRef.current.signal({ type: 'candidate', candidate: candidate });
-          console.log("Applied ICE candidate to peer connection");
-        } catch (error) {
-          console.error("Error applying ICE candidate:", error);
-        }
+    // Handle ICE candidate
+    socketRef.current.on("ice-candidate", ({ callId, candidate }) => {
+      console.log("Received ICE candidate for call:", callId);
+      if (peerRef.current) {
+        peerRef.current.signal({ type: "candidate", candidate });
+        console.log("Applied ICE candidate to peer connection");
       } else {
         console.log("Cannot apply ICE candidate - no peer connection");
       }
@@ -204,7 +184,15 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
           throw new Error("User not initialized or socket not connected");
         }
 
-        console.log("Initiating call to:", receiverId, "of type:", callType);
+        // Convert IDs to numbers
+        const userIdNum = toNumberId(userId);
+        const receiverIdNum = toNumberId(receiverId);
+
+        if (userIdNum === null || receiverIdNum === null) {
+          throw new Error("Invalid userId or receiverId");
+        }
+
+        console.log("Initiating call to:", receiverIdNum, "of type:", callType);
 
         // Get user media based on call type
         const constraints = {
@@ -227,48 +215,32 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
 
         // Create peer connection (as initiator)
         peerRef.current = new Peer({
-          initiator: true, // true for caller, false for receiver
+          initiator: true,
           trickle: true,
-          stream: stream,
-          config: peerConfig,
-          sdpTransform: (sdp) => {
-            console.log("SDP before transform:", sdp);
-            return sdp;
-          }
+          stream,
         });
 
-        console.log("Created peer connection as initiator");
-
-        peerRef.current.on("iceStateChange", (iceState) => {
-          console.log("ICE connection state changed to:", iceState);
-
-          // If ICE gathering is complete but connection failed, try TURN
-          if (iceState === 'disconnected' || iceState === 'failed') {
-            console.log("ICE connection failed - might need TURN server");
-          }
-        });
         // Handle peer signals
         peerRef.current.on("signal", (signal) => {
-          console.log("Generated offer signal:", signal);
+          console.log("Generated offer signal");
           // Send call request to signaling server
           socketRef.current?.emit("call-user", {
-            callerId: userId,
+            callerId: userIdNum,
             callerName: userName,
             callerImage: userImage,
-            receiverId: receiverId.toString(),
+            receiverId: receiverIdNum,
             callType,
             callId,
             signal,
           });
-          console.log("Sent call request with signal to:", receiverId);
         });
 
-        // Update the ICE candidate handler in initiateCall function
+        // Handle ICE candidates
         peerRef.current.on("ice", (candidate) => {
-          console.log("Generated ICE candidate for receiver:", candidate);
+          console.log("Generated ICE candidate for receiver");
           socketRef.current?.emit("ice-candidate", {
-            userId: receiverId,
-            callId,  // Make sure callId is included
+            userId: receiverIdNum, // The recipient of this ICE candidate
+            callId,
             candidate,
           });
         });
@@ -295,7 +267,7 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
           setConnectionState("failed");
         });
 
-        // Update call state
+        // Update call state - store string IDs for internal use
         setCallState((prev) => ({
           ...prev,
           isCalling: true,
@@ -307,15 +279,15 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
         }));
 
         // Also make an API call to store call information
-        const apiBaseUrl = process.env.NEXT_PUBLIC_WEBRTC_BASE_URL || "http://localhost:3000";
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
         fetch(`${apiBaseUrl}/call/initiate`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            callerId: userId,
-            receiverId,
+            callerId: userIdNum,
+            receiverId: receiverIdNum,
             callType,
           }),
         });
@@ -331,20 +303,26 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
 
   // Accept incoming call
   const acceptCall = useCallback(async () => {
-    console.log('log accept call')
     try {
       if (!socketRef.current) {
         throw new Error("Socket not connected");
       }
 
-      const { callType, callerId, callId, incomingSignal, callerName, callerImage } = callState;
+      const { callType, callerId, callId, incomingSignal } = callState;
 
       if (!callType || !callerId || !callId || !incomingSignal) {
         throw new Error("Missing call information");
       }
 
-      console.log("Accepting call from:", callerId, "with signal:", incomingSignal);
-      console.log("Caller info:", { callerName, callerImage });
+      // Convert IDs to numbers
+      const userIdNum = toNumberId(userId);
+      const callerIdNum = toNumberId(callerId);
+
+      if (userIdNum === null || callerIdNum === null) {
+        throw new Error("Invalid userId or callerId");
+      }
+
+      console.log("Accepting call from:", callerIdNum, "with signal:", incomingSignal);
 
       // Get user media based on call type
       const constraints = {
@@ -363,23 +341,9 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
 
       // Create peer connection (not as initiator)
       peerRef.current = new Peer({
-        initiator: false, // true for caller, false for receiver
+        initiator: false,
         trickle: true,
-        stream: stream,
-        config: peerConfig,
-        sdpTransform: (sdp) => {
-          console.log("SDP before transform:", sdp);
-          return sdp;
-        }
-      });
-
-      peerRef.current.on("iceStateChange", (iceState) => {
-        console.log("ICE connection state changed to:", iceState);
-
-        // If ICE gathering is complete but connection failed, try TURN
-        if (iceState === 'disconnected' || iceState === 'failed') {
-          console.log("ICE connection failed - might need TURN server");
-        }
+        stream,
       });
 
       // Handle peer signals
@@ -388,18 +352,18 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
         // Send answer to signaling server
         socketRef.current?.emit("accept-call", {
           callId,
-          callerId,
-          receiverId: userId, // Add this to ensure proper routing
+          callerId: callerIdNum,
+          receiverId: userIdNum, // Add this to ensure proper routing
           signal,
         });
       });
 
-// Update the ICE candidate handler in acceptCall function
+      // Handle ICE candidates
       peerRef.current.on("ice", (candidate) => {
-        console.log("Generated ICE candidate for caller:", candidate);
+        console.log("Generated ICE candidate for caller");
         socketRef.current?.emit("ice-candidate", {
-          userId: callerId,
-          callId,  // Make sure callId is included
+          userId: callerIdNum, // The recipient of this ICE candidate
+          callId,
           candidate,
         });
       });
@@ -451,11 +415,19 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
 
     if (!callId || !callerId) return;
 
-    console.log("Rejecting call:", callId, "from:", callerId);
+    // Convert callerId to number
+    const callerIdNum = toNumberId(callerId);
+
+    if (callerIdNum === null) {
+      console.error("Invalid callerId for rejection");
+      return;
+    }
+
+    console.log("Rejecting call:", callId, "from:", callerIdNum);
     // Send rejection to signaling server
     socketRef.current.emit("reject-call", {
       callId,
-      callerId,
+      callerId: callerIdNum,
     });
 
     // Update call state
@@ -475,11 +447,19 @@ const useWebRTC = ({ userId, userName, userImage }: UseWebRTCProps) => {
 
     if (!callId || !otherUserId) return;
 
-    console.log("Ending call:", callId, "with user:", otherUserId);
+    // Convert otherUserId to number
+    const otherUserIdNum = toNumberId(otherUserId);
+
+    if (otherUserIdNum === null) {
+      console.error("Invalid otherUserId for ending call");
+      return;
+    }
+
+    console.log("Ending call:", callId, "with user:", otherUserIdNum);
     // Notify the other user
     socketRef.current.emit("end-call", {
       callId,
-      userId: otherUserId,
+      userId: otherUserIdNum,
     });
 
     // Update call state
