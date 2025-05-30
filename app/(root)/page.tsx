@@ -737,7 +737,6 @@ function Home() {
             `${apiBaseUrl}/chat/${chatId}/history/${messageCount}?userId=${userId}`
           );
           const messagesData = await messagesResponse.json();
-
           console.log("Fetched messages data:", messagesData);
 
           if (messagesData.success && Array.isArray(messagesData.data)) {
@@ -775,7 +774,7 @@ function Home() {
 
             // Reverse the array to show oldest messages first
             /*setMessages(formattedMessages.reverse());*/
-            console.log("Formatted messages:", formattedMessages);
+            //console.log("Formatted messages:", formattedMessages);
 
             const reversed = formattedMessages.reverse(); // Oldest first
             setAllMessages(reversed);
@@ -1128,7 +1127,7 @@ function Home() {
       wsRef.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log("WebSocket message received with updated handler:", data);
+          //console.log("WebSocket message received with updated handler:", data);
 
           // Handle different message types
           switch (data.type) {
@@ -1256,7 +1255,7 @@ function Home() {
             }
 
             case "pong":
-              console.log("Received pong from server");
+              //console.log("Received pong from server");
               break;
 
             default:
@@ -1269,83 +1268,46 @@ function Home() {
     }
   }, [selectedChatInfo]);
 
+// First effect: Initialize userId
   useEffect(() => {
     try {
       const userStr = localStorage.getItem("user");
-
       if (!userStr) {
         router.replace("/introduction");
         return;
       }
-
       const user = JSON.parse(userStr);
-      const userId = user.id;
-      setUserId(userId);
-      let foundChat = params.get("chatId");
-      if (foundChat) {
-        let userSelect = "11111111";
-        if (!foundChat.includes("group")) {
-          userSelect = foundChat
-            .split("-")
-            .filter((id) => Number(id) !== userId)[0];
-        }
-        handleUserSelect(Number(userSelect), foundChat);
-      }
-
-      // Initialize WebSocket only once
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        wsRef.current = initializeWebSocket(userId);
-      }
-
-      // Fetch chat list
-      fetchChatList(userId);
-      setInterval(() => {
-        fetchChatList(userId);
-      }, 3000);
-
-      // Add visibility change handler for reconnection when tab becomes active
-      const handleVisibilityChange = () => {
-        if (document.visibilityState !== "hidden") {
-          console.log("Page became visible, checking WebSocket connection");
-          if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-            console.log("WebSocket not connected, reconnecting...");
-            wsRef.current = initializeWebSocket(userId);
-          }
-        }
-      };
-
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-
-      // Cleanup function
-      return () => {
-        console.log("Component unmounting, cleaning up WebSocket");
-        document.removeEventListener(
-          "visibilitychange",
-          handleVisibilityChange
-        );
-
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-          reconnectTimeoutRef.current = null;
-        }
-
-        if (pingIntervalRef.current) {
-          clearInterval(pingIntervalRef.current);
-          pingIntervalRef.current = null;
-        }
-
-        if (wsRef.current) {
-          wsRef.current.onclose = null; // Remove the onclose handler to prevent reconnection after unmount
-          wsRef.current.close();
-          wsRef.current = null;
-        }
-      };
+      setUserId(user.id);
     } catch (error) {
-      console.error("Error initializing:", error);
+      console.error("Error getting user:", error);
       router.replace("/introduction");
     }
-  }, [router]); // Only depend on router to prevent re-initialization
+  }, [router]);
 
+// Second effect: Handle params and initialize WebSocket (runs after userId is set)
+  useEffect(() => {
+    if (!userId) return; // Wait until userId is available
+
+    let foundChat = params.get("chatId");
+    if (foundChat) {
+      let userSelect = "11111111";
+      if (!foundChat.includes("group")) {
+        userSelect = foundChat
+        .split("-")
+        .filter((id) => Number(id) !== Number(userId))[0];
+      }
+      handleUserSelect(Number(userSelect), foundChat);
+    }
+
+    // Initialize WebSocket
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      wsRef.current = initializeWebSocket(userId);
+    }
+
+    // Fetch chat list
+    fetchChatList(userId);
+
+  }, [userId, params]); // Depend on userId so it runs after userId is set
   useEffect(() => {
     if (messages.length > 0) {
       //scrollToBottom();

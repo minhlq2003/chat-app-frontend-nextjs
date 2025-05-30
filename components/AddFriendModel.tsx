@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import {router} from "next/client";
+import {useRouter} from "next/navigation";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
@@ -17,6 +19,7 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
     friend?: boolean;
     friendRequestSent?: boolean;
   }
+  const router = useRouter();
   const { t } = useTranslation("common");
   const [phone, setPhone] = useState("");
   const [searchResults, setSearchResults] = useState<FriendSuggestion[]>([]);
@@ -28,6 +31,27 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
     const userId = user.id;
     setUserId(userId);
   }, [userId]);
+  const handleChatClick = async (friendId: string) => {
+    try {
+      if (!userId) return;
+
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:3000";
+      const response = await fetch(
+        `${apiBaseUrl}/chat/private?userIdA=${userId}&userIdB=${friendId}`
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        router.replace(`/?chatId=${data.data.chatId}`);
+      } else {
+        console.error("Failed to get or create private chat");
+      }
+    } catch (error) {
+      console.error("Error getting or creating private chat:", error);
+    }
+  };
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (phone.trim()) {
@@ -143,7 +167,7 @@ export default function AddFriendModal({ onClose }: { onClose: () => void }) {
                   </div>
                   <div>
                     {user.friend ? (
-                      <button className="min-w-[90px] text-sm border border-blue-500 text-blue-500 px-3 py-1 rounded hover:bg-blue-500 hover:text-white transition">
+                      <button onClick={() => {handleChatClick(user.userId)}} className="min-w-[90px] text-sm border border-blue-500 text-blue-500 px-3 py-1 rounded hover:bg-blue-500 hover:text-white transition">
                         {t("Message")}
                       </button>
                     ) : sentUsers.includes(user.userId) ? (

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { CallIcon } from "@/constant/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPhone, faVideo } from "@fortawesome/free-solid-svg-icons";
+import { faPhone, faVideo, faPhoneVolume } from "@fortawesome/free-solid-svg-icons";
 
 interface CallButtonProps {
   onCallInitiated: (callType: "audio" | "video") => void;
@@ -30,12 +30,7 @@ const CallButton: React.FC<CallButtonProps> = ({ onCallInitiated, className = ""
         onClick={() => setShowOptions(!showOptions)}
         className={`cursor-pointer ${className}`}
       >
-        <Image
-          src={CallIcon}
-          alt="Call"
-          width={25}
-          height={25}
-        />
+        <FontAwesomeIcon icon={faPhoneVolume} className="text-customPurple" />
       </div>
 
       {showOptions && (
