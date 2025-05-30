@@ -12,7 +12,6 @@ const Page = () => {
   const { t } = useTranslation("common");
   const router = useRouter();
   const { type } = useParams();
-  console.log("type", type);
 
   const isForgot = type === "forgotpassword";
   const [user, setUser] = useState<TemporaryUserProps>();
@@ -27,6 +26,7 @@ const Page = () => {
   const [serverOtp, setServerOtp] = useState("");
   const [otp, setOtp] = useState("");
   const [isSend, setIsSend] = useState(false);
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     const temUser = JSON.parse(localStorage.getItem("user") || "{}");
@@ -139,6 +139,7 @@ const Page = () => {
 
     if (Object.keys(result).length > 0) {
       await sendOtpEmail(email);
+      setEmail(email);
       setIsSend(!isSend);
     } else {
       toast.error(t("There is no account associated with this email!"));
@@ -154,23 +155,31 @@ const Page = () => {
     }
   };
 
+  const passwordRegex =
+    /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])(?!.*\s).{9,}$/;
+
   const handleSubmit = async () => {
     if (isForgot) {
-      if (validateForm()) {
-        if (form.newPassword !== form.oldPassword) {
-          toast.error("Confirm password does not match new password");
-          return;
-        }
-        const newUser = {
-          ...user,
-          //phone: user.phone,
-          password: form.newPassword,
-        };
-        let data = await getUserInfo("phone", newUser.phone);
-        if (data) {
-          const result = await resetPassword(data.id, form.newPassword);
-          toast.success("Password reset successfully");
-        }
+      console.log("old", form.oldPassword);
+      if (!passwordRegex.test(form.oldPassword)) {
+        toast.error(
+          t(
+            "Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character."
+          )
+        );
+        return;
+      }
+      if (form.newPassword !== form.oldPassword) {
+        toast.error("Confirm password does not match new password");
+        return;
+      }
+      let data = await getUserInfo("email", email);
+      console.log("data", data);
+
+      if (data) {
+        const result = await resetPassword(data.id, form.newPassword);
+        toast.success("Password reset successfully");
+        localStorage.clear()
         router.push("/signin");
       }
     } else {
@@ -184,28 +193,30 @@ const Page = () => {
         toast.error(t("Phone number not found"));
         return;
       }
-      if(!form.oldPassword){
-        toast.error(t("Password is required!"))
+      if (!form.oldPassword) {
+        toast.error(t("Password is required!"));
       }
       if (data.password !== form.oldPassword) {
         toast.error("Old password is incorrect");
         return;
       }
 
-      if(!form.newPassword){
-        toast.error(t("New password is required!"))
+      if (!form.newPassword) {
+        toast.error(t("New password is required!"));
       }
 
       if (data.password === form.newPassword) {
         toast.error(t("New password must be different from old password"));
         return;
       }
-
       const passwordRegex =
         /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])(?!.*\s).{9,}$/;
-
-      if(!passwordRegex.test(form.newPassword)){
-        toast.error(t("Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character."))
+      if (!passwordRegex.test(form.newPassword)) {
+        toast.error(
+          t(
+            "Password must be >8 characters, include 1 uppercase, 1 number, and 1 special character."
+          )
+        );
         return;
       }
       const res = await fetch(
@@ -255,7 +266,7 @@ const Page = () => {
                       type="text"
                       iconClassName="text-white"
                       icon={faEnvelope}
-                      placeholder={t("Enter your phone number")}
+                      placeholder={t("Enter your email")}
                       onChange={(e) => handleChange("email", e.target.value)}
                     />
                     <button

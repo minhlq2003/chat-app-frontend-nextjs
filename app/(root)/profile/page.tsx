@@ -12,7 +12,7 @@ import { FormSuccessErrors, TemporaryUserProps } from "@/constant/type";
 import Image from "next/image";
 import React, { Suspense, use, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { faEnvelope, faVenusMars } from "@fortawesome/free-solid-svg-icons";
+import { faCalendar, faLocationDot, faPhone, faUser, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 const Page = () => {
@@ -37,8 +37,10 @@ const Page = () => {
     fileInputRef.current?.click();
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async (imageUrl: string | undefined) => {
     if (!user) return;
+    if(imageUrl)
+      user.image = imageUrl;
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/update`, {
@@ -92,7 +94,7 @@ const Page = () => {
             }),
             image: imageUrl,
           }));
-          handleComplete();
+          handleComplete(imageUrl);
         } else {
           console.error("Image upload failed:", await response.json());
           toast.error("Failed to upload image. Please try again.");
@@ -161,7 +163,7 @@ const Page = () => {
           <h1 className="text-3xl font-bold text-center">{user?.name}</h1>
           <div className="flex flex-col gap-5 w-[1000px] mx-auto">
             <InputField
-              image={BlackUser}
+              icon={faUser}
               type="text"
               value={user?.name || ""}
               textClassname="text-black"
@@ -177,7 +179,7 @@ const Page = () => {
               isEditable={true}
             />
             <InputField
-              image={WhitePhone}
+              icon={faPhone}
               type="text"
               value={user?.phone || ""}
               textClassname="text-black"
@@ -213,7 +215,7 @@ const Page = () => {
             />
 
             <InputField
-              image={CalendarIcon}
+              icon={faCalendar}
               type="date"
               value={formatDateToInputValue(user?.birthday || "")}
               placeholder={t("Enter your birthday")}
@@ -231,7 +233,7 @@ const Page = () => {
             />
 
             <InputField
-              image={LocationIcon}
+              icon={faLocationDot}
               type="text"
               placeholder={t("Enter your address")}
               textClassname="text-black"

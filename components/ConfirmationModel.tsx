@@ -57,8 +57,11 @@ export default function ConfirmationModel({
 
         if (data.success) {
           toast.success("Operation successfully.");
-          if (listChatFunc && !requestObject.object) {
+          if (listChatFunc && !(requestObject && requestObject.object)) {
             await listChatFunc(selectedUser);
+            if(getChatFunc && selectedUser) {
+            await getChatFunc(selectedUser);
+            }
           }
           if (chatFunc !== null) {
             if (requestObject.object) {
